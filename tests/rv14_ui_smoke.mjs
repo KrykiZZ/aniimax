@@ -49,7 +49,10 @@ async function checkLayout(width) {
   viewport:innerWidth,width:document.documentElement.scrollWidth,
   body:document.body.getBoundingClientRect().width,
   tables:[...document.querySelectorAll('.env-unit-table,.facility-plan-table')].filter(el=>el.getClientRects().length).map(el=>({width:el.clientWidth,scroll:el.scrollWidth})),
+  overflow:[...document.querySelectorAll('body *')].filter(el=>el.getClientRects().length && el.getBoundingClientRect().right>innerWidth+2)
+   .map(el=>({tag:el.tagName,id:el.id,classes:el.getAttribute('class'),right:el.getBoundingClientRect().right,text:el.textContent.trim().slice(0,100)})).slice(0,15),
  }));
+ if(metrics.width>width+2) await page.screenshot({path:`test-results/rv14-overflow-${width}.png`,fullPage:true});
  assert.ok(metrics.width<=width+2,`page overflow at ${width}: ${JSON.stringify(metrics)}`);
  assert.ok(metrics.tables.every(t=>t.scroll<=t.width+2),`plan table overflow at ${width}: ${JSON.stringify(metrics)}`);
  if(width===1600) assert.ok(metrics.body>=1580,'wide desktop uses the expanded page');
@@ -88,6 +91,14 @@ try {
  await page.locator('.config-section').screenshot({path:'test-results/rv14-setup.png'});
  await page.locator('.env-unit').first().screenshot({path:'test-results/rv14-environment.png'});
  for(const width of [1600,1440,1280,1024,768,390]) await checkLayout(width);
+ // Fast local runs can prove optimality while CI reaches the time limit.
+ // Exercise the longer status deterministically, without changing the plan.
+ const lastNote=page.locator('.progress-step .step-note').last();
+ const originalNote=await lastNote.innerHTML();
+ await lastNote.evaluate(el=>{el.textContent='best found in time · 30.0 s';});
+ await page.waitForFunction(()=>[...document.querySelectorAll('.step-note')].at(-1).textContent.includes('лучший за отведённое время'));
+ await checkLayout(390);
+ await lastNote.evaluate((el,html)=>{el.innerHTML=html;},originalNote);
  await page.locator('.env-unit').first().screenshot({path:'test-results/rv14-environment-mobile.png'});
  await page.locator('#themeToggle').click();
  await checkLayout(390);

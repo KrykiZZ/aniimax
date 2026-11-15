@@ -632,6 +632,7 @@
     "rustScope": "cargo test --release --locked --all-targets with the same two slow geometry tests excluded as in CI; explicit ignored tests remain ignored",
     "wasm": "Current-season planning, E-Mode and module gates passed on a freshly built WASM package",
     "browser": "Setup/import/export/season budget and RV14 at six viewport widths passed",
-    "note": "One parallel setup-browser run failed on tooltip visibility; the separate repeat passed. No assertion was removed."
+    "note": "One parallel setup-browser run failed on tooltip visibility; the separate repeat passed. No assertion was removed.",
+    "mobileTimeLimit": "CI exposed a 426px progress row at a 390px viewport when Minimum Team reached its time limit. Reproduced in Chromium 151, fixed by stacking the note below the stage label on mobile, and covered independently of solver timing."
   }
 }
