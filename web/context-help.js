@@ -33,6 +33,7 @@ export function initContextHelp() {
         pinned = false;
         card.hidden = true;
     }
+    document.addEventListener('aniimax-language-change', hide);
     function place() {
         if (!target?.isConnected) return hide();
         const box = target.getBoundingClientRect();

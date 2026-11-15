@@ -3055,3 +3055,4 @@ tr:hover .skip-row,
         animation: none;
     }
 }
+#language-switch { min-width: 4.5rem; cursor: pointer; color-scheme: dark light; }

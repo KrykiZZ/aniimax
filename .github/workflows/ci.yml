@@ -81,6 +81,10 @@ jobs:
         run: npm run test:wasm
       - name: Setup import and WASM UI smoke
         run: npm run test:ui
+      - name: Russian and English language switching
+        run: |
+          node --test tests/i18n_catalog.test.mjs
+          node tests/i18n_ui_smoke.mjs
       - name: Keep tested WASM build
         if: always()
         uses: actions/upload-artifact@v4

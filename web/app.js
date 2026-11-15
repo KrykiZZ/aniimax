@@ -1,3 +1,4 @@
+import { translate, sourceAttribute } from './i18n.js';
 // Aniimax Web Application
 
 import {
@@ -2384,16 +2385,32 @@ let skippedRecipes = new Set();
 let recipeIndex = [];
 
 function recipeLabel(recipe) {
-    return `${prettyItem(recipe.name)} (${recipe.facility})`;
+    return `${translate(prettyItem(recipe.name))} (${translate(recipe.facility)})`;
 }
+
+function renderRecipeOptions() {
+    document.getElementById('skip-options').innerHTML =
+        recipeIndex.map(r => `<option value="${escapeText(recipeLabel(r))}"></option>`).join('');
+}
+
+document.addEventListener('aniimax-language-change', () => {
+    const input = document.getElementById('skip-input');
+    const options = document.getElementById('skip-options');
+    const selected = Array.from(options.options)
+        .findIndex(option => option.value.toLowerCase() === input.value.trim().toLowerCase());
+    renderRecipeOptions();
+    if (selected >= 0) {
+        input.value = options.options[selected].value;
+        input.setCustomValidity('');
+    }
+});
 
 async function loadRecipeIndex() {
     try {
         recipeIndex = JSON.parse(await callWorker('get_all_items'))
             .map(r => ({ season: r.season, moduleRequirement: r.module_requirement, name: r.name, facility: r.facility, facilityLevel: r.facility_level || 1, cost: r.cost || 0, seasonSeedCost: r.season_seed_cost || 0, environment: r.environment || null, jobs: r.jobs || [], ingredients: r.raw_materials || [], amounts: r.required_amount || [], yieldAmount: r.yield_amount || 1, byproduct: r.byproduct_item || null, byproductAmount: r.byproduct?.[1] || 0, turns: r.sell_currency === 'none' }))
             .sort((a, b) => a.facility.localeCompare(b.facility) || a.name.localeCompare(b.name));
-        document.getElementById('skip-options').innerHTML =
-            recipeIndex.map(r => `<option value="${recipeLabel(r)}"></option>`).join('');
+        renderRecipeOptions();
         renderSkippedRecipes();
     } catch (error) {
         console.warn('Could not load the recipe list:', error);
@@ -2437,7 +2454,7 @@ function addSkipFromInput() {
         if (partial.length === 1) match = partial[0];
     }
     if (!match) {
-        input.setCustomValidity('Pick a recipe from the list.');
+        input.setCustomValidity(translate('Pick a recipe from the list.'));
         input.reportValidity();
         return;
     }
@@ -4763,7 +4780,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const unheardOf = event.target.dataset?.confirm;
         if (unheardOf && checked) {
             const ok = window.confirm(
-                `No level-${value} ${unheardOf} Aniimo is known in the game yet. Plan as though you have one?`
+                translate(`No level-${value} ${unheardOf} Aniimo is known in the game yet. Plan as though you have one?`)
             );
             if (!ok) {
                 showAniimoSetup();
@@ -4828,7 +4845,7 @@ function tipAttrs(title, { detail = '', stats = '', color = '' } = {}) {
 function showTip(el) {
     // A title set since the last hover replaces the one kept aside.
     if (el.hasAttribute('title')) {
-        const text = el.getAttribute('title');
+        const text = sourceAttribute(el, 'title');
         el.removeAttribute('title');
         el.dataset.tipText = text;
         if (!el.hasAttribute('aria-label')) el.setAttribute('aria-description', text);
@@ -4898,3 +4915,4 @@ document.addEventListener('focusin', (e) => {
 });
 document.addEventListener('focusout', hideTip);
 window.addEventListener('scroll', hideTip, { passive: true, capture: true });
+document.addEventListener('aniimax-language-change', hideTip);
