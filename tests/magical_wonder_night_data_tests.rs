@@ -1,11 +1,11 @@
-//! Future Magical Wonder Night dataset, transcribed from 2026-10-29 in-game
-//! screenshots supplied by the player. This does not enable the season in the live app.
+//! Magical Wonder Night data reconciled with client build 3934365.
+//! See docs/game-data-audit-2026-11-15.json for differences from earlier screenshots.
 
 use aniimax::data::{load_all_data, parse_season, season_raw_ingredients};
 use std::{collections::HashSet, path::Path};
 
 #[test]
-fn wonder_night_crop_and_product_cards_match_supplied_evidence() {
+fn wonder_night_crop_and_product_data_match_client_evidence() {
     let recipes = parse_season(include_str!("../data/magical_wonder_night.csv")).unwrap();
     assert_eq!(recipes.len(), 11, "two crops plus nine craftables");
     let find = |name: &str| recipes.iter().find(|r| r.name == name)
@@ -15,7 +15,7 @@ fn wonder_night_crop_and_product_cards_match_supplied_evidence() {
         let crop = find(name);
         assert_eq!(crop.facility, "Farmland");
         assert_eq!(crop.facility_level, 5);
-        assert_eq!(crop.production_time, 1800.0);
+        assert_eq!(crop.production_time, 2400.0);
         assert_eq!(crop.yield_amount, 8);
         assert_eq!(crop.sell_value, 61.0);
         assert_eq!(crop.energy, Some(1350.0));
@@ -25,23 +25,23 @@ fn wonder_night_crop_and_product_cards_match_supplied_evidence() {
     }
     // (Name, facility, level, ingredients, per-batch quantities, coins, points, workload)
     for (name, facility, level, ingredients, amounts, coins, points, workload) in [
-        ("sea_salt_roasted_pumpkin", "Claw Game Cooker", 4,
+        ("sea_salt_roasted_pumpkin", "Claw Game Cooker", 1,
             "magic_pumpkin;sea_salt", "8;23", 1180.0, 8.0, 135.0),
-        ("magic_pumpkin_cake", "Blazing Stove", 2,
-            "magic_pumpkin;wheatmeal", "8;1", 1120.0, 10.0, 135.0),
-        ("magic_pumpkin_lantern", "Crafting Table", 4,
+        ("magic_pumpkin_cake", "Blazing Stove", 1,
+            "magic_pumpkin;milled_rice", "8;1", 1120.0, 10.0, 135.0),
+        ("magic_pumpkin_lantern", "Crafting Table", 1,
             "magic_pumpkin", "8", 650.0, 8.0, 68.0),
-        ("candied_lanternfruit", "Pickling Jar", 2,
+        ("candied_lanternfruit", "Pickling Jar", 1,
             "memory_lanternfruit;rock_candy", "8;1", 2260.0, 8.0, 203.0),
-        ("gleam_fruit_nectar", "Bouncy Brew Keg", 2,
+        ("gleam_fruit_nectar", "Bouncy Brew Keg", 1,
             "memory_lanternfruit;fresh_water", "8;8", 1180.0, 10.0, 135.0),
-        ("golden_lantern_pumpkin_soup", "Simmering Pot", 3,
+        ("golden_lantern_pumpkin_soup", "Simmering Pot", 1,
             "magic_pumpkin;memory_lanternfruit;fresh_water", "8;8;8", 1830.0, 20.0, 203.0),
-        ("memory_lantern", "Crafting Table", 4,
+        ("memory_lantern", "Crafting Table", 1,
             "memory_lanternfruit;cotton_thread", "8;1", 1220.0, 8.0, 135.0),
-        ("honey_glazed_pumpkin_cup", "Blazing Stove", 2,
+        ("honey_glazed_pumpkin_cup", "Blazing Stove", 1,
             "sea_salt_roasted_pumpkin;candied_lanternfruit", "1;1", 4430.0, 4.0, 338.0),
-        ("glowfruit_lantern_set", "Crafting Table", 5,
+        ("glowfruit_lantern_set", "Crafting Table", 1,
             "memory_lantern;magic_pumpkin_lantern", "1;1", 2710.0, 4.0, 243.0),
     ] {
         let r = find(name);
@@ -82,4 +82,21 @@ fn wonder_night_ingredients_exist_and_have_no_cycles() {
     // Keep the older CSV backwards-compatible: it has no environment column.
     let previous = parse_season(include_str!("../data/harvest_moon_festival.csv")).unwrap();
     assert!(previous.iter().all(|i| i.environment.is_none()));
+}
+
+#[test]
+fn client_timers_are_watered_once_and_worker_levels_are_separate() {
+    let mut seasonal = parse_season(include_str!("../data/magical_wonder_night.csv")).unwrap();
+    aniimax::models::apply_watering(&mut seasonal);
+    for name in ["magic_pumpkin", "memory_lanternfruit"] {
+        assert_eq!(seasonal.iter().find(|r| r.name == name).unwrap().production_time, 1800.0);
+    }
+    let reqs = aniimax::data::parse_aniimo_requirements(include_str!("../data/aniimo_requirements.csv")).unwrap();
+    for (name, ability) in [("laminated_beams", "Artisanship"), ("densified_timber_component", "Artisanship"),
+                            ("refined_ore", "Fire"), ("microcrystalline_ore_plate", "Fire")] {
+        assert_eq!(reqs.get(name), Some((ability, 3)), "{name}");
+    }
+    let cake = seasonal.iter().find(|r| r.name == "magic_pumpkin_cake").unwrap();
+    assert_eq!(cake.facility_level, 1);
+    assert_eq!(reqs.get("magic_pumpkin_cake"), Some(("Fire", 2)));
 }

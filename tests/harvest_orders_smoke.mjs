@@ -27,11 +27,11 @@ for (const name of ['magic_pumpkin', 'memory_lanternfruit']) {
 assert.ok(!items.some(item => item.name === 'moondew_radish'));
 assert.equal(JSON.parse(pkg.plan_input_error(JSON.stringify(input))), null);
 assert.match(JSON.parse(pkg.plan_input_error(JSON.stringify({
-    ...input, harvest_mutation_plots: 1, season_currency_per_day: 511,
-}))), /512 Weird Jelly Beans\/day/);
+    ...input, harvest_mutation_plots: 1, season_currency_per_day: 383,
+}))), /384 Weird Jelly Beans\/day/);
 assert.match(JSON.parse(pkg.plan_input_error(JSON.stringify({
     ...input, harvest_mutation_plots: 2, season_currency_per_day: 600,
-}))), /1024 Weird Jelly Beans\/day/);
+}))), /768 Weird Jelly Beans\/day/);
 
 const zero = JSON.parse(await plan(pkg, JSON.stringify(input)));
 assert.equal(zero.success, true, zero.error);

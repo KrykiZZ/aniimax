@@ -1,0 +1,637 @@
+{
+  "date": "2026-11-15",
+  "source": {
+    "build": 3934365,
+    "archiveSha256": "f043cfe74521483e74a0be39c6d635356c4d0313cef3169c62a5ff69c12d7e06",
+    "archive": "Aniimo_Data/StreamingAssets/cvs/res/lua/LuaScripts.xdf",
+    "dataEntry": "xfs/luascripts/Common/Data/pmdata.bin"
+  },
+  "run": "python3 -B scripts/game_data/audit.py --archive /path/to/LuaScripts.xdf --out test-results/game-data",
+  "outputs": {
+    "recipes.json": "Все 783 формулы с ID, ингредиентами, выходом, локализованными названиями и привязками к объектам",
+    "tables.json": "104 таблицы дома, объектов, модулей, операций, сезонов, условий и улучшений",
+    "items.json": "Карточки связанных входных и выходных предметов",
+    "comparison.json": "Сравнение проверяемых полей рецептов с CSV планировщика",
+    "operation-comparison.json": "Сравнение требований к умениям и явных этапов обработки грядок",
+    "unmapped-client-recipes.json": "Формулы клиента, не сопоставленные с текущими CSV; не все являются доступными производственными рецептами"
+  },
+  "counts": {
+    "clientTables": 104,
+    "clientFormulas": 783,
+    "recipeRows": {
+      "matched": 408,
+      "partial": 14,
+      "different": 0,
+      "unmatched": 0,
+      "ambiguous": 0,
+      "missing": 0
+    },
+    "operationRows": {
+      "matched": 324,
+      "partial": 0,
+      "different": 0,
+      "unmatched": 2,
+      "ambiguous": 0,
+      "missing": 0
+    }
+  },
+  "fieldsChecked": [
+    "workload",
+    "production_time",
+    "facility_level",
+    "yield",
+    "ingredients",
+    "energy (заполненные значения)",
+    "sell_value (базовая цена в монетах дома, когда есть запись)",
+    "byproduct_yield",
+    "ability",
+    "min_level",
+    "workload этапа грядки"
+  ],
+  "corrections": [
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "magic_pumpkin",
+      "formulaId": 4001074,
+      "changes": [
+        {
+          "field": "production_time",
+          "planner": 1800.0,
+          "client": 2400,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "memory_lanternfruit",
+      "formulaId": 4001075,
+      "changes": [
+        {
+          "field": "production_time",
+          "planner": 1800.0,
+          "client": 2400,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "sea_salt_roasted_pumpkin",
+      "formulaId": 4010223,
+      "changes": [
+        {
+          "field": "facility_level",
+          "planner": 4.0,
+          "client": 1,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "magic_pumpkin_cake",
+      "formulaId": 4010229,
+      "changes": [
+        {
+          "field": "facility_level",
+          "planner": 2.0,
+          "client": 1,
+          "status": "different"
+        },
+        {
+          "field": "ingredients",
+          "planner": [
+            [
+              "magic_pumpkin",
+              8.0
+            ],
+            [
+              "wheatmeal",
+              1.0
+            ]
+          ],
+          "client": [
+            [
+              "magic_pumpkin",
+              8
+            ],
+            [
+              "milled_rice",
+              1
+            ]
+          ],
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "magic_pumpkin_lantern",
+      "formulaId": 4010226,
+      "changes": [
+        {
+          "field": "facility_level",
+          "planner": 4.0,
+          "client": 1,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "candied_lanternfruit",
+      "formulaId": 4010224,
+      "changes": [
+        {
+          "field": "facility_level",
+          "planner": 2.0,
+          "client": 1,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "gleam_fruit_nectar",
+      "formulaId": 4010230,
+      "changes": [
+        {
+          "field": "facility_level",
+          "planner": 2.0,
+          "client": 1,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "golden_lantern_pumpkin_soup",
+      "formulaId": 4010231,
+      "changes": [
+        {
+          "field": "facility_level",
+          "planner": 3.0,
+          "client": 1,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "memory_lantern",
+      "formulaId": 4010227,
+      "changes": [
+        {
+          "field": "facility_level",
+          "planner": 4.0,
+          "client": 1,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "honey_glazed_pumpkin_cup",
+      "formulaId": 4010225,
+      "changes": [
+        {
+          "field": "facility_level",
+          "planner": 2.0,
+          "client": 1,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/magical_wonder_night.csv",
+      "name": "glowfruit_lantern_set",
+      "formulaId": 4010228,
+      "changes": [
+        {
+          "field": "facility_level",
+          "planner": 5.0,
+          "client": 1,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/aniimo_requirements.csv",
+      "name": "laminated_beams",
+      "formulaId": 4010171,
+      "operationId": 110103,
+      "changes": [
+        {
+          "field": "min_level",
+          "planner": 2.0,
+          "client": 3,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/aniimo_requirements.csv",
+      "name": "densified_timber_component",
+      "formulaId": 4010172,
+      "operationId": 110103,
+      "changes": [
+        {
+          "field": "min_level",
+          "planner": 2.0,
+          "client": 3,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/aniimo_requirements.csv",
+      "name": "refined_ore",
+      "formulaId": 4010176,
+      "operationId": 100023,
+      "changes": [
+        {
+          "field": "min_level",
+          "planner": 2.0,
+          "client": 3,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/aniimo_requirements.csv",
+      "name": "microcrystalline_ore_plate",
+      "formulaId": 4010177,
+      "operationId": 100023,
+      "changes": [
+        {
+          "field": "min_level",
+          "planner": 2.0,
+          "client": 3,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/aniimo_requirements.csv",
+      "name": "moondew_radish_slices",
+      "formulaId": 4010150,
+      "operationId": 100002,
+      "changes": [
+        {
+          "field": "min_level",
+          "planner": 3.0,
+          "client": 2,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/aniimo_requirements.csv",
+      "name": "umbral_hot_pot",
+      "formulaId": 4010147,
+      "operationId": 100002,
+      "changes": [
+        {
+          "field": "min_level",
+          "planner": 3.0,
+          "client": 2,
+          "status": "different"
+        }
+      ]
+    },
+    {
+      "file": "data/aniimo_requirements.csv",
+      "name": "umbral_pickle",
+      "formulaId": 4010146,
+      "operationId": 100732,
+      "changes": [
+        {
+          "field": "min_level",
+          "planner": 3.0,
+          "client": 2,
+          "status": "different"
+        }
+      ]
+    }
+  ],
+  "removedUnusedAliases": [
+    "data/e_mode.csv: quick_natural_mineral_spring",
+    "data/e_mode.csv: quick_plain_fresh_water"
+  ],
+  "interpretation": [
+    "2400 секунд — исходный таймер двух сезонных культур. Два полива уменьшают его до 1800 секунд, что объясняет 30 минут на прежних снимках. Повторное сокращение до 1350 секунд исправлено.",
+    "Для девяти сезонных изделий список formulaList доступен начиная с уровня объекта 1. Уровни умений анимо и открытие рецептов через записи остаются отдельными условиями.",
+    "Magic Pumpkin Cake потребляет предмет 4001063 (Milled Rice), а не 4010032 (Wheatmeal).",
+    "Reclaiming для обработки грядки связан с операцией 100311: Cultivating / Возделывание. Tilling / Вспашка — другая операция 100312.",
+    "Ранее для девяти изделий текущего сезона отсутствовали строки требований к умениям, а для двух культур — шесть этапов выращивания. Добавлены по homeAbility и workload операций клиента."
+  ],
+  "unresolved": {
+    "missingPrices": [
+      {
+        "name": "aniipod",
+        "formulaId": 110001
+      },
+      {
+        "name": "aniipod_pro",
+        "formulaId": 110002
+      },
+      {
+        "name": "aniipod_mega",
+        "formulaId": 110007
+      },
+      {
+        "name": "coarse_sifted_ore",
+        "formulaId": 4010174
+      },
+      {
+        "name": "sintered_ore_brick",
+        "formulaId": 4010175
+      },
+      {
+        "name": "refined_ore",
+        "formulaId": 4010176
+      },
+      {
+        "name": "microcrystalline_ore_plate",
+        "formulaId": 4010177
+      },
+      {
+        "name": "growth_bud",
+        "formulaId": 150001
+      },
+      {
+        "name": "growth_flower",
+        "formulaId": 150002
+      },
+      {
+        "name": "growth_fruit",
+        "formulaId": 150003
+      },
+      {
+        "name": "rough_lumber",
+        "formulaId": 4010169
+      },
+      {
+        "name": "standard_planks",
+        "formulaId": 4010170
+      },
+      {
+        "name": "laminated_beams",
+        "formulaId": 4010171
+      },
+      {
+        "name": "densified_timber_component",
+        "formulaId": 4010172
+      }
+    ],
+    "unmatchedOperations": [
+      {
+        "file": "data/grower_steps.csv",
+        "name": "moondew_radish",
+        "step": "Reclaiming",
+        "checks": [],
+        "status": "unmatched",
+        "candidateIds": []
+      },
+      {
+        "file": "data/grower_steps.csv",
+        "name": "waxing_moon_pepper",
+        "step": "Reclaiming",
+        "checks": [],
+        "status": "unmatched",
+        "candidateIds": []
+      }
+    ],
+    "notYetSemanticallyVerified": [
+      "Стоимость семян и валюты магазинов",
+      "Условия модулей и квестов, доступность рецептов по времени",
+      "Все коэффициенты скорости, характера, голода, электрической сети и климата",
+      "Автоматически добавляемые операции (включая сезонные грядки) и геометрия покрытия",
+      "Правила начисления очков события и вероятности мутаций",
+      "Актуальность локальной сборки относительно серверных поправок"
+    ],
+    "notAutomaticallyImported": "В клиенте есть дополнительные формулы, в том числе Sorghum, Sorghum Flour, Captain Spud, Cranberry Soft Cake и Orange Flower Rice Drink. Они выгружены, но не включены в оптимизацию без проверки доступности и зависимостей."
+  },
+  "tables": {
+    "home_ability_data": 13,
+    "home_ability_level_data": 4,
+    "home_addon_data": 18,
+    "home_blueprint_data": 15,
+    "home_build_data": 1145,
+    "home_build_link_data": 51,
+    "home_camp_car_data": 30,
+    "home_camp_data": 6,
+    "home_camp_type_data": 1,
+    "home_camp_unlock_revert_data": 6,
+    "home_car_component_data": 9,
+    "home_car_component_tab_data": 2,
+    "home_car_component_upgrade_data": 9,
+    "home_car_internal_model_data": 22,
+    "home_car_modify_data": 2,
+    "home_car_modify_model_data": 8,
+    "home_car_modify_type_data": 2,
+    "home_car_plate_data": 2,
+    "home_car_skin_data": 1,
+    "home_car_skin_unlock_item_index": 1,
+    "home_car_upgrade_data": 22,
+    "home_category_lv1_progress_data": 4,
+    "home_event_owner_to_id_data": 2,
+    "home_event_text_data": 81,
+    "home_event_type_data": 13,
+    "home_event_type_to_id_data": 9,
+    "home_extra_anime_data": 360,
+    "home_handbook_category_detail": 3,
+    "home_handbook_category_lv1_data": 5,
+    "home_handbook_category_lv2_data": 13,
+    "home_handbook_category_lv3_data": 82,
+    "home_handbook_grade_reward_data": 54,
+    "home_handbook_homeland_data": 1078,
+    "home_handbook_item_category_index": 1503,
+    "home_handbook_ornament_set_data": 11,
+    "home_handbook_product_data": 414,
+    "home_handbook_season_data": 2,
+    "home_handbook_season_item_index": 57,
+    "home_handbook_season_ui_data": 2,
+    "home_interaction_data": 53,
+    "home_item_new_data": 104,
+    "home_item_release_data": 111,
+    "home_leisure_behavior_data": 37,
+    "home_object_data": 1541,
+    "home_object_place_data": 106,
+    "home_order_data": 5,
+    "home_pet_mbti_desc_data": 8,
+    "home_sample_resource_data": 750,
+    "home_scene_to_camp_id_data": 6,
+    "home_season_buff_data": 16,
+    "home_season_celebration_chest_data": 1,
+    "home_season_celebration_data": 1,
+    "home_season_collection_item_data": 109,
+    "home_season_collection_reward_data": 20,
+    "home_season_config_data": 31,
+    "home_season_construction_combined_reward_data": 5,
+    "home_season_construction_reward_data": 17,
+    "home_season_construction_submit_data": 302,
+    "home_season_daily_task_data": 11,
+    "home_season_data": 2,
+    "home_season_desc_data": 14,
+    "home_season_module_data": 16,
+    "home_season_mutation_category_data": 4,
+    "home_season_mutation_collection_by_season_data": 2,
+    "home_season_mutation_collection_by_type_data": 2,
+    "home_season_mutation_collection_data": 32,
+    "home_season_mutation_collection_reward_by_season_data": 2,
+    "home_season_mutation_collection_reward_data": 10,
+    "home_season_mutation_count_level_data": 4,
+    "home_season_mutation_harvest_index_data": 4,
+    "home_season_mutation_level_data": 8,
+    "home_season_prepare_goal_data": 5,
+    "home_season_prepare_task_data": 5,
+    "home_season_pumpkin_data": 5,
+    "home_season_pumpkin_pos_data": 30,
+    "home_season_stage_data": 6,
+    "home_sub_type_data": 11,
+    "home_trash_data": 358,
+    "home_type_data": 11,
+    "home_upgrade_data": 29,
+    "home_wall_hole_data": 0,
+    "home_wishing_star_collection_data": 2,
+    "homeland_area_data": 6,
+    "homeland_area_unlock_revert_data": 1,
+    "homeland_bgm_data": 16,
+    "homeland_config_data": 167,
+    "homeland_facility_data": 421,
+    "homeland_facility_data_reverse": 552,
+    "homeland_food_item": 73,
+    "homeland_formula_data": 783,
+    "homeland_formula_data_reverse": 145,
+    "homeland_formula_period_data": 3,
+    "homeland_formula_random_add_data": 8,
+    "homeland_formula_random_data": 25,
+    "homeland_formula_random_reverse_data": 171,
+    "homeland_formula_random_type_data": 8,
+    "homeland_item_to_material_data": 1277,
+    "homeland_lottery_reward_data": 16,
+    "homeland_lottery_tier_data": 4,
+    "homeland_material_config_data": 1277,
+    "homeland_material_shop_data": 1,
+    "homeland_operate_data": 118,
+    "homeland_season_unlock_revert_data": 0,
+    "homeland_zone_unlock_config_data": 25
+  },
+  "addedWorkerAndGrowingSteps": [
+    {
+      "name": "magic_pumpkin",
+      "formulaId": 4001074,
+      "operationId": 100111,
+      "newRow": "magic_pumpkin, Farmland, Collecting, Grass, 1, 3",
+      "file": "data/grower_steps.csv"
+    },
+    {
+      "name": "magic_pumpkin",
+      "formulaId": 4001074,
+      "operationId": 100311,
+      "newRow": "magic_pumpkin, Farmland, Reclaiming, Earth, 1, 5",
+      "file": "data/grower_steps.csv"
+    },
+    {
+      "name": "magic_pumpkin",
+      "formulaId": 4001074,
+      "operationId": 100101,
+      "newRow": "magic_pumpkin, Farmland, Sowing, Grass, 1, 3",
+      "file": "data/grower_steps.csv"
+    },
+    {
+      "name": "memory_lanternfruit",
+      "formulaId": 4001075,
+      "operationId": 100111,
+      "newRow": "memory_lanternfruit, Farmland, Collecting, Grass, 1, 3",
+      "file": "data/grower_steps.csv"
+    },
+    {
+      "name": "memory_lanternfruit",
+      "formulaId": 4001075,
+      "operationId": 100311,
+      "newRow": "memory_lanternfruit, Farmland, Reclaiming, Earth, 1, 5",
+      "file": "data/grower_steps.csv"
+    },
+    {
+      "name": "memory_lanternfruit",
+      "formulaId": 4001075,
+      "operationId": 100101,
+      "newRow": "memory_lanternfruit, Farmland, Sowing, Grass, 1, 3",
+      "file": "data/grower_steps.csv"
+    },
+    {
+      "name": "sea_salt_roasted_pumpkin",
+      "formulaId": 4010223,
+      "operationId": 100002,
+      "newRow": "sea_salt_roasted_pumpkin, Claw Game Cooker, Fire, 2",
+      "file": "data/aniimo_requirements.csv"
+    },
+    {
+      "name": "magic_pumpkin_cake",
+      "formulaId": 4010229,
+      "operationId": 100002,
+      "newRow": "magic_pumpkin_cake, Blazing Stove, Fire, 2",
+      "file": "data/aniimo_requirements.csv"
+    },
+    {
+      "name": "magic_pumpkin_lantern",
+      "formulaId": 4010226,
+      "operationId": 110102,
+      "newRow": "magic_pumpkin_lantern, Crafting Table, Artisanship, 2",
+      "file": "data/aniimo_requirements.csv"
+    },
+    {
+      "name": "candied_lanternfruit",
+      "formulaId": 4010224,
+      "operationId": 100732,
+      "newRow": "candied_lanternfruit, Pickling Jar, Dark, 2",
+      "file": "data/aniimo_requirements.csv"
+    },
+    {
+      "name": "gleam_fruit_nectar",
+      "formulaId": 4010230,
+      "operationId": 100202,
+      "newRow": "gleam_fruit_nectar, Bouncy Brew Keg, Water, 2",
+      "file": "data/aniimo_requirements.csv"
+    },
+    {
+      "name": "golden_lantern_pumpkin_soup",
+      "formulaId": 4010231,
+      "operationId": 100002,
+      "newRow": "golden_lantern_pumpkin_soup, Simmering Pot, Fire, 2",
+      "file": "data/aniimo_requirements.csv"
+    },
+    {
+      "name": "memory_lantern",
+      "formulaId": 4010227,
+      "operationId": 110102,
+      "newRow": "memory_lantern, Crafting Table, Artisanship, 2",
+      "file": "data/aniimo_requirements.csv"
+    },
+    {
+      "name": "honey_glazed_pumpkin_cup",
+      "formulaId": 4010225,
+      "operationId": 100002,
+      "newRow": "honey_glazed_pumpkin_cup, Blazing Stove, Fire, 2",
+      "file": "data/aniimo_requirements.csv"
+    },
+    {
+      "name": "glowfruit_lantern_set",
+      "formulaId": 4010228,
+      "operationId": 110103,
+      "newRow": "glowfruit_lantern_set, Crafting Table, Artisanship, 3",
+      "file": "data/aniimo_requirements.csv"
+    }
+  ],
+  "validation": {
+    "importerTests": 8,
+    "rustPassed": 138,
+    "rustScope": "cargo test --release --locked --all-targets with the same two slow geometry tests excluded as in CI; explicit ignored tests remain ignored",
+    "wasm": "Current-season planning, E-Mode and module gates passed on a freshly built WASM package",
+    "browser": "Setup/import/export/season budget and RV14 at six viewport widths passed",
+    "note": "One parallel setup-browser run failed on tooltip visibility; the separate repeat passed. No assertion was removed."
+  }
+}

@@ -5,14 +5,14 @@ import { harvestBudgetStatus } from '../web/harvest-budget.js';
 
 test('Wonder Night has optional seed cap and never reserves historical orders', () => {
     assert.deepEqual(harvestBudgetStatus(0, 600), { needed: 0, spare: 600, conflict: false, watered: true });
-    assert.equal(harvestBudgetStatus(1, 600).needed, 512);
-    assert.equal(harvestBudgetStatus(2, 600).needed, 1024);
+    assert.equal(harvestBudgetStatus(1, 600).needed, 384);
+    assert.equal(harvestBudgetStatus(2, 600).needed, 768);
     assert.equal(harvestBudgetStatus(2, 600).conflict, true);
-    assert.equal(harvestBudgetStatus(1, 512).conflict, false);
+    assert.equal(harvestBudgetStatus(1, 384).conflict, false);
     assert.equal(harvestBudgetStatus(2, null).conflict, false);
     assert.equal(harvestBudgetStatus(0, 0).conflict, false);
-    assert.equal(harvestBudgetStatus(1, 511).conflict, true);
-    assert.equal(harvestBudgetStatus(1, 600, false).needed, 384);
+    assert.equal(harvestBudgetStatus(1, 383).conflict, true);
+    assert.equal(harvestBudgetStatus(1, 600, false).needed, 288);
 });
 
 test('budget estimate agrees with the new event crop costs and cycle times', () => {

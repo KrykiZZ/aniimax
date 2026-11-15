@@ -1,0 +1,914 @@
+{
+  "build": 3934365,
+  "recipes": [
+    {
+      "id": 4001074,
+      "item": {
+        "id": 4001074,
+        "textId": 1636705867,
+        "en": "Magic Pumpkin",
+        "ru_RU": "Волшебная тыква"
+      },
+      "inputs": [
+        {
+          "item": {
+            "id": 4000046,
+            "textId": 1132615129,
+            "en": "Magic Pumpkin Seed",
+            "ru_RU": "Семя волшебной тыквы"
+          },
+          "amount": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": {
+            "id": 4001074,
+            "textId": 1636705867,
+            "en": "Magic Pumpkin",
+            "ru_RU": "Волшебная тыква"
+          },
+          "amount": 8
+        }
+      ],
+      "facilities": [
+        {
+          "id": 10100005,
+          "typeId": 1010000,
+          "level": 5,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        },
+        {
+          "id": 10100006,
+          "typeId": 1010000,
+          "level": 6,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        },
+        {
+          "id": 10100007,
+          "typeId": 1010000,
+          "level": 7,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        },
+        {
+          "id": 10100008,
+          "typeId": 1010000,
+          "level": 8,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        }
+      ],
+      "raw": {
+        "accelerateItemId": 4040035,
+        "accelerateStageList": 5000,
+        "consumable1": 4000046,
+        "consumableNum1": 1,
+        "decreaseTime": 300,
+        "envRequireOperate": 5000,
+        "forceEnvRequire": 1,
+        "lightRequire": 1,
+        "modelChangeTime": 320,
+        "modelPrefab1": "$P_Home_Produce_Crops_Pumpkin_Embryo.prefab",
+        "modelPrefab2": "$P_Home_Produce_Crops_Pumpkin_Grow.prefab",
+        "modelPrefab3": "$P_Home_Produce_Crops_Pumpkin_Ripe.prefab",
+        "modelType": 1,
+        "outputs": {
+          "1": {
+            "1": 4001074,
+            "2": 8
+          }
+        },
+        "postOperateList": {
+          "1": 5000,
+          "2": 100111
+        },
+        "preOperateList": {
+          "1": 100311,
+          "2": 100101
+        },
+        "previewItemId": 4001074,
+        "tillRewardId": 200890,
+        "time": 2400,
+        "timePeriodId": 3,
+        "timerState": 100211,
+        "timerStateTime1": 800,
+        "timerStateTime2": 1600,
+        "transportThreshold": 8,
+        "type": 1,
+        "unlockByItemId": 4040183
+      }
+    },
+    {
+      "id": 4010032,
+      "item": {
+        "id": 4010032,
+        "textId": 1853963911,
+        "en": "Wheatmeal",
+        "ru_RU": "Пшеничная мука"
+      },
+      "inputs": [
+        {
+          "item": {
+            "id": 4001000,
+            "textId": 2022384452,
+            "en": "Wheat",
+            "ru_RU": "Пшеница"
+          },
+          "amount": 50
+        }
+      ],
+      "outputs": [
+        {
+          "item": {
+            "id": 4010032,
+            "textId": 1853963911,
+            "en": "Wheatmeal",
+            "ru_RU": "Пшеничная мука"
+          },
+          "amount": 1
+        }
+      ],
+      "facilities": [
+        {
+          "id": 10200001,
+          "typeId": 1020000,
+          "level": 1,
+          "mode": "normal",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 15,
+          "mbti": "T"
+        },
+        {
+          "id": 10200002,
+          "typeId": 1020000,
+          "level": 2,
+          "mode": "normal",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 30,
+          "mbti": "T"
+        },
+        {
+          "id": 10200003,
+          "typeId": 1020000,
+          "level": 3,
+          "mode": "normal",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 45,
+          "mbti": "T"
+        },
+        {
+          "id": 10200004,
+          "typeId": 1020000,
+          "level": 4,
+          "mode": "normal",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 60,
+          "mbti": "T"
+        },
+        {
+          "id": 10200005,
+          "typeId": 1020000,
+          "level": 5,
+          "mode": "normal",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 75,
+          "mbti": "T"
+        },
+        {
+          "id": 10200006,
+          "typeId": 1020000,
+          "level": 6,
+          "mode": "normal",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 90,
+          "mbti": "T"
+        },
+        {
+          "id": 10200007,
+          "typeId": 1020000,
+          "level": 7,
+          "mode": "normal",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 105,
+          "mbti": "T"
+        }
+      ],
+      "raw": {
+        "consumable1": 4001000,
+        "consumableNum1": 50,
+        "outputs": {
+          "1": {
+            "1": 4010032,
+            "2": 1
+          }
+        },
+        "postOperateList": {
+          "1": 100601
+        },
+        "previewItemId": 4010032,
+        "transportThreshold": 2,
+        "type": 1,
+        "workload": 54
+      }
+    },
+    {
+      "id": 4010229,
+      "item": {
+        "id": 4010229,
+        "textId": 1380184340,
+        "en": "Magic Pumpkin Cake",
+        "ru_RU": "Волшебный тыквенный пирог"
+      },
+      "inputs": [
+        {
+          "item": {
+            "id": 4001074,
+            "textId": 1636705867,
+            "en": "Magic Pumpkin",
+            "ru_RU": "Волшебная тыква"
+          },
+          "amount": 8
+        },
+        {
+          "item": {
+            "id": 4001063,
+            "textId": 1593787304,
+            "en": "Milled Rice",
+            "ru_RU": "Шлифованный рис"
+          },
+          "amount": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": {
+            "id": 4010229,
+            "textId": 1380184340,
+            "en": "Magic Pumpkin Cake",
+            "ru_RU": "Волшебный тыквенный пирог"
+          },
+          "amount": 1
+        }
+      ],
+      "facilities": [
+        {
+          "id": 10200081,
+          "typeId": 1020008,
+          "level": 1,
+          "mode": "normal",
+          "name": {
+            "en": "Blazing Stove",
+            "ru_RU": "Жаркая плита"
+          },
+          "electricRequire": 15,
+          "mbti": "N"
+        },
+        {
+          "id": 10200082,
+          "typeId": 1020008,
+          "level": 2,
+          "mode": "normal",
+          "name": {
+            "en": "Blazing Stove",
+            "ru_RU": "Жаркая плита"
+          },
+          "electricRequire": 30,
+          "mbti": "N"
+        },
+        {
+          "id": 10200083,
+          "typeId": 1020008,
+          "level": 3,
+          "mode": "normal",
+          "name": {
+            "en": "Blazing Stove",
+            "ru_RU": "Жаркая плита"
+          },
+          "electricRequire": 45,
+          "mbti": "N"
+        },
+        {
+          "id": 10200084,
+          "typeId": 1020008,
+          "level": 4,
+          "mode": "normal",
+          "name": {
+            "en": "Blazing Stove",
+            "ru_RU": "Жаркая плита"
+          },
+          "electricRequire": 60,
+          "mbti": "N"
+        },
+        {
+          "id": 10200085,
+          "typeId": 1020008,
+          "level": 5,
+          "mode": "normal",
+          "name": {
+            "en": "Blazing Stove",
+            "ru_RU": "Жаркая плита"
+          },
+          "electricRequire": 75,
+          "mbti": "N"
+        },
+        {
+          "id": 10200086,
+          "typeId": 1020008,
+          "level": 6,
+          "mode": "normal",
+          "name": {
+            "en": "Blazing Stove",
+            "ru_RU": "Жаркая плита"
+          },
+          "electricRequire": 90,
+          "mbti": "N"
+        }
+      ],
+      "raw": {
+        "consumable1": 4001074,
+        "consumable2": 4001063,
+        "consumableNum1": 8,
+        "consumableNum2": 1,
+        "outputs": {
+          "1": {
+            "1": 4010229,
+            "2": 1
+          }
+        },
+        "postOperateList": {
+          "1": 100002
+        },
+        "previewItemId": 4010229,
+        "timePeriodId": 3,
+        "transportThreshold": 1,
+        "type": 1,
+        "unlockByItemId": 4040168,
+        "workload": 135
+      }
+    },
+    {
+      "id": 4020033,
+      "item": {
+        "id": 4020033,
+        "textId": 1524776801,
+        "en": "Quick Formula: Wheat",
+        "ru_RU": "Быстрая формула «Пшеница»"
+      },
+      "inputs": [
+        {
+          "item": {
+            "id": 4000000,
+            "textId": 1929900662,
+            "en": "Wheat Seed",
+            "ru_RU": "Семя пшеницы"
+          },
+          "amount": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": {
+            "id": 4001000,
+            "textId": 2022384452,
+            "en": "Wheat",
+            "ru_RU": "Пшеница"
+          },
+          "amount": 42
+        }
+      ],
+      "facilities": [
+        {
+          "id": 10100002,
+          "typeId": 1010000,
+          "level": 2,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        },
+        {
+          "id": 10100003,
+          "typeId": 1010000,
+          "level": 3,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        },
+        {
+          "id": 10100004,
+          "typeId": 1010000,
+          "level": 4,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        },
+        {
+          "id": 10100005,
+          "typeId": 1010000,
+          "level": 5,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        },
+        {
+          "id": 10100006,
+          "typeId": 1010000,
+          "level": 6,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        },
+        {
+          "id": 10100007,
+          "typeId": 1010000,
+          "level": 7,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        },
+        {
+          "id": 10100008,
+          "typeId": 1010000,
+          "level": 8,
+          "mode": "normal",
+          "name": {
+            "en": "Farmland",
+            "ru_RU": "Пахотная земля"
+          },
+          "electricRequire": null,
+          "mbti": null
+        }
+      ],
+      "raw": {
+        "accelerateItemId": 4040035,
+        "accelerateStageList": 5000,
+        "consumable1": 4000000,
+        "consumableNum1": 1,
+        "decreaseTime": 150,
+        "isHighSpeedFormula": 1,
+        "modelChangeTime": 600,
+        "modelPrefab1": "$P_Home_Produce_Crops_Wheat_Embryo.prefab",
+        "modelPrefab2": "$P_Home_Produce_Crops_Wheat_Grow.prefab",
+        "modelPrefab3": "$P_Home_Produce_Crops_Wheat_Ripe.prefab",
+        "modelType": 1,
+        "outputs": {
+          "1": {
+            "1": 4001000,
+            "2": 42
+          }
+        },
+        "postOperateList": {
+          "1": 5000,
+          "2": 100701
+        },
+        "preOperateList": {
+          "1": 100101
+        },
+        "previewItemId": 4020033,
+        "tillRewardId": 200685,
+        "time": 1200,
+        "timerState": 100211,
+        "timerStateTime1": 400,
+        "timerStateTime2": 800,
+        "transportThreshold": 84,
+        "type": 1,
+        "unlockCondition": 60301,
+        "unlockDesc": 1975407400
+      }
+    },
+    {
+      "id": 40100321,
+      "item": {
+        "id": 4010032,
+        "textId": 1853963911,
+        "en": "Wheatmeal",
+        "ru_RU": "Пшеничная мука"
+      },
+      "inputs": [
+        {
+          "item": {
+            "id": 4001000,
+            "textId": 2022384452,
+            "en": "Wheat",
+            "ru_RU": "Пшеница"
+          },
+          "amount": 50
+        }
+      ],
+      "outputs": [
+        {
+          "item": {
+            "id": 4010032,
+            "textId": 1853963911,
+            "en": "Wheatmeal",
+            "ru_RU": "Пшеничная мука"
+          },
+          "amount": 1
+        }
+      ],
+      "facilities": [
+        {
+          "id": 10200001,
+          "typeId": 1020000,
+          "level": 1,
+          "mode": "electric",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 15,
+          "mbti": "T"
+        },
+        {
+          "id": 10200002,
+          "typeId": 1020000,
+          "level": 2,
+          "mode": "electric",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 30,
+          "mbti": "T"
+        },
+        {
+          "id": 10200003,
+          "typeId": 1020000,
+          "level": 3,
+          "mode": "electric",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 45,
+          "mbti": "T"
+        },
+        {
+          "id": 10200004,
+          "typeId": 1020000,
+          "level": 4,
+          "mode": "electric",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 60,
+          "mbti": "T"
+        },
+        {
+          "id": 10200005,
+          "typeId": 1020000,
+          "level": 5,
+          "mode": "electric",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 75,
+          "mbti": "T"
+        },
+        {
+          "id": 10200006,
+          "typeId": 1020000,
+          "level": 6,
+          "mode": "electric",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 90,
+          "mbti": "T"
+        },
+        {
+          "id": 10200007,
+          "typeId": 1020000,
+          "level": 7,
+          "mode": "electric",
+          "name": {
+            "en": "Carousel Mill",
+            "ru_RU": "Карусельная мельница"
+          },
+          "electricRequire": 105,
+          "mbti": "T"
+        }
+      ],
+      "raw": {
+        "consumable1": 4001000,
+        "consumableNum1": 50,
+        "outputs": {
+          "1": {
+            "1": 4010032,
+            "2": 1
+          }
+        },
+        "postOperateList": {
+          "1": 5002
+        },
+        "previewItemId": 4010032,
+        "time": 54,
+        "transportThreshold": 2,
+        "type": 1
+      }
+    },
+    {
+      "id": 4010171,
+      "item": {
+        "id": 4010171,
+        "textId": 1157195799,
+        "en": "Laminated Beams",
+        "ru_RU": "Балки из клееного бруса"
+      },
+      "inputs": [
+        {
+          "item": {
+            "id": 4010170,
+            "textId": 1723193274,
+            "en": "Standard Planks",
+            "ru_RU": "Стандартные доски"
+          },
+          "amount": 8
+        }
+      ],
+      "outputs": [
+        {
+          "item": {
+            "id": 4010171,
+            "textId": 1157195799,
+            "en": "Laminated Beams",
+            "ru_RU": "Балки из клееного бруса"
+          },
+          "amount": 1
+        }
+      ],
+      "facilities": [
+        {
+          "id": 10200093,
+          "typeId": 1020009,
+          "level": 3,
+          "mode": "normal",
+          "name": {
+            "en": "Woodworking Bench",
+            "ru_RU": "Столярный верстак"
+          },
+          "electricRequire": 45,
+          "mbti": "E"
+        },
+        {
+          "id": 10200094,
+          "typeId": 1020009,
+          "level": 4,
+          "mode": "normal",
+          "name": {
+            "en": "Woodworking Bench",
+            "ru_RU": "Столярный верстак"
+          },
+          "electricRequire": 60,
+          "mbti": "E"
+        }
+      ],
+      "raw": {
+        "consumable1": 4010170,
+        "consumableNum1": 8,
+        "outputs": {
+          "1": {
+            "1": 4010171,
+            "2": 1
+          }
+        },
+        "postOperateList": {
+          "1": 110103
+        },
+        "previewItemId": 4010171,
+        "transportThreshold": 2,
+        "type": 1,
+        "workload": 41
+      }
+    }
+  ],
+  "items": {
+    "4001000": {
+      "bindType": 1,
+      "displayType": 10001,
+      "fomulaId": 4001000,
+      "funcRep": 1778294583,
+      "holdMax": 9999999,
+      "homeFoodAdd": 140,
+      "homeType": 2,
+      "icon": "$ui_item_4001000.png",
+      "invId": 8,
+      "isHomeItem": 1,
+      "itemDes": 1579523559,
+      "itemName": 2022384452,
+      "lvReq": 1,
+      "lvTop": 150,
+      "quality": 3,
+      "rmbValue": 1,
+      "source": {
+        "1": 102009
+      },
+      "spellTime": 0,
+      "stackcount": 9999999,
+      "type": 5
+    },
+    "4001074": {
+      "bindType": 1,
+      "displayType": 10001,
+      "fomulaId": 4001074,
+      "funcRep": 1861263176,
+      "holdMax": 9999999,
+      "homeFoodAdd": 1350,
+      "homeType": 2,
+      "icon": "$ui_item_4001062.png",
+      "invId": 8,
+      "isHomeItem": 1,
+      "itemDes": 2116073795,
+      "itemName": 1636705867,
+      "lvReq": 1,
+      "lvTop": 150,
+      "quality": 4,
+      "rmbValue": 1,
+      "source": {
+        "1": 102009
+      },
+      "spellTime": 0,
+      "stackcount": 9999999,
+      "type": 5
+    },
+    "4010032": {
+      "bindType": 1,
+      "displayType": 10001,
+      "fomulaId": 4010032,
+      "funcRep": 1654252970,
+      "holdMax": 9999999,
+      "homeFoodAdd": 9370,
+      "homeType": 3,
+      "icon": "$ui_item_4010032.png",
+      "invId": 8,
+      "isHomeItem": 1,
+      "itemDes": 1639981400,
+      "itemName": 1853963911,
+      "lvReq": 1,
+      "lvTop": 150,
+      "quality": 3,
+      "rmbValue": 1,
+      "source": {
+        "1": 102000
+      },
+      "spellTime": 0,
+      "stackcount": 9999999,
+      "type": 5
+    },
+    "4010229": {
+      "bindType": 1,
+      "displayType": 10001,
+      "fomulaId": 4010229,
+      "funcRep": 2092912831,
+      "holdMax": 9999999,
+      "homeFoodAdd": 30190,
+      "homeType": 3,
+      "icon": "$ui_item_4010114.png",
+      "invId": 8,
+      "isHomeItem": 1,
+      "itemDes": 1718058878,
+      "itemName": 1380184340,
+      "lvReq": 1,
+      "lvTop": 150,
+      "quality": 4,
+      "rmbValue": 1,
+      "source": {
+        "1": 102019
+      },
+      "spellTime": 0,
+      "stackcount": 9999999,
+      "type": 5
+    }
+  },
+  "tables": {
+    "homeland_material_config_data": {
+      "1": {
+        "itemId": 4001000,
+        "price": {
+          "1": 1010,
+          "2": 1
+        },
+        "shopType": 1
+      },
+      "45": {
+        "itemId": 4010032,
+        "price": {
+          "1": 1010,
+          "2": 70
+        },
+        "shopType": 1
+      },
+      "1226": {
+        "itemId": 4001074,
+        "price": {
+          "1": 1010,
+          "2": 61
+        },
+        "shopType": 1
+      },
+      "1263": {
+        "itemId": 4010229,
+        "price": {
+          "1": 1010,
+          "2": 1120
+        },
+        "shopType": 1
+      }
+    },
+    "homeland_operate_data": {
+      "110103": {
+        "aiMsgName": "Msg_Home_Common",
+        "allowAutoReplace": 0,
+        "animeStateDefault": "Home_OperateLoop_None",
+        "functionId": 3054,
+        "homeAbility": {
+          "1": 1101,
+          "2": 3
+        },
+        "interactionId": 358,
+        "itemConsume": 1,
+        "playerCanDo": 1,
+        "priority": 1,
+        "requireText": 1338874044,
+        "topLogoIconType": 2,
+        "type": 1,
+        "workingIcon": "$UI_Home_TopLogo_Hammer.png",
+        "workingName": 2146764200,
+        "workingNameWithoutEllipsis": 1183404866
+      }
+    }
+  },
+  "text": {
+    "en": {}
+  }
+}

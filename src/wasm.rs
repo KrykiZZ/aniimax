@@ -2349,16 +2349,16 @@ mod tests {
         let mut input = wonder_input();
         input["harvest_mutation_plots"] = 2.into();
         let error: String = serde_json::from_str(&super::plan_input_error(&input.to_string())).unwrap();
-        assert!(error.contains("1024 Weird Jelly Beans/day"), "{error}");
-        for (budget, plots) in [(1024, 2), (600, 1), (0, 2), (0, 0)] {
+        assert!(error.contains("768 Weird Jelly Beans/day"), "{error}");
+        for (budget, plots) in [(768, 2), (600, 1), (0, 2), (0, 0)] {
             let mut valid = input.clone();
             valid["season_currency_per_day"] = budget.into();
             valid["harvest_mutation_plots"] = plots.into();
             assert_eq!(super::plan_input_error(&valid.to_string()), "null");
         }
-        input["season_currency_per_day"] = 511.into();
+        input["season_currency_per_day"] = 383.into();
         input["harvest_mutation_plots"] = 1.into();
-        assert!(super::plan_input_error(&input.to_string()).contains("512 Weird Jelly Beans/day"));
+        assert!(super::plan_input_error(&input.to_string()).contains("384 Weird Jelly Beans/day"));
     }
 
     #[test]
@@ -2400,7 +2400,7 @@ mod tests {
     #[test]
     fn embedded_grower_steps_cover_farmland_and_woodland() {
         let steps = embedded_grower_steps();
-        for item in get_embedded_items().iter().filter(|i| i.facility == "Farmland" || i.facility == "Woodland") {
+        for item in get_embedded_items().into_iter().chain(super::embedded_season_items()).filter(|i| i.facility == "Farmland" || i.facility == "Woodland") {
             assert!(!steps.get(&item.name).is_empty(), "{} has no embedded grower steps", item.name);
         }
     }
@@ -2409,7 +2409,7 @@ mod tests {
     #[test]
     fn embedded_aniimo_requirements_cover_embedded_items() {
         let reqs = embedded_aniimo_requirements();
-        for item in get_embedded_items().iter().filter(|i| i.workload.is_some()) {
+        for item in get_embedded_items().into_iter().chain(super::embedded_season_items()).filter(|i| i.workload.is_some()) {
             assert!(reqs.get(&item.name).is_some(), "{} has no embedded Aniimo requirement", item.name);
         }
     }

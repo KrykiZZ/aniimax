@@ -569,9 +569,10 @@
       "ru": "Золотой тыквенный суп с фонарем"
     },
     "Grape": {
-      "textId": "1867484329",
-      "en": "Grape",
-      "ru": "Виноград"
+      "textId": "1686402257",
+      "en": "Grapes",
+      "ru": "Виноград",
+      "note": "Linked through client build 3934365 recipe/operation IDs; see game-data audit."
     },
     "Grape Candy": {
       "textId": "1203187345",
@@ -1156,10 +1157,10 @@
       "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
     },
     "Quick Scales": {
-      "textId": "1613270417",
-      "en": "Quick Formula: Scales",
-      "ru": "Быстрая формула «Чешуя»",
-      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+      "textId": "1890673826",
+      "en": "High-Speed Formula: Scales",
+      "ru": "Высокоскоростная Формула: Чешуя",
+      "note": "Linked through client build 3934365 recipe/operation IDs; see game-data audit."
     },
     "Quick Sea Salt": {
       "textId": "2116466550",
@@ -1185,10 +1186,10 @@
       "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
     },
     "Quick Wheat": {
-      "textId": "1974567409",
-      "en": "Fast-Growing Wheat",
-      "ru": "Быстрорастущая пшеница",
-      "note": "Reviewed context or Aniimax spelling alias."
+      "textId": "1524776801",
+      "en": "Quick Formula: Wheat",
+      "ru": "Быстрая формула «Пшеница»",
+      "note": "Linked through client build 3934365 recipe/operation IDs; see game-data audit."
     },
     "Quick Wool": {
       "textId": "1929901382",
@@ -1666,6 +1667,18 @@
       "en": "Tidewhisper Sandcastle",
       "ru": "Песочный замок «Шепот прилива»",
       "note": "Alias used by the calculator: Sandcastle"
+    },
+    "Reclaiming": {
+      "textId": "1926801134",
+      "en": "Cultivating",
+      "ru": "Возделывание",
+      "note": "Linked through client build 3934365 recipe/operation IDs; see game-data audit."
+    },
+    "Reclaiming crops": {
+      "textId": "1926801134",
+      "en": "Cultivating",
+      "ru": "Возделывание",
+      "note": "Linked through client build 3934365 recipe/operation IDs; see game-data audit."
     }
   }
 }
