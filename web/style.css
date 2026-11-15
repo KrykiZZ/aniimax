@@ -1804,6 +1804,12 @@ details.explain p {
     padding: 0.15rem 0.3rem;
 }
 
+@media (max-width: 600px) {
+    .level-up-lines { table-layout: fixed; }
+    .level-up-lines th, .level-up-lines td { overflow-wrap: anywhere; white-space: normal; }
+    .level-up-lines th .rate-unit-select { width: 100%; min-width: 0; max-width: 100%; }
+}
+
 /* A level-up that couldn't be planned: the coin rate follows its note. */
 .level-up-card .level-up-note {
     margin-bottom: 1rem;
