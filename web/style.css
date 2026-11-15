@@ -68,9 +68,9 @@ body {
     background-color: var(--bg);
     color: var(--text);
     line-height: 1.55;
-    max-width: 880px;
+    max-width: 1600px;
     margin: 2.5rem auto;
-    padding: 0 1rem;
+    padding: 0 1.5rem;
     transition: background-color 0.3s, color 0.3s;
     font-variant-numeric: tabular-nums;
 }
@@ -455,7 +455,7 @@ p {
 /* Modules Grid */
 .modules-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
@@ -815,7 +815,7 @@ tbody tr:first-child td {
 }
 
 .env-unit-table {
-    flex: 1 1 320px;
+    flex: 1 1 720px;
     min-width: 0;
 }
 
@@ -1018,7 +1018,7 @@ footer {
 }
 
 .modal-content.wide {
-    max-width: 1100px;
+    max-width: 1600px;
 }
 
 .modal-header {
@@ -1285,7 +1285,7 @@ footer {
 
 .chip-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
     gap: 0.4rem;
 }
 
@@ -1488,7 +1488,7 @@ details.explain p {
     background: var(--surface);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 900px) {
     .card {
         padding: 1rem;
     }
@@ -1499,7 +1499,9 @@ details.explain p {
     }
 
     .facility-plan-table tr {
-        display: block;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem 1rem;
         padding: 0.6rem 0;
         border-bottom: 1px solid var(--border);
     }
@@ -1509,15 +1511,15 @@ details.explain p {
     }
 
     .card .facility-plan-table td {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
+        display: block;
+        min-width: 0;
         padding: 0.15rem 0;
         border: none;
-        text-align: right;
+        text-align: left;
     }
 
     .facility-plan-table td::before {
+        display: block;
         content: attr(data-label);
         color: var(--text-muted);
         font-size: 0.75rem;
@@ -1531,7 +1533,7 @@ details.explain p {
     }
 
     .chip-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: 1fr;
     }
 }
 
@@ -1606,12 +1608,12 @@ details.explain p {
 /* How many of each ability a plan needs, like the game's Abilities screen. */
 .ability-strip {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
     gap: 1rem 0.35rem;
     margin: 0.85rem 0 0;
 }
 
-@media (min-width: 720px) {
+@media (min-width: 1400px) {
     .ability-strip {
         grid-template-columns: repeat(13, minmax(0, 1fr));
         gap: 0.3rem;
@@ -1638,11 +1640,9 @@ details.explain p {
 
 .ability-name {
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
-    white-space: nowrap;
+    text-align: center;
 }
 
 .ability-cell.zero {
@@ -3064,3 +3064,61 @@ tr:hover .skip-row,
     }
 }
 #language-switch { min-width: 4.5rem; cursor: pointer; color-scheme: dark light; }
+
+/* Keep module selectors and long Russian material names readable at RV 14+. */
+#simple-module-levels {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 1rem;
+}
+#simple-config #simple-module-levels .input-field {
+    max-width: none;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+#simple-module-levels .label-with-help { justify-content: space-between; }
+#simple-module-levels select { margin-top: auto; }
+.module-card { display: flex; flex-direction: column; }
+.module-card .input-field { margin-top: auto; }
+@media (max-width: 1439px) {
+    #simple-module-levels { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 1000px) {
+    #simple-module-levels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+    #simple-module-levels { grid-template-columns: 1fr; }
+}
+.stock-grid:not(#simple-module-levels) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+.facility-plan-table td:first-child { min-width: 10rem; }
+.facility-plan-table td:nth-child(4) { min-width: 10rem; }
+.facility-plan-table td:last-child { min-width: 13rem; }
+@media (max-width: 900px) {
+    .facility-plan-table td:first-child,
+    .facility-plan-table td:nth-child(4),
+    .facility-plan-table td:last-child { min-width: 0; }
+    .facility-plan-table td:last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+    .facility-plan-table tr { grid-template-columns: 1fr; }
+}
+
+/* Keep each suggested change visually paired with its gain. */
+.improve-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.improve-list .improve-gain { text-align: right; }
+@media (max-width: 600px) {
+    .improve-list li { grid-template-columns: 1fr; }
+    .improve-list .improve-gain { text-align: left; }
+}

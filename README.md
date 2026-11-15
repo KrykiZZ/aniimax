@@ -742,3 +742,9 @@ For browser changes, run `npm ci`, `npm test`,
 a local server and real optimizer WASM, covering pre-calculation import, stored
 Aniimo mode, compatibility, invalid codes, shared-link persistence, Harvest caps,
 and desktop/mobile layout.
+
+The Russian layout regression is `npm run test:rv14` (after the same WASM and
+browser setup). It calculates RV 14, waits for the homeland layout and background
+recommendations, checks visible Russian text and tooltips, opens the recipe
+reference, and checks widths 1600, 1440, 1280, 1024, 768 and 390 pixels. It also checks
+RU/EN switching and saved RV selection. Screenshots are written to `test-results/`.

@@ -38,3 +38,33 @@ test('Game terms do not replace unrelated calculator controls',()=>{
  assert.equal(dictionary.Share,'Доля');
  assert.equal(dictionary.Skip,'Исключить');
 });
+
+const {compileTemplates,translateCatalog}=await import('../web/i18n-catalog.js');
+const templates=compileTemplates(dictionary);
+const translate=text=>translateCatalog(text,dictionary,templates);
+test('RV14 compound labels translate without swallowing sentences or decimal values',()=>{
+ assert.equal(translate('11,071,910 Home Coins, 34,523 Mineral Sand'),'11,071,910 монет дома, 34,523 Минеральный песок');
+ assert.equal(translate('7h 0m in-game upgrade timer after you start it.'),'После запуска улучшения игровой таймер составит 7ч 0м.');
+ assert.equal(translate('The selected 120% grid band uses 630 / 660 power. 1 Lightning Aniimo is included in the team for the active generators. Active rated spare: 170; total configured spare: 170.'),'Выбран режим сети 120%; потребление мощности: 630 / 660. В команду включён анимо стихии «Молния» для генератора: 1. Резерв активной мощности: 170; общий заданный резерв: 170.');
+ assert.equal(translate('E-Mode levels used for this plan: 1 × Lv. 3 Blazing Stove, 2 × Lv. 4 Carousel Mill. Actual levels determine power use.'),'Уровни объектов в электрорежиме: 1 × Жаркая плита ур. 3, 2 × Карусельная мельница ур. 4. Потребление мощности зависит от фактического уровня объектов.');
+ assert.equal(translate('Woodland: Coconut ×12'),'Лесной массив: Кокос ×12');
+ assert.equal(translate('3× Water Lv.4 · Faithful (F) (+20% speed) · 3× Well (Quick Fresh Water)'),'3× Вода ур. 4 · Верность (F) (+20% к скорости) · 3× Колодец (Быстрый рецепт: пресная вода)');
+ assert.equal(translate('0.014 batch deliveries/hour · 13.6 tiles from storage'),'Доставок партий в час: 0.014 · Расстояние до хранилища: 13.6 клеток');
+ assert.equal(translate('Grape · E-Mode · direct generator coverage'),'Виноград · Электрорежим · Прямое покрытие генератора');
+ assert.equal(translate('Lv.8: Premium Potato, Quick Agave'),'Ур. 8: Премиальный картофель, Быстрая формула - Агава');
+ assert.equal(translate('About Fill from RV'),'О разделе «Заполнение по уровню автодома»');
+});
+test('Unknown text and captured replacement characters are preserved',()=>{
+ assert.equal(translate('Unknown text 1.5'),'Unknown text 1.5');
+ assert.equal(translate('Unlock $&'),'Открыть рецепт «$&»');
+});
+
+test('Reported GitHub Pages examples, including ability upgrades and dot-grouped rates',()=>{
+ assert.equal(translate('Active rated spare: 140; total configured spare: 140.'),'Резерв активной мощности: 140; общий заданный резерв: 140.');
+ for(const mode of ['Scorching','Cool','Adequate']) assert.equal(translate(`${mode} coverage`),`Покрытие: ${dictionary[mode]}`);
+ for(const ability of ['Water','Leisure','Earth']) assert.equal(translate(`${ability} Aniimo Lv.4`),`Анимо: ${dictionary[ability]} ур. 4`);
+ assert.equal(translate('Water Aniimo Lv.3–4'),'Анимо: Вода, ур. 3–4');
+ assert.equal(translate('+3.2% Home Coins (+4.951/hour)'),'Монеты дома: +3.2% (+4.951/ч)');
+ assert.equal(translate('~+17% Home Coins (+26.472/hour)'),'≈Монеты дома: +17% (+26.472/ч)');
+ assert.equal(translate('Unlock Ginseng Porridge'),'Открыть рецепт «Каша с женьшенем»');
+});

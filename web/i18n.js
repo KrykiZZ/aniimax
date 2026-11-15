@@ -1,3 +1,5 @@
+import { compileTemplates, translateCatalog } from './i18n-catalog.js';
+
 // Register a language here and add its JSON catalog; English phrases are the source keys.
 const languages = { en: 'EN', ru: 'RU' };
 const catalogs = { en: {} };
@@ -12,18 +14,7 @@ async function load(code) {
         const response = await fetch(new URL(`./locales/${code}.json${new URL(import.meta.url).search}`, import.meta.url));
         if (!response.ok) throw new Error(`Could not load ${code} translations`);
         catalogs[code] = await response.json();
-        templates[code] = Object.entries(catalogs[code])
-            .filter(([source, target]) => /\{[a-z_]+\}/i.test(source) && /\{[a-z_]+\}/i.test(target))
-            .sort(([left], [right]) => right.length - left.length)
-            .map(([source, target]) => {
-                const slots = [...source.matchAll(/\{[a-z_]+\}/gi)].map(match => match[0]);
-                const parts = source.split(/\{[a-z_]+\}/gi);
-                const pattern = parts.map((part, i) => escapeRegExp(part) + (i < slots.length
-                    ? (/^\{(?:days|hours|minutes|seconds|n|level|trips|distance|plots)\}$/.test(slots[i])
-                        ? '([0-9][0-9.,\\s]*)' : '(.+?)')
-                    : '')).join('');
-                return { pattern: new RegExp(`^${pattern}$`), slots, target };
-            });
+        templates[code] = compileTemplates(catalogs[code]);
     }
 }
 
@@ -32,51 +23,11 @@ const attributeSources = new WeakMap();
 const attributes = ['title', 'aria-label', 'aria-description', 'placeholder', 'data-label', 'data-tooltip', 'data-tip', 'data-tip-detail', 'data-tip-stats', 'data-tip-text', 'data-help'];
 
 export function translate(value) {
-    if (language === 'en' || !value) return value;
-    const phrases = catalogs[language];
-    const trimmed = value.trim();
-    const translated = phrases[trimmed];
-    if (translated) return value.replace(trimmed, translated);
-    for (const separator of ['\n', ' · ']) {
-        if (!trimmed.includes(separator)) continue;
-        const parts = trimmed.split(separator);
-        const localized = parts.map(part => translate(part));
-        if (localized.some((part, i) => part !== parts[i])) return value.replace(trimmed, () => localized.join(separator));
-    }
-    // Dynamic labels keep their values while the source sentence remains translatable.
-    for (const { pattern, slots, target } of templates[language] || []) {
-        const match = trimmed.match(pattern);
-        if (!match) continue;
-        let result = target;
-        slots.forEach((slot, i) => {
-            const captured = match[i + 1];
-            const whole = captured === trimmed ? captured : translate(captured);
-            const value = whole === captured ? captured.split(', ').map(part => part === trimmed ? part : translate(part)).join(', ') : whole;
-            result = result.replace(slot, value);
-        });
-        return value.replace(trimmed, result);
-    }
-    if (trimmed.includes('; ')) {
-        const parts = trimmed.split('; ');
-        const localized = parts.map(part => translate(part));
-        if (localized.some((part, i) => part !== parts[i])) return value.replace(trimmed, localized.join('; '));
-    }
-    if (trimmed.includes('. ')) {
-        const parts = trimmed.split('. ');
-        const localized = parts.map((part, i) => translate(part + (i < parts.length - 1 ? '.' : '')));
-        if (localized.some((part, i) => part !== parts[i] + (i < parts.length - 1 ? '.' : ''))) {
-            return value.replace(trimmed, localized.join(' '));
-        }
-    }
-    return value;
+    return language === 'en' ? value : translateCatalog(value, catalogs[language], templates[language]);
 }
 
 export function currentLocale() {
     return language === 'ru' ? 'ru-RU' : 'en-US';
-}
-
-function escapeRegExp(text) {
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function updateText(node) {

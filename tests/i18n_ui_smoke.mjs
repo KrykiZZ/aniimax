@@ -55,7 +55,12 @@ try{
  assert.ok(planBefore.includes('producing') || planBefore.includes('facility-plan-table') || planBefore.includes('<table'),'calculated plan is present');
  await page.locator('#language-switch').selectOption('en');
  await page.waitForFunction(()=>document.documentElement.lang==='en');
- if(before) assert.equal(await page.locator('#plan-rate').textContent(),before);
+ // The amount is unchanged; the rate's currency and unit now translate too.
+ if(before) {
+  const after=await page.locator('#plan-rate').textContent();
+  assert.equal(after.match(/^[\d.,\s]+/)[0],before.match(/^[\d.,\s]+/)[0]);
+  assert.ok(after.includes('Home Coins'));
+ }
  await page.locator('#language-switch').selectOption('ru');
  await page.waitForFunction(()=>document.documentElement.lang==='ru');
  await mkdir(new URL('../test-results/',import.meta.url),{recursive:true});

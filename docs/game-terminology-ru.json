@@ -32,6 +32,11 @@
       "en": "Agave Drink",
       "ru": "Напиток из агавы"
     },
+    "Agave Fiber": {
+      "textId": "1605907738",
+      "en": "Agave Fiber",
+      "ru": "Волокно агавы"
+    },
     "Agave Syrup": {
       "textId": "1491968492",
       "en": "Agave Syrup",
@@ -128,6 +133,11 @@
       "en": "Bread",
       "ru": "Хлеб"
     },
+    "Bright Silver Powder": {
+      "textId": "1742741868",
+      "en": "Bright Silver Powder",
+      "ru": "Яркая серебряная пыль"
+    },
     "Candied Lanternfruit": {
       "textId": "1482587924",
       "en": "Candied Lanternfruit",
@@ -152,6 +162,11 @@
       "textId": "1098851613",
       "en": "Carousel Mill",
       "ru": "Карусельная мельница"
+    },
+    "Celestis": {
+      "textId": "1092155364",
+      "en": "Celestis",
+      "ru": "Селестис"
     },
     "Cherry Blossom": {
       "textId": "1626109422",
@@ -254,6 +269,16 @@
       "en": "Coconut Oil",
       "ru": "Кокосовое масло"
     },
+    "Coinwisp": {
+      "textId": "1235935544",
+      "en": "Coinwisp",
+      "ru": "Монетгейст"
+    },
+    "Collecting": {
+      "textId": "1896987040",
+      "en": "Collecting",
+      "ru": "Сбор"
+    },
     "Cooling Unit": {
       "textId": "1499125367",
       "en": "Cooling Unit",
@@ -340,6 +365,11 @@
       "en": "Densified Timber Component",
       "ru": "Деталь из уплотненной древесины"
     },
+    "Dewy": {
+      "textId": "1093536181",
+      "en": "Dewy",
+      "ru": "Отдушечка"
+    },
     "Dewy House": {
       "textId": "1159270874",
       "en": "Dewy House",
@@ -394,6 +424,11 @@
       "textId": "1203549621",
       "en": "Dried Lemon Slices",
       "ru": "Сушеные дольки лимона"
+    },
+    "Dried Orange Flower": {
+      "textId": "2046569258",
+      "en": "Dried Orange Flower",
+      "ru": "Сушеный цветок апельсина"
     },
     "Dried Strawberries": {
       "textId": "1520195494",
@@ -450,6 +485,12 @@
       "en": "Flowers in a Bottle",
       "ru": "Цветы в бутылке"
     },
+    "Flowers in a Bottle": {
+      "textId": "1455833800",
+      "en": "Flowers in a Bottle",
+      "ru": "Цветы в бутылке",
+      "note": "Aniimax recipe label / spelling alias."
+    },
     "Fresh Water": {
       "textId": "2089063981",
       "en": "Plain Fresh Water",
@@ -496,10 +537,31 @@
       "en": "Gleam Fruit Nectar",
       "ru": "Нектар из искрящегося плода"
     },
+    "Glitter Powder": {
+      "textId": "1294705525",
+      "en": "Glitter Powder",
+      "ru": "Блестящая пыль"
+    },
     "Glowfruit Lantern Set": {
       "textId": "2119547177",
       "en": "Glowfruit Lantern Set",
       "ru": "Комплект «Фонарь из светоплода»"
+    },
+    "Gold Dust": {
+      "textId": "1286266453",
+      "en": "Gold Dust",
+      "ru": "Золотая пыль"
+    },
+    "Gold Speck Cap": {
+      "textId": "1380322001",
+      "en": "Gold-Speck Cap",
+      "ru": "Шляпка «Крупицы золота»",
+      "note": "Aniimax title-case item ID alias."
+    },
+    "Gold-Speck Cap": {
+      "textId": "1380322001",
+      "en": "Gold-Speck Cap",
+      "ru": "Шляпка «Крупицы золота»"
     },
     "Golden Lantern Pumpkin Soup": {
       "textId": "1584987615",
@@ -677,6 +739,11 @@
       "en": "Lightning",
       "ru": "Молния"
     },
+    "Logging": {
+      "textId": "1635608975",
+      "en": "Logging",
+      "ru": "Заготовка дерева"
+    },
     "Lotion": {
       "textId": "2133998910",
       "en": "Lotion",
@@ -789,6 +856,11 @@
       "en": "Natural Rubber",
       "ru": "Натуральный каучук"
     },
+    "Nimbi": {
+      "textId": "1078134632",
+      "en": "Nimbi",
+      "ru": "Пушинка"
+    },
     "Nimble": {
       "textId": "1093829386",
       "en": "Nimble",
@@ -819,6 +891,11 @@
       "en": "Orange Flower Incense",
       "ru": "Апельсиновое благовоние"
     },
+    "Orange Flower Scented Mat": {
+      "textId": "1830348232",
+      "en": "Orange Flower Scented Mat",
+      "ru": "Коврик с ароматом цветков апельсина"
+    },
     "Palm Bark": {
       "textId": "1554392812",
       "en": "Palm Bark",
@@ -834,10 +911,20 @@
       "en": "Pearl",
       "ru": "Жемчужина"
     },
+    "Pearl Face Cream": {
+      "textId": "1342518740",
+      "en": "Pearl Face Cream",
+      "ru": "Жемчужный крем для лица"
+    },
     "Pearl Necklace": {
       "textId": "1215393379",
       "en": "Pearl Necklace",
       "ru": "Жемчужное ожерелье"
+    },
+    "Pearl Powder": {
+      "textId": "1643257179",
+      "en": "Pearl Powder",
+      "ru": "Жемчужная пудра"
     },
     "Perfumery": {
       "textId": "1160916204",
@@ -889,6 +976,11 @@
       "en": "Potato Kvass",
       "ru": "Картофельный квас"
     },
+    "Potato Starch": {
+      "textId": "2009948386",
+      "en": "Potato Starch",
+      "ru": "Картофельный крахмал"
+    },
     "Pottery": {
       "textId": "1185229115",
       "en": "Pottery",
@@ -934,6 +1026,11 @@
       "textId": "1134792375",
       "en": "Premium Mixed Perfume",
       "ru": "Премиальный смешанный аромат"
+    },
+    "Premium Potato": {
+      "textId": "1544473698",
+      "en": "Premium Potato",
+      "ru": "Премиальный картофель"
     },
     "Premium Potato Soup": {
       "textId": "1383294754",
@@ -985,6 +1082,12 @@
       "textId": "1496645690",
       "en": "Quartz Ore",
       "ru": "Кварцевая руда"
+    },
+    "Quick Agave": {
+      "textId": "1154381939",
+      "en": "Quick Formula - Agave",
+      "ru": "Быстрая формула - Агава",
+      "note": "Aniimax recipe label / spelling alias."
     },
     "Quick Aromathyst": {
       "textId": "1552410164",
@@ -1093,6 +1196,16 @@
       "ru": "Быстрый рецепт: шерсть",
       "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
     },
+    "Quicksilver Springstone": {
+      "textId": "1690771624",
+      "en": "Quicksilver Springstone",
+      "ru": "Серебристый родниковый камень"
+    },
+    "Reaping": {
+      "textId": "1576561914",
+      "en": "Reaping",
+      "ru": "Сбор урожая"
+    },
     "Refined Flour": {
       "textId": "1992429008",
       "en": "Refined Flour",
@@ -1132,6 +1245,12 @@
       "textId": "1078640185",
       "en": "River-Washed Stones",
       "ru": "Речная галька"
+    },
+    "River-Washed Stones": {
+      "textId": "1078640185",
+      "en": "River-Washed Stones",
+      "ru": "Речная галька",
+      "note": "Aniimax recipe label / spelling alias."
     },
     "Roasted Soybeans": {
       "textId": "2030200923",
@@ -1228,6 +1347,16 @@
       "en": "Shredded Coconut",
       "ru": "Кокосовая стружка"
     },
+    "Shredded Coconut Cake": {
+      "textId": "2052461463",
+      "en": "Shredded Coconut Cake",
+      "ru": "Кекс с кокосовой стружкой"
+    },
+    "Silver Ore": {
+      "textId": "1473955508",
+      "en": "Silver Ore",
+      "ru": "Серебряная руда"
+    },
     "Simmering Pot": {
       "textId": "1239088895",
       "en": "Simmering Pot",
@@ -1238,6 +1367,11 @@
       "en": "Sintered Ore Brick",
       "ru": "Обожженный рудный брикет"
     },
+    "Sisal Plush Mat": {
+      "textId": "1867868164",
+      "en": "Sisal Plush Mat",
+      "ru": "Плюшевый коврик из сизаля"
+    },
     "Snowmelt Cold Spring": {
       "textId": "1534450517",
       "en": "Snowmelt Cold Spring",
@@ -1247,6 +1381,11 @@
       "textId": "1076403773",
       "en": "Soap",
       "ru": "Мыло"
+    },
+    "Sowing": {
+      "textId": "1142184189",
+      "en": "Sowing",
+      "ru": "Посев"
     },
     "Soy Sauce": {
       "textId": "1620709782",
@@ -1272,6 +1411,11 @@
       "textId": "1723193274",
       "en": "Standard Planks",
       "ru": "Стандартные доски"
+    },
+    "Star Diamond": {
+      "textId": "1422366289",
+      "en": "Star Diamond",
+      "ru": "Звездный алмаз"
     },
     "Star Wish Lantern": {
       "textId": "1734003014",
@@ -1343,6 +1487,11 @@
       "en": "Sunlamp",
       "ru": "Солнечная лампа"
     },
+    "Susuta": {
+      "textId": "1105522098",
+      "en": "Susuta",
+      "ru": "Стесняша"
+    },
     "Sweet Rice Drink": {
       "textId": "1574212862",
       "en": "Sweet Rice Drink",
@@ -1409,6 +1558,11 @@
       "textId": "1105667470",
       "en": "Water",
       "ru": "Вода"
+    },
+    "Watering": {
+      "textId": "1781166347",
+      "en": "Watering",
+      "ru": "Полив"
     },
     "Waxing Moon Pepper": {
       "textId": "1629925506",
