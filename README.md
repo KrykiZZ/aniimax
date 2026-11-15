@@ -12,6 +12,12 @@ Updated for the full release, with a joint LP-based facility-allocation engine f
 
 This deployment uses Zudin987/aniimax commit `c1e259d818141ea4b1d833c45af0292a74757118`, derived from [ae-bii/aniimax](https://github.com/ae-bii/aniimax). The original MIT license is preserved. GitHub Pages builds and deploys the `web/` directory automatically on pushes to `main`.
 
+## Russian terminology
+
+`web/locales/ru.json` uses names from the Aniimo client build 3934365. The reviewed EN/RU text IDs, source spellings and archive checksum are recorded in `docs/game-terminology-ru.json`. Some Aniimax recipe labels are aliases: quick production uses the corresponding game recipe/formula name, and spelling differences are mapped explicitly. Where the client has multiple translations, the record identifies the selected string. Calculator controls remain context-specific translations. No game archives are required by the deployed site.
+
+Run `node --test tests/i18n_catalog.test.mjs` to check terminology, interpolation slots and recipe names embedded in unlock tooltips.
+
 ## Features
 
 **Web app**

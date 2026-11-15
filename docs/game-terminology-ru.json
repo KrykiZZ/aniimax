@@ -1,0 +1,1500 @@
+{
+  "build": 3934365,
+  "archive": "Aniimo_Data/StreamingAssets/cvs/res/lua/LuaScripts.xdf",
+  "archiveSha256": "f043cfe74521483e74a0be39c6d635356c4d0313cef3169c62a5ff69c12d7e06",
+  "locales": [
+    "en",
+    "ru_RU"
+  ],
+  "terms": {
+    "Advanced Gemstone Dust": {
+      "textId": "1225418446",
+      "en": "Advanced Gemstone Dust",
+      "ru": "Улучшенная Самоцветная пыль"
+    },
+    "Advanced Lemon Incense": {
+      "textId": "2066606417",
+      "en": "Advanced Lemon Incense",
+      "ru": "Продвинутое лимонное благовоние"
+    },
+    "Advanced Wind Chime": {
+      "textId": "1771513904",
+      "en": "Advanced Wind Chime",
+      "ru": "Премиальный ветряной колокольчик"
+    },
+    "Agave": {
+      "textId": "1184686279",
+      "en": "Agave",
+      "ru": "Агава"
+    },
+    "Agave Drink": {
+      "textId": "1328831480",
+      "en": "Agave Drink",
+      "ru": "Напиток из агавы"
+    },
+    "Agave Syrup": {
+      "textId": "1491968492",
+      "en": "Agave Syrup",
+      "ru": "Сироп агавы"
+    },
+    "Aniipod": {
+      "textId": "1114636259",
+      "en": "Aniipod",
+      "ru": "Анипод"
+    },
+    "Aniipod Maker": {
+      "textId": "1134474217",
+      "en": "Aniipod Maker",
+      "ru": "Аниподер"
+    },
+    "Aniipod Mega": {
+      "textId": "1420136659",
+      "en": "Aniipod Mega",
+      "ru": "Мегаанипод"
+    },
+    "Aniipod Pro": {
+      "textId": "1244098204",
+      "en": "Aniipod Pro",
+      "ru": "Про-анипод"
+    },
+    "Apple": {
+      "textId": "1745932377",
+      "en": "Apple",
+      "ru": "Яблоко",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Apple Candy": {
+      "textId": "1286197112",
+      "en": "Apple Candy",
+      "ru": "Яблочная конфета"
+    },
+    "Apple Juice": {
+      "textId": "1567265997",
+      "en": "Apple Juice",
+      "ru": "Яблочный сок"
+    },
+    "Apple Tart": {
+      "textId": "1789481593",
+      "en": "Apple Tart",
+      "ru": "Яблочный тарт"
+    },
+    "Aromathyst": {
+      "textId": "1366415159",
+      "en": "Aromathyst",
+      "ru": "Ароматит"
+    },
+    "Artisanship": {
+      "textId": "1455300383",
+      "en": "Artisanship",
+      "ru": "Ремесло"
+    },
+    "Bamboo": {
+      "textId": "1480648900",
+      "en": "Bamboo",
+      "ru": "Бамбук"
+    },
+    "Bamboo Joss Stick": {
+      "textId": "1252554137",
+      "en": "Bamboo Joss Stick",
+      "ru": "Бамбуковое благовоние"
+    },
+    "Bamboo Ware": {
+      "textId": "1613158175",
+      "en": "Bamboo Ware",
+      "ru": "Бамбуковые изделия"
+    },
+    "Berry Chocolate Coconut Pudding": {
+      "textId": "1311865331",
+      "en": "Berry Chocolate Coconut Pudding",
+      "ru": "Кокосовый пудинг с ягодами и какао"
+    },
+    "Blazing Stove": {
+      "textId": "1079681837",
+      "en": "Blazing Stove",
+      "ru": "Жаркая плита"
+    },
+    "Bouncy Brew Keg": {
+      "textId": "1110154629",
+      "en": "Bouncy Brew Keg",
+      "ru": "Пружинистая пивная бочка"
+    },
+    "Bouquet": {
+      "textId": "1201872561",
+      "en": "Bouquet",
+      "ru": "Букет"
+    },
+    "Bread": {
+      "textId": "1816468085",
+      "en": "Bread",
+      "ru": "Хлеб"
+    },
+    "Candied Lanternfruit": {
+      "textId": "1482587924",
+      "en": "Candied Lanternfruit",
+      "ru": "Цукаты из плода-фонаря"
+    },
+    "Candied Orange Flower": {
+      "textId": "1986518909",
+      "en": "Candied Orange Flower",
+      "ru": "Цветок апельсина в сиропе"
+    },
+    "Candied Strawberries": {
+      "textId": "1881179869",
+      "en": "Candied Strawberries",
+      "ru": "Клубника в сиропе"
+    },
+    "Caramel Nut Chips": {
+      "textId": "2085454001",
+      "en": "Caramel Nut Chips",
+      "ru": "Карамельные ореховые чипсы"
+    },
+    "Carousel Mill": {
+      "textId": "1098851613",
+      "en": "Carousel Mill",
+      "ru": "Карусельная мельница"
+    },
+    "Cherry Blossom": {
+      "textId": "1626109422",
+      "en": "Cherry Blossom",
+      "ru": "Цветок вишни"
+    },
+    "Cherry Blossom Rice Ball": {
+      "textId": "1617066144",
+      "en": "Cherry Blossom Rice Ball",
+      "ru": "Рисовый шарик с цветами вишни"
+    },
+    "Cherry Incense": {
+      "textId": "1960889248",
+      "en": "Cherry Incense",
+      "ru": "Вишневое благовоние"
+    },
+    "Chestnut": {
+      "textId": "1135004221",
+      "en": "Chestnut",
+      "ru": "Каштан"
+    },
+    "Chestnut Puree": {
+      "textId": "2045189048",
+      "en": "Chestnut Purée",
+      "ru": "Каштановое пюре",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Chimney Kiln": {
+      "textId": "1348752265",
+      "en": "Chimney Kiln",
+      "ru": "Печь с дымоходом"
+    },
+    "Cider Vinegar": {
+      "textId": "1184241625",
+      "en": "Cider Vinegar",
+      "ru": "Яблочный уксус"
+    },
+    "Claw Game Cooker": {
+      "textId": "1127237107",
+      "en": "Claw Game Cooker",
+      "ru": "Плита-кран"
+    },
+    "Clay": {
+      "textId": "1772669234",
+      "en": "Clay",
+      "ru": "Глина"
+    },
+    "Coarse Sifted Ore": {
+      "textId": "1739428970",
+      "en": "Coarse-Sifted Ore",
+      "ru": "Крупно просеянная руда"
+    },
+    "Coarse-Sifted Ore": {
+      "textId": "1739428970",
+      "en": "Coarse-Sifted Ore",
+      "ru": "Крупно просеянная руда"
+    },
+    "Cocoa": {
+      "textId": "1219489111",
+      "en": "Cocoa",
+      "ru": "Какао"
+    },
+    "Cocoa Powder": {
+      "textId": "1633555851",
+      "en": "Cocoa Powder",
+      "ru": "Какао-порошок"
+    },
+    "Cocoa Spread": {
+      "textId": "2013728957",
+      "en": "Cocoa Spread",
+      "ru": "Какао-паста"
+    },
+    "Coconut": {
+      "textId": "1155281550",
+      "en": "Coconut",
+      "ru": "Кокос"
+    },
+    "Coconut Cocoa": {
+      "textId": "1788614426",
+      "en": "Coconut Cocoa",
+      "ru": "Кокосовое какао"
+    },
+    "Coconut Cookie": {
+      "textId": "1488090402",
+      "en": "Coconut Cookie",
+      "ru": "Кокосовое печенье"
+    },
+    "Coconut Cooler": {
+      "textId": "1119970977",
+      "en": "Coconut Cooler",
+      "ru": "Освежающий кокосовый напиток"
+    },
+    "Coconut Milk": {
+      "textId": "1391508722",
+      "en": "Coconut Milk",
+      "ru": "Кокосовое молоко"
+    },
+    "Coconut Oil": {
+      "textId": "1470016183",
+      "en": "Coconut Oil",
+      "ru": "Кокосовое масло"
+    },
+    "Cooling Unit": {
+      "textId": "1499125367",
+      "en": "Cooling Unit",
+      "ru": "Охлаждающий блок"
+    },
+    "Copper Ore": {
+      "textId": "1424010508",
+      "en": "Copper Ore",
+      "ru": "Медная руда"
+    },
+    "Cotton": {
+      "textId": "1412375523",
+      "en": "Cotton",
+      "ru": "Хлопок"
+    },
+    "Cotton Fabric": {
+      "textId": "2068859307",
+      "en": "Cotton Fabric",
+      "ru": "Хлопковая ткань"
+    },
+    "Cotton Thread": {
+      "textId": "1566658346",
+      "en": "Cotton Thread",
+      "ru": "Хлопковая нить"
+    },
+    "Crackle Generator": {
+      "textId": "1216929337",
+      "en": "Crackle Generator",
+      "ru": "Генератор искр"
+    },
+    "Crafting Module": {
+      "textId": "1857566992",
+      "en": "Crafting Module",
+      "ru": "Ремесленный модуль"
+    },
+    "Crafting Table": {
+      "textId": "1550043756",
+      "en": "Crafting Table",
+      "ru": "Стол для рукоделия",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Cranberry": {
+      "textId": "1420406517",
+      "en": "Cranberry",
+      "ru": "Клюква"
+    },
+    "Cranberry Chocolate": {
+      "textId": "1302676991",
+      "en": "Cranberry Chocolate",
+      "ru": "Шоколадная клюква"
+    },
+    "Cranberry Jam": {
+      "textId": "1793156101",
+      "en": "Cranberry Jam",
+      "ru": "Клюквенное варенье"
+    },
+    "Cranberry Juice": {
+      "textId": "1845597004",
+      "en": "Cranberry Juice",
+      "ru": "Клюквенный сок"
+    },
+    "Creamy Potato Soup": {
+      "textId": "1561184764",
+      "en": "Creamy Potato Soup",
+      "ru": "Картофельный крем-суп"
+    },
+    "Dance Pad Polisher": {
+      "textId": "1145726875",
+      "en": "Dance Pad Polisher",
+      "ru": "Полировальный танцпол"
+    },
+    "Dark": {
+      "textId": "1312173570",
+      "en": "Dark",
+      "ru": "Тьма"
+    },
+    "Deep Rock Spring Water": {
+      "textId": "2061477954",
+      "en": "Deep Rock Spring Water",
+      "ru": "Вода с глубины родника"
+    },
+    "Densified Timber Component": {
+      "textId": "1190938217",
+      "en": "Densified Timber Component",
+      "ru": "Деталь из уплотненной древесины"
+    },
+    "Dewy House": {
+      "textId": "1159270874",
+      "en": "Dewy House",
+      "ru": "Дом росы"
+    },
+    "Doll": {
+      "textId": "1611060830",
+      "en": "Doll",
+      "ru": "Кукла"
+    },
+    "Dream Catcher": {
+      "textId": "1383580892",
+      "en": "Dream Catcher",
+      "ru": "Ловец снов"
+    },
+    "Dried Apple Slices": {
+      "textId": "1274651785",
+      "en": "Dried Apple Slices",
+      "ru": "Сушеные дольки яблока"
+    },
+    "Dried Bean Curd": {
+      "textId": "1466936333",
+      "en": "Dried Bean Curd",
+      "ru": "Сушеный тофу"
+    },
+    "Dried Cherry Blossom": {
+      "textId": "1092571137",
+      "en": "Dried Cherry Blossom",
+      "ru": "Сушеный цветок вишни"
+    },
+    "Dried Cranberries": {
+      "textId": "1892817191",
+      "en": "Dried Cranberries",
+      "ru": "Сушеная клюква"
+    },
+    "Dried Flowers": {
+      "textId": "1818360384",
+      "en": "Dried Flowers",
+      "ru": "Сушеные цветы"
+    },
+    "Dried Ginseng": {
+      "textId": "1467511434",
+      "en": "Dried Ginseng",
+      "ru": "Сушеный женьшень"
+    },
+    "Dried Grapes": {
+      "textId": "1847250092",
+      "en": "Dried Grapes",
+      "ru": "Изюм"
+    },
+    "Dried Lemon Slices": {
+      "textId": "1203549621",
+      "en": "Dried Lemon Slices",
+      "ru": "Сушеные дольки лимона"
+    },
+    "Dried Strawberries": {
+      "textId": "1520195494",
+      "en": "Dried Strawberries",
+      "ru": "Сушеная клубника"
+    },
+    "Dye": {
+      "textId": "1549356642",
+      "en": "Dye",
+      "ru": "Краска"
+    },
+    "Dyed Cotton Fabric": {
+      "textId": "2024758478",
+      "en": "Dyed Cotton Fabric",
+      "ru": "Окрашенная хлопковая ткань"
+    },
+    "Earth": {
+      "textId": "1134125605",
+      "en": "Earth",
+      "ru": "Земля"
+    },
+    "Ecological Module": {
+      "textId": "1414319243",
+      "en": "Ecological Module",
+      "ru": "Экомодуль"
+    },
+    "Energetic": {
+      "textId": "1079363176",
+      "en": "Energetic",
+      "ru": "Энергичность"
+    },
+    "Faithful": {
+      "textId": "1250669256",
+      "en": "Faithful",
+      "ru": "Верность"
+    },
+    "Farmland": {
+      "textId": "1114271934",
+      "en": "Farmland",
+      "ru": "Пахотная земля"
+    },
+    "Floral Windmill": {
+      "textId": "1638871658",
+      "en": "Floral Windmill",
+      "ru": "Цветочная ветряная мельница"
+    },
+    "Flower Bread": {
+      "textId": "1180016170",
+      "en": "Flower Bread",
+      "ru": "Цветочный хлеб"
+    },
+    "Flowers In A Bottle": {
+      "textId": "1455833800",
+      "en": "Flowers in a Bottle",
+      "ru": "Цветы в бутылке"
+    },
+    "Fresh Water": {
+      "textId": "2089063981",
+      "en": "Plain Fresh Water",
+      "ru": "Пресная вода",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Gem": {
+      "textId": "1394504065",
+      "en": "Gem",
+      "ru": "Самоцвет"
+    },
+    "Gemstone Dust": {
+      "textId": "1402993126",
+      "en": "Gemstone Dust",
+      "ru": "Самоцветная пыль"
+    },
+    "Ginseng": {
+      "textId": "1148220324",
+      "en": "Ginseng",
+      "ru": "Женьшень"
+    },
+    "Ginseng Chestnut Cake": {
+      "textId": "1904410863",
+      "en": "Ginseng Chestnut Cake",
+      "ru": "Пирог с женьшенем и каштаном"
+    },
+    "Ginseng Porridge": {
+      "textId": "1340427273",
+      "en": "Ginseng Porridge",
+      "ru": "Каша с женьшенем"
+    },
+    "Ginseng Powder": {
+      "textId": "1408349362",
+      "en": "Ginseng Powder",
+      "ru": "Порошок женьшеня"
+    },
+    "Ginseng Water": {
+      "textId": "1118001442",
+      "en": "Ginseng Water",
+      "ru": "Женьшеневая вода"
+    },
+    "Gleam Fruit Nectar": {
+      "textId": "1925620056",
+      "en": "Gleam Fruit Nectar",
+      "ru": "Нектар из искрящегося плода"
+    },
+    "Glowfruit Lantern Set": {
+      "textId": "2119547177",
+      "en": "Glowfruit Lantern Set",
+      "ru": "Комплект «Фонарь из светоплода»"
+    },
+    "Golden Lantern Pumpkin Soup": {
+      "textId": "1584987615",
+      "en": "Golden Lantern Pumpkin Soup",
+      "ru": "Золотой тыквенный суп с фонарем"
+    },
+    "Grape": {
+      "textId": "1867484329",
+      "en": "Grape",
+      "ru": "Виноград"
+    },
+    "Grape Candy": {
+      "textId": "1203187345",
+      "en": "Grape Candy",
+      "ru": "Виноградная конфета"
+    },
+    "Grape Jam": {
+      "textId": "1867280926",
+      "en": "Grape Jam",
+      "ru": "Виноградное варенье"
+    },
+    "Grape Juice": {
+      "textId": "2015305656",
+      "en": "Grape Juice",
+      "ru": "Виноградный сок"
+    },
+    "Grape Lemon Drink": {
+      "textId": "1198588034",
+      "en": "Grape Lemon Drink",
+      "ru": "Виноградно-лимонный напиток"
+    },
+    "Grass": {
+      "textId": "1126782915",
+      "en": "Grass",
+      "ru": "Трава"
+    },
+    "Growth Bud": {
+      "textId": "1824997430",
+      "en": "Growth Bud",
+      "ru": "Бутон роста"
+    },
+    "Growth Flower": {
+      "textId": "1347617910",
+      "en": "Growth Flower",
+      "ru": "Цветок роста"
+    },
+    "Growth Fruit": {
+      "textId": "1513007595",
+      "en": "Growth Fruit",
+      "ru": "Плод роста"
+    },
+    "Harvest Moon Festival": {
+      "textId": "1168228901",
+      "en": "Harvest Moon Festival",
+      "ru": "Лунный праздник урожая"
+    },
+    "Harvest Moon Points": {
+      "textId": "1543935334",
+      "en": "Harvest Moon Points",
+      "ru": "Очки лунного урожая"
+    },
+    "Harvest Platter": {
+      "textId": "1361725759",
+      "en": "Harvest Platter",
+      "ru": "Блюдо урожая"
+    },
+    "Heat Furnace": {
+      "textId": "1187380990",
+      "en": "Heat Furnace",
+      "ru": "Отопительная печь"
+    },
+    "Herbal Ginseng Aroma": {
+      "textId": "1177133286",
+      "en": "Herbal Ginseng Aroma",
+      "ru": "Травяной аромат женьшеня"
+    },
+    "Honey Glazed Pumpkin Cup": {
+      "textId": "1547530747",
+      "en": "Honey-Glazed Pumpkin Cup",
+      "ru": "Тыквенная чаша в медовой глазури"
+    },
+    "Hot Cocoa": {
+      "textId": "1137332435",
+      "en": "Hot Cocoa",
+      "ru": "Горячий какао"
+    },
+    "Ice": {
+      "textId": "1235720364",
+      "en": "Ice",
+      "ru": "Лед"
+    },
+    "Instinctive": {
+      "textId": "1074806839",
+      "en": "Instinctive",
+      "ru": "Инстинктивность"
+    },
+    "Jello": {
+      "textId": "1878269553",
+      "en": "Jello",
+      "ru": "Желе"
+    },
+    "Joy Wheel Loom": {
+      "textId": "1074630374",
+      "en": "Joy Wheel Loom",
+      "ru": "Ткацкий станок «Колесо радости»"
+    },
+    "Judicious": {
+      "textId": "1171404647",
+      "en": "Judicious",
+      "ru": "Рассудительность"
+    },
+    "Jukebox Dryer": {
+      "textId": "1108608719",
+      "en": "Jukebox Dryer",
+      "ru": "Сушилка-музыкальный автомат",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Kitchen Module": {
+      "textId": "1145966329",
+      "en": "Kitchen Module",
+      "ru": "Кухонный модуль"
+    },
+    "Laminated Beams": {
+      "textId": "1157195799",
+      "en": "Laminated Beams",
+      "ru": "Балки из клееного бруса"
+    },
+    "Lavender": {
+      "textId": "1189789928",
+      "en": "Lavender",
+      "ru": "Лаванда"
+    },
+    "Lavender Cookies": {
+      "textId": "1157448990",
+      "en": "Lavender Cookies",
+      "ru": "Лавандовое печенье"
+    },
+    "Lavender Incense": {
+      "textId": "1118195240",
+      "en": "Lavender Incense",
+      "ru": "Лавандовое благовоние"
+    },
+    "Lavender Powder": {
+      "textId": "2145783768",
+      "en": "Lavender Powder",
+      "ru": "Лавандовый порошок"
+    },
+    "Lavender Sachet": {
+      "textId": "1419652684",
+      "en": "Lavender Sachet",
+      "ru": "Лавандовое саше"
+    },
+    "Leisure": {
+      "textId": "1149765999",
+      "en": "Leisure",
+      "ru": "Досуг"
+    },
+    "Lemon": {
+      "textId": "1145955295",
+      "en": "Lemon",
+      "ru": "Лимон"
+    },
+    "Lemon Incense": {
+      "textId": "1853029163",
+      "en": "Lemon Incense",
+      "ru": "Лимонное благовоние"
+    },
+    "Light": {
+      "textId": "1282708551",
+      "en": "Light",
+      "ru": "Свет"
+    },
+    "Lightning": {
+      "textId": "1325537111",
+      "en": "Lightning",
+      "ru": "Молния"
+    },
+    "Lotion": {
+      "textId": "2133998910",
+      "en": "Lotion",
+      "ru": "Лосьон"
+    },
+    "Magic Pumpkin Cake": {
+      "textId": "1380184340",
+      "en": "Magic Pumpkin Cake",
+      "ru": "Волшебный тыквенный пирог"
+    },
+    "Magic Pumpkin Lantern": {
+      "textId": "1747907918",
+      "en": "Magic Pumpkin Lantern",
+      "ru": "Фонарь «Волшебная тыква»"
+    },
+    "Magical Wonder Night": {
+      "textId": "2088541776",
+      "en": "Magical Wonder Night",
+      "ru": "Волшебная Чудесная ночь"
+    },
+    "Malt Sugar": {
+      "textId": "1215638089",
+      "en": "Malt Sugar",
+      "ru": "Мальтоза"
+    },
+    "Maple Candy Apple Jam": {
+      "textId": "1377092446",
+      "en": "Maple Candy Apple Jam",
+      "ru": "Яблочное варенье с кленовой карамелью"
+    },
+    "Maple Candy Roasted Potatoes": {
+      "textId": "1581022544",
+      "en": "Maple Candy Roasted Potatoes",
+      "ru": "Запеченный картофель с кленовой карамелью"
+    },
+    "Maple Candy Star": {
+      "textId": "1211913792",
+      "en": "Maple Candy Star",
+      "ru": "Кленовая карамель-звездочка"
+    },
+    "Maple Sugar Chunk": {
+      "textId": "1819428852",
+      "en": "Maple Sugar Chunk",
+      "ru": "Кусок кленового сахара"
+    },
+    "Maple Syrup": {
+      "textId": "1486404146",
+      "en": "Maple Syrup",
+      "ru": "Кленовый сироп"
+    },
+    "Memory Lantern": {
+      "textId": "1263527344",
+      "en": "Memory Lantern",
+      "ru": "Фонарь памяти"
+    },
+    "Memory Lanternfruit": {
+      "textId": "1367014722",
+      "en": "Memory Lanternfruit",
+      "ru": "Плод-фонарь памяти"
+    },
+    "Microcrystalline Ore Plate": {
+      "textId": "1126537464",
+      "en": "Microcrystalline Ore Plate",
+      "ru": "Мелкокристаллическая рудная пластина"
+    },
+    "Milled Rice": {
+      "textId": "1593787304",
+      "en": "Milled Rice",
+      "ru": "Шлифованный рис"
+    },
+    "Mine": {
+      "textId": "1097757549",
+      "en": "Mine",
+      "ru": "Шахта",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Mineral Sand": {
+      "textId": "1810007599",
+      "en": "Mineral Sand",
+      "ru": "Минеральный песок"
+    },
+    "Mixed Perfume": {
+      "textId": "1210588148",
+      "en": "Mixed Perfume",
+      "ru": "Смешанный аромат"
+    },
+    "Moondew Radish": {
+      "textId": "1374278642",
+      "en": "Moondew Radish",
+      "ru": "Лунноросяная редька"
+    },
+    "Moondew Radish Slices": {
+      "textId": "1236034602",
+      "en": "Moondew Radish Slices",
+      "ru": "Кусочки лунноросяной редьки"
+    },
+    "Moonray Wheat": {
+      "textId": "1365320854",
+      "en": "Moonray Wheat",
+      "ru": "Луносветная пшеница"
+    },
+    "Natural Mineral Spring Water": {
+      "textId": "2005246596",
+      "en": "Natural Mineral Spring",
+      "ru": "Природная минеральная вода",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Natural Rubber": {
+      "textId": "1482148913",
+      "en": "Natural Rubber",
+      "ru": "Натуральный каучук"
+    },
+    "Nimble": {
+      "textId": "1093829386",
+      "en": "Nimble",
+      "ru": "Проворство"
+    },
+    "Nimbus Bed": {
+      "textId": "1095943398",
+      "en": "Nimbus Bed",
+      "ru": "Дождливое ложе"
+    },
+    "Nuts": {
+      "textId": "1353901163",
+      "en": "Nuts",
+      "ru": "Орехи"
+    },
+    "Orange Flower": {
+      "textId": "2045432124",
+      "en": "Orange Flower",
+      "ru": "Цветок апельсина"
+    },
+    "Orange Flower Dew": {
+      "textId": "2052620068",
+      "en": "Orange Flower Dew",
+      "ru": "Роса цветка апельсина"
+    },
+    "Orange Flower Incense": {
+      "textId": "1949487343",
+      "en": "Orange Flower Incense",
+      "ru": "Апельсиновое благовоние"
+    },
+    "Palm Bark": {
+      "textId": "1554392812",
+      "en": "Palm Bark",
+      "ru": "Пальмовая кора"
+    },
+    "Palm Rope": {
+      "textId": "1530565946",
+      "en": "Palm Rope",
+      "ru": "Пальмовая веревка"
+    },
+    "Pearl": {
+      "textId": "2111561824",
+      "en": "Pearl",
+      "ru": "Жемчужина"
+    },
+    "Pearl Necklace": {
+      "textId": "1215393379",
+      "en": "Pearl Necklace",
+      "ru": "Жемчужное ожерелье"
+    },
+    "Perfumery": {
+      "textId": "1160916204",
+      "en": "Perfumery",
+      "ru": "Парфюмерия"
+    },
+    "Petals": {
+      "textId": "1862188698",
+      "en": "Petals",
+      "ru": "Лепестки"
+    },
+    "Phonolfactory Table": {
+      "textId": "1083648300",
+      "en": "Phonolfactory Table",
+      "ru": "Музыкально-обонятельный стол"
+    },
+    "Pickling Jar": {
+      "textId": "1194192275",
+      "en": "Pickling Jar",
+      "ru": "Банка для маринования"
+    },
+    "Plain Rice Porridge": {
+      "textId": "1712400640",
+      "en": "Plain Rice Porridge",
+      "ru": "Простая рисовая каша"
+    },
+    "Playful": {
+      "textId": "1101940406",
+      "en": "Playful",
+      "ru": "Игривость"
+    },
+    "Porcelain": {
+      "textId": "1184980039",
+      "en": "Porcelain",
+      "ru": "Фарфор"
+    },
+    "Potato": {
+      "textId": "1360455660",
+      "en": "Potato",
+      "ru": "Картофель"
+    },
+    "Potato Chips": {
+      "textId": "2101633977",
+      "en": "Potato Chips",
+      "ru": "Картофельные чипсы"
+    },
+    "Potato Kvass": {
+      "textId": "1961308571",
+      "en": "Potato Kvass",
+      "ru": "Картофельный квас"
+    },
+    "Pottery": {
+      "textId": "1185229115",
+      "en": "Pottery",
+      "ru": "Керамика"
+    },
+    "Power Module": {
+      "textId": "1077771480",
+      "en": "Power Module",
+      "ru": "Энергетический модуль"
+    },
+    "Power Pole": {
+      "textId": "1412351028",
+      "en": "Crackle Power Pole",
+      "ru": "Искрящийся электрический столб",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Practical": {
+      "textId": "1086096257",
+      "en": "Practical",
+      "ru": "Практичность"
+    },
+    "Premium Berry Chocolate Coconut Pudding": {
+      "textId": "1385413642",
+      "en": "Premium Berry Chocolate Coconut Pudding",
+      "ru": "Премиальный кокосовый пудинг с ягодами и какао"
+    },
+    "Premium Bread": {
+      "textId": "1266420058",
+      "en": "Premium Bread",
+      "ru": "Премиальный хлеб"
+    },
+    "Premium Gemstone Dust": {
+      "textId": "1188103267",
+      "en": "Premium Gemstone Dust",
+      "ru": "Премиальная самоцветная пыль"
+    },
+    "Premium Jello": {
+      "textId": "1581926430",
+      "en": "Premium Jello",
+      "ru": "Премиальное желе"
+    },
+    "Premium Mixed Perfume": {
+      "textId": "1134792375",
+      "en": "Premium Mixed Perfume",
+      "ru": "Премиальный смешанный аромат"
+    },
+    "Premium Potato Soup": {
+      "textId": "1383294754",
+      "en": "Premium Potato Soup",
+      "ru": "Премиальный картофельный суп"
+    },
+    "Premium River Washed Stones": {
+      "textId": "1104921215",
+      "en": "Premium River-Washed Stones",
+      "ru": "Премиальная речная галька"
+    },
+    "Premium River-Washed Stones": {
+      "textId": "1104921215",
+      "en": "Premium River-Washed Stones",
+      "ru": "Премиальная речная галька"
+    },
+    "Premium Rose Freshener": {
+      "textId": "1476891514",
+      "en": "Premium Rose Freshener",
+      "ru": "Премиальный розовый освежитель"
+    },
+    "Premium Salted Lemon": {
+      "textId": "1920247146",
+      "en": "Premium Salted Lemon",
+      "ru": "Премиальный соленый лимон"
+    },
+    "Premium Soap": {
+      "textId": "1362740622",
+      "en": "Premium Soap",
+      "ru": "Премиальное мыло"
+    },
+    "Premium Sweet Rice Wine": {
+      "textId": "1185923773",
+      "en": "Premium Sweet Rice Wine",
+      "ru": "Премиальное сладкое рисовое вино"
+    },
+    "Premium Wheat": {
+      "textId": "1501781567",
+      "en": "Premium Wheat",
+      "ru": "Премиум-пшеница"
+    },
+    "Premium Wind Chime": {
+      "textId": "1771513904",
+      "en": "Advanced Wind Chime",
+      "ru": "Премиальный ветряной колокольчик",
+      "note": "Aniimax alias for the premium wind chime; game English calls it Advanced Wind Chime."
+    },
+    "Quartz Ore": {
+      "textId": "1496645690",
+      "en": "Quartz Ore",
+      "ru": "Кварцевая руда"
+    },
+    "Quick Aromathyst": {
+      "textId": "1552410164",
+      "en": "Quick Recipe: Aromathyst",
+      "ru": "Быстрый рецепт: ароматит",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Bamboo": {
+      "textId": "1676031708",
+      "en": "Quick Formula: Bamboo",
+      "ru": "Быстрая формула «Бамбук»",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Coconut": {
+      "textId": "1466780022",
+      "en": "Quick Formula: Coconut",
+      "ru": "Быстрая формула «Кокос»",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Deep Rock Spring Water": {
+      "textId": "1960629378",
+      "en": "Quick Recipe: Deep Rock Spring Water",
+      "ru": "Быстрый рецепт: вода с глубины родника",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Fresh Water": {
+      "textId": "1694090343",
+      "en": "Quick Recipe: Fresh Water",
+      "ru": "Быстрый рецепт: пресная вода",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Lemon": {
+      "textId": "2114371934",
+      "en": "Quick Formula: Lemon",
+      "ru": "Быстрая формула «Лимон»",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Maple Syrup": {
+      "textId": "2146401307",
+      "en": "Quick Recipe: Maple Syrup",
+      "ru": "Быстрый рецепт: кленовый сироп",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Natural Mineral Spring Water": {
+      "textId": "1917748809",
+      "en": "Quick Recipe: Natural Mineral Water",
+      "ru": "Быстрый рецепт: природная минеральная вода",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Pearl": {
+      "textId": "1950687160",
+      "en": "Quick Formula: Pearl",
+      "ru": "Быстрая формула «Жемчужина»",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Potato": {
+      "textId": "1782081878",
+      "en": "Quick Recipe: Potato",
+      "ru": "Быстрый рецепт: картофель",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Rice": {
+      "textId": "1995139245",
+      "en": "Quick Recipe: Rice",
+      "ru": "Быстрый рецепт: рис",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Scales": {
+      "textId": "1613270417",
+      "en": "Quick Formula: Scales",
+      "ru": "Быстрая формула «Чешуя»",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Sea Salt": {
+      "textId": "2116466550",
+      "en": "Quick Recipe: Sea Salt",
+      "ru": "Быстрый рецепт: морская соль",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Snowmelt Cold Spring": {
+      "textId": "1993665129",
+      "en": "Quick Formula - Snowmelt Cold Spring",
+      "ru": "Быстрая формула - Талый ключ"
+    },
+    "Quick Strawberry": {
+      "textId": "2132059317",
+      "en": "Quick Recipe: Strawberry",
+      "ru": "Быстрый рецепт: клубника",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Well Water": {
+      "textId": "1240326542",
+      "en": "Quick Recipe: Well Water",
+      "ru": "Быстрый рецепт: колодезная вода",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Quick Wheat": {
+      "textId": "1974567409",
+      "en": "Fast-Growing Wheat",
+      "ru": "Быстрорастущая пшеница",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Quick Wool": {
+      "textId": "1929901382",
+      "en": "Quick Recipe: Wool",
+      "ru": "Быстрый рецепт: шерсть",
+      "note": "Aniimax quick-production recipe; uses the in-game recipe/formula name."
+    },
+    "Refined Flour": {
+      "textId": "1992429008",
+      "en": "Refined Flour",
+      "ru": "Очищенная мука"
+    },
+    "Refined Ore": {
+      "textId": "1803632852",
+      "en": "Refined Ore",
+      "ru": "Очищенная руда"
+    },
+    "Resource Detector": {
+      "textId": "1676164497",
+      "en": "Resource Detector",
+      "ru": "Детектор ресурсов"
+    },
+    "Rice": {
+      "textId": "1147500285",
+      "en": "Rice",
+      "ru": "Рис"
+    },
+    "Rice Drink": {
+      "textId": "1844770601",
+      "en": "Rice Drink",
+      "ru": "Рисовый напиток"
+    },
+    "Rice Vinegar": {
+      "textId": "1338669367",
+      "en": "Rice Vinegar",
+      "ru": "Рисовый уксус"
+    },
+    "Rich Grape Compote": {
+      "textId": "2002336075",
+      "en": "Rich Grape Compote",
+      "ru": "Виноградный десерт"
+    },
+    "River Washed Stones": {
+      "textId": "1078640185",
+      "en": "River-Washed Stones",
+      "ru": "Речная галька"
+    },
+    "Roasted Soybeans": {
+      "textId": "2030200923",
+      "en": "Roasted Soybeans",
+      "ru": "Жареные соевые бобы"
+    },
+    "Roasted Waxing Moon Pepper": {
+      "textId": "1471743308",
+      "en": "Roasted Waxing Moon Pepper",
+      "ru": "Обжаренный перец растущей луны"
+    },
+    "Rock": {
+      "textId": "1107680596",
+      "en": "Rock",
+      "ru": "Камень"
+    },
+    "Rock Candy": {
+      "textId": "1848623640",
+      "en": "Rock Candy",
+      "ru": "Леденцовый сахар"
+    },
+    "Rose": {
+      "textId": "1147251967",
+      "en": "Rose",
+      "ru": "Роза"
+    },
+    "Rose Concentrate": {
+      "textId": "1257585776",
+      "en": "Rose Concentrate",
+      "ru": "Розовый концентрат"
+    },
+    "Rose Freshener": {
+      "textId": "1820231206",
+      "en": "Rose Freshener",
+      "ru": "Розовый освежитель"
+    },
+    "Rose Incense": {
+      "textId": "2027445093",
+      "en": "Rose Incense",
+      "ru": "Розовое благовоние"
+    },
+    "Rose Shortbread": {
+      "textId": "1270938765",
+      "en": "Rose Shortbread",
+      "ru": "Песочное печенье с розой"
+    },
+    "Rough Lumber": {
+      "textId": "2011398223",
+      "en": "Rough Lumber",
+      "ru": "Грубые пиломатериалы"
+    },
+    "Rubber Duck": {
+      "textId": "1426677216",
+      "en": "Rubber Duck",
+      "ru": "Резиновая уточка"
+    },
+    "Salted Cherry Blossom": {
+      "textId": "1103740529",
+      "en": "Salted Cherry Blossom",
+      "ru": "Соленые цветы вишни"
+    },
+    "Salted Lemon": {
+      "textId": "2092832490",
+      "en": "Salted Lemon",
+      "ru": "Соленый лимон"
+    },
+    "Scales": {
+      "textId": "1514227842",
+      "en": "Scales",
+      "ru": "Чешуя"
+    },
+    "Sea Salt": {
+      "textId": "1356078270",
+      "en": "Sea Salt",
+      "ru": "Морская соль"
+    },
+    "Sea Salt Roasted Pumpkin": {
+      "textId": "1495128351",
+      "en": "Sea Salt Roasted Pumpkin",
+      "ru": "Тыква, запеченная с морской солью"
+    },
+    "Shell": {
+      "textId": "1364810027",
+      "en": "Shell",
+      "ru": "Ракушка"
+    },
+    "Shell Ornament": {
+      "textId": "1410839086",
+      "en": "Shell Ornament",
+      "ru": "Украшение из ракушек"
+    },
+    "Shredded Coconut": {
+      "textId": "1171450658",
+      "en": "Shredded Coconut",
+      "ru": "Кокосовая стружка"
+    },
+    "Simmering Pot": {
+      "textId": "1239088895",
+      "en": "Simmering Pot",
+      "ru": "Кастрюля для тушения"
+    },
+    "Sintered Ore Brick": {
+      "textId": "1690074915",
+      "en": "Sintered Ore Brick",
+      "ru": "Обожженный рудный брикет"
+    },
+    "Snowmelt Cold Spring": {
+      "textId": "1534450517",
+      "en": "Snowmelt Cold Spring",
+      "ru": "Талый ключ"
+    },
+    "Soap": {
+      "textId": "1076403773",
+      "en": "Soap",
+      "ru": "Мыло"
+    },
+    "Soy Sauce": {
+      "textId": "1620709782",
+      "en": "Soy Sauce",
+      "ru": "Соевый соус"
+    },
+    "Soy Sauce Fried Rice": {
+      "textId": "1243114084",
+      "en": "Soy Sauce Fried Rice",
+      "ru": "Жареный рис с соевым соусом"
+    },
+    "Soy Sauce Tofu": {
+      "textId": "1933361345",
+      "en": "Soy Sauce Tofu",
+      "ru": "Тофу в соевом соусе"
+    },
+    "Soybean": {
+      "textId": "1090865020",
+      "en": "Soybean",
+      "ru": "Соевые бобы"
+    },
+    "Standard Planks": {
+      "textId": "1723193274",
+      "en": "Standard Planks",
+      "ru": "Стандартные доски"
+    },
+    "Star Wish Lantern": {
+      "textId": "1734003014",
+      "en": "Star Wish Lantern",
+      "ru": "Фонарь желаний"
+    },
+    "Starfall Hammock": {
+      "textId": "1129697096",
+      "en": "Starfall Hammock",
+      "ru": "Гамак падающих звезд"
+    },
+    "Steamed Vermicelli Roll": {
+      "textId": "1402414383",
+      "en": "Steamed Vermicelli Roll",
+      "ru": "Рулетик в рисовой бумаге"
+    },
+    "Storage Unit": {
+      "textId": "1148949025",
+      "en": "Storage Unit",
+      "ru": "Отделение хранилища"
+    },
+    "Strawberry": {
+      "textId": "1174143692",
+      "en": "Strawberry",
+      "ru": "Клубника"
+    },
+    "Strawberry Candy": {
+      "textId": "1358190088",
+      "en": "Strawberry Candy",
+      "ru": "Клубничная конфета"
+    },
+    "Strawberry Cream Puff": {
+      "textId": "1664112023",
+      "en": "Strawberry Cream Puff",
+      "ru": "Клубничное буше"
+    },
+    "Strawberry Jam": {
+      "textId": "1165465791",
+      "en": "Strawberry Jam",
+      "ru": "Клубничное варенье"
+    },
+    "Strawberry Juice": {
+      "textId": "1720054164",
+      "en": "Strawberry Juice",
+      "ru": "Клубничный сок"
+    },
+    "Sugar Roasted Chestnuts": {
+      "textId": "1356367145",
+      "en": "Sugar-Roasted Chestnuts",
+      "ru": "Каштаны, жаренные с сахаром"
+    },
+    "Sugar-Roasted Chestnuts": {
+      "textId": "1356367145",
+      "en": "Sugar-Roasted Chestnuts",
+      "ru": "Каштаны, жаренные с сахаром"
+    },
+    "Sugarcane": {
+      "textId": "1108920508",
+      "en": "Sugarcane",
+      "ru": "Сахарный тростник"
+    },
+    "Sugarcane Juice": {
+      "textId": "1446334085",
+      "en": "Sugarcane Juice",
+      "ru": "Сок сахарного тростника"
+    },
+    "Sunlamp": {
+      "textId": "1170756797",
+      "en": "Sunlamp",
+      "ru": "Солнечная лампа"
+    },
+    "Sweet Rice Drink": {
+      "textId": "1574212862",
+      "en": "Sweet Rice Drink",
+      "ru": "Сладкий рисовый напиток"
+    },
+    "Tanghulu": {
+      "textId": "1819279293",
+      "en": "Tanghulu",
+      "ru": "Танхулу"
+    },
+    "Tenacious": {
+      "textId": "1280920622",
+      "en": "Tenacious",
+      "ru": "Цепкость"
+    },
+    "Tidewhisper Sandcastle": {
+      "textId": "1102710380",
+      "en": "Tidewhisper Sandcastle",
+      "ru": "Песочный замок «Шепот прилива»",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Toasted Rice Green Tea": {
+      "textId": "1569355304",
+      "en": "Toasted Rice Green Tea",
+      "ru": "Зеленый чай с жареным рисом"
+    },
+    "Tofu": {
+      "textId": "1077108933",
+      "en": "Tofu",
+      "ru": "Тофу"
+    },
+    "Umbral Hot Pot": {
+      "textId": "1517892065",
+      "en": "Umbral Hot Pot",
+      "ru": "Теневое хого"
+    },
+    "Umbral Pickle": {
+      "textId": "1235639576",
+      "en": "Umbral Pickle",
+      "ru": "Теневые соленья"
+    },
+    "Umbral Sweet And Spicy Sauce": {
+      "textId": "2129439476",
+      "en": "Umbral Sweet Spicy Sauce",
+      "ru": "Теневой остро-сладкий соус",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Walnut": {
+      "textId": "1626306594",
+      "en": "Walnut",
+      "ru": "Грецкий орех"
+    },
+    "Walnut Cake": {
+      "textId": "1986879004",
+      "en": "Walnut Cake",
+      "ru": "Кекс с грецким орехом"
+    },
+    "Walnut Milk": {
+      "textId": "2143767044",
+      "en": "Walnut Milk",
+      "ru": "Молоко из грецкого ореха"
+    },
+    "Water": {
+      "textId": "1105667470",
+      "en": "Water",
+      "ru": "Вода"
+    },
+    "Waxing Moon Pepper": {
+      "textId": "1629925506",
+      "en": "Waxing Moon Pepper",
+      "ru": "Перец растущей луны"
+    },
+    "Weird Jelly Beans": {
+      "textId": "2144395881",
+      "en": "Weird Jelly Beans",
+      "ru": "Причудливые желейные бобы"
+    },
+    "Well": {
+      "textId": "1230214576",
+      "en": "Well",
+      "ru": "Колодец",
+      "note": "Reviewed context or Aniimax spelling alias."
+    },
+    "Well Water": {
+      "textId": "1401526198",
+      "en": "Well Water",
+      "ru": "Колодезная вода"
+    },
+    "Wheat": {
+      "textId": "1129081127",
+      "en": "Wheat",
+      "ru": "Пшеница"
+    },
+    "Wheat Tea": {
+      "textId": "1099516148",
+      "en": "Wheat Tea",
+      "ru": "Пшеничный чай"
+    },
+    "Wheatmeal": {
+      "textId": "1853963911",
+      "en": "Wheatmeal",
+      "ru": "Пшеничная мука"
+    },
+    "Willow Wood": {
+      "textId": "1186092461",
+      "en": "Willow Wood",
+      "ru": "Ива"
+    },
+    "Wind": {
+      "textId": "1138609835",
+      "en": "Wind",
+      "ru": "Ветер"
+    },
+    "Wind Chime": {
+      "textId": "1405568936",
+      "en": "Wind Chime",
+      "ru": "Ветряной колокольчик"
+    },
+    "Wood Sculpture": {
+      "textId": "1731391766",
+      "en": "Wood Sculpture",
+      "ru": "Деревянная статуэтка"
+    },
+    "Woodland": {
+      "textId": "1099561540",
+      "en": "Woodland",
+      "ru": "Лесной массив"
+    },
+    "Woodworking Bench": {
+      "textId": "1100533482",
+      "en": "Woodworking Bench",
+      "ru": "Столярный верстак"
+    },
+    "Wool": {
+      "textId": "1665212808",
+      "en": "Wool",
+      "ru": "Шерсть"
+    },
+    "Wool Fabric": {
+      "textId": "1627161937",
+      "en": "Wool Fabric",
+      "ru": "Шерстяная ткань"
+    },
+    "Woolen Yarn": {
+      "textId": "1896340841",
+      "en": "Woolen Yarn",
+      "ru": "Шерстяная пряжа"
+    },
+    "Woven Toy": {
+      "textId": "1965796953",
+      "en": "Woven Toy",
+      "ru": "Плетеная безделушка"
+    }
+  }
+}
