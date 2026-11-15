@@ -87,6 +87,8 @@ jobs:
           node tests/i18n_ui_smoke.mjs
       - name: RV14 Russian layout and recipe reference
         run: npm run test:rv14
+      - name: Russian seasonal controls, roster, help and import errors
+        run: npm run test:localization
       - name: Keep tested WASM build
         if: always()
         uses: actions/upload-artifact@v4

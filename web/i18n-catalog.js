@@ -18,7 +18,7 @@ export function compileTemplates(catalog) {
             // Short wrappers must not consume a whole list or sentence as one item.
             const broad = (source.replace(SLOT, '').match(/[a-z]+/gi) || []).length <= 2
                 && !source.includes(': ') && !source.includes(', ') && !source.startsWith('~');
-            return { pattern: new RegExp(`^${pattern}$`), slots, target, broad };
+            return { pattern: new RegExp(`^${pattern}$`), slots, target, broad, startsWithSlot: source.startsWith('{') };
         });
 }
 
@@ -44,6 +44,8 @@ export function translateCatalog(value, catalog = {}, templates = []) {
     const render = template => {
         const match = text.match(template.pattern);
         if (!match) return null;
+        // A suffix for one item must not swallow a semicolon-separated checklist.
+        if (template.startsWithSlot && match.slice(1).some(value => value.includes('; '))) return null;
         const values = new Map(template.slots.map((slot, i) => [slot,
             match[i + 1] === text ? match[i + 1] : translate(match[i + 1])]));
         return replace(template.target.replace(SLOT, slot => values.get(slot)));

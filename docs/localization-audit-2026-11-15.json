@@ -1,0 +1,1150 @@
+{
+  "date": "2026-11-15",
+  "baseline": "cb6e882204cbf56b8596345086c2bd1129b7df30",
+  "gameBuild": 3934365,
+  "scope": [
+    "Основной экран и скрытая справка",
+    "Расширенные настройки автодома 20",
+    "Сезонное изготовление на уровне 14: закрытые и открытые рецепты, ошибочное количество",
+    "Своя команда анимо",
+    "Ошибка импорта",
+    "Справочник рецептов",
+    "Расчёт автодома 14 на шести ширинах экрана"
+  ],
+  "sampledUniqueSources": 1180,
+  "changedCatalogEntries": 160,
+  "note": "Список содержит найденные пропуски, исправленные частичные переводы и дополнительные шаблоны ошибок из исходного кода. Обычный текст интерфейса переведён редакционно с игровыми названиями из проверенного словаря. Проверка не доказывает покрытие всех возможных числовых комбинаций и ошибок движка.",
+  "changes": [
+    {
+      "source": "At a processor, \\(r\\) is one workload a second. At a gathering facility (Well, Mine, Sandcastle, Dewy House and the like) and at the Dance Pad Polisher and Aniipod Maker, it's higher on recipes needing a higher ability level: 1 a second at level 1, 1.25 at level 2 and 1.5 at level 3. A Growth Fruit, 5,400 workload, takes an hour at 100%.",
+      "previous": "На процессоре \\(r\\) — это одна рабочая нагрузка в секунду. На сборочном объекте (Well, Mine, Sandcastle, Dewy House и т.п.), а также в Dance Pad Polisher и Aniipod Maker он выше для рецептов, требующих более высокого уровня способностей: 1 в секунду на уровне 1, 1,25 в секунду на уровне 2 и 1,5 на уровне 3. Growth Fruit, нагрузка 5400, занимает час при 100%.",
+      "translation": "На перерабатывающем объекте \\(r\\) равен одной единице работы в секунду. На добывающих объектах (Колодец, Шахта, Песочный замок «Шепот прилива», Дом росы и подобных), а также на объектах «Полировальный танцпол» и «Аниподер» скорость зависит от требуемого уровня умения: 1 единица в секунду для уровня 1, 1,25 для уровня 2 и 1,5 для уровня 3. Плод роста требует 5400 единиц работы: при эффективности 100% это один час.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Efficiency \\(e\\) depends on the Aniimo's ability level compared with the level the recipe needs. At exactly the needed level it's 100%. At a processor, one level above the recipe's need is 300%, and each level after that adds 100% (400%, 500%). At a gathering facility, each level above adds half a workload a second, whatever the recipe needs, so against the recipe's own base rate that reads as +50% a level on a level-1 recipe, +40% on a level-2 one and +33% on a level-3 one. The Dance Pad Polisher and Aniipod Maker add 40% a level. The personality term counts only when the Aniimo has the facility's personality (+20%); the Polisher and Aniipod Maker have none. Ability levels stop at 4.",
+      "previous": "Эффективность \\(e\\) зависит от уровня способностей Анимо по сравнению с уровнем, необходимым для рецепта. Именно на необходимом уровне это 100%. У процессора один уровень выше потребности рецепта составляет 300%, а каждый последующий уровень добавляет 100% (400%, 500%). На сборочном объекте каждый уровень выше добавляет половину рабочей нагрузки в секунду, что бы ни требовал рецепт, то есть по отношению к собственной базовой ставке рецепта, которая составляет +50% за уровень для рецепта уровня 1, +40% для рецепта уровня 2 и +33% для рецепта уровня 3. Полировщик танцевальной площадки и создатель аниподов добавляют 40% за уровень. Термин личности учитывается только в том случае, если Анимо имеет индивидуальность объекта (+20%); у Polisher и Aniipod Maker его нет. Уровни способностей останавливаются на 4.",
+      "translation": "Эффективность \\(e\\) зависит от разницы между уровнем умения анимо и требованием рецепта. При совпадении уровней она равна 100%. На перерабатывающем объекте превышение на один уровень даёт 300%, каждый следующий уровень добавляет 100% (400%, 500%). На добывающем объекте каждый дополнительный уровень добавляет 0,5 единицы работы в секунду: +50% к базовой скорости рецепта уровня 1, +40% для уровня 2 и +33% для уровня 3. Полировальный танцпол и Аниподер получают +40% за уровень. Подходящая черта характера даёт +20%; для этих двух объектов черты характера не учитываются. Максимальный уровень умения — 4.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "The plan solves once per ticked priority, in your order. Each solve makes as much of its priority as it can while keeping at least what the earlier ones reached; a last solve then earns as many Home Coins as all of those leave room for. Aniimo EXP, Aniipods and, during the Harvest Moon Festival, Harvest Moon Points count as their own currencies, so the same model handles them like Home Coins.",
+      "previous": "План решается один раз для каждого отмеченного приоритета в вашем заказе. Каждое решение максимально использует свой приоритет, сохраняя при этом, по крайней мере, то, чего достигли предыдущие; последнее решение приносит столько монет дома, сколько осталось места. Анимо EXP, Aniipods и, во время фестиваля Harvest Moon, очки Harvest Moon считаются отдельной валютой, поэтому одна и та же модель обрабатывает их как монеты дома.",
+      "translation": "Расчёт выполняется для каждой включённой цели по порядку. Каждая цель максимизируется с сохранением предыдущих результатов; оставшиеся мощности направляются на монеты дома. Опыт анимо, аниподы и очки лунного урожая во время Лунного праздника урожая учитываются как отдельные цели.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "ranks what you want: Home Coins, Aniimo EXP (Growth items from the Dance Pad Polisher), Aniipods (the best tier your Aniipod Maker can reach, since a better one catches better), Wood Blocks and Mineral Sand. Switch on the ones you want and drag them into order; the plan makes as much of the first as it can, then as much of the next as that allows, and whatever's left goes to Home Coins. The rate card shows each one.",
+      "previous": "оценивает то, что вы хотите: монеты дома, Анимо EXP (предметы роста от полировщика Dance Pad), Aniipods (лучший уровень, которого может достичь ваш создатель Aniipod, поскольку лучший ловит лучше), деревянные блоки и минеральный песок. Включите те, которые вам нужны, и перетащите их по порядку; план делает столько из первого, сколько может, затем столько из следующего, сколько позволяет, а все, что остается, идет в монеты дома. Прейскурант показывает каждый из них.",
+      "translation": "задаёт порядок целей: монеты дома, опыт анимо (предметы роста с объекта «Полировальный танцпол»), аниподы (лучший доступный Аниподеру тип для более успешной поимки), деревянные бруски и минеральный песок. Включите нужные цели и перетащите их в желаемом порядке. План максимизирует первую цель, затем следующую с сохранением предыдущего результата, а оставшиеся мощности направляет на монеты дома. Карточка производства показывает скорость для каждой цели.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": ": the seeds your Farmland and Woodland go through and what they cost, in total until the level-up with Level up, or at the chosen rate with Priorities.",
+      "previous": ": семена, через которые проходят ваши фермерские и лесные угодья, и их стоимость, в общей сложности до повышения уровня с помощью Level Up или по выбранной ставке с помощью Priorities.",
+      "translation": ": семена для объектов «Пахотная земля» и «Лесной массив» и их стоимость. В режиме «Повышение уровня» показана общая стоимость до улучшения, в режиме «Приоритеты» — затраты за выбранную единицу времени.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "coins",
+      "previous": "монеты дома",
+      "translation": "Монеты дома",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Choose a whole amount from 1 to 100000.",
+      "previous": null,
+      "translation": "Введите целое число от 1 до 100000.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Recipe data is still loading. Try again shortly.",
+      "previous": null,
+      "translation": "Рецепты ещё загружаются. Повторите попытку чуть позже.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Recipe cycle at {item}.",
+      "previous": null,
+      "translation": "Циклическая зависимость рецепта: {item}.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Missing recipe data: {item}.",
+      "previous": null,
+      "translation": "Нет данных о рецепте: {item}.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{item}: needs {facility} Lv.{level}",
+      "previous": null,
+      "translation": "{item}: требуется {facility} ур. {level}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{item}: skipped or Recipe Note not ticked",
+      "previous": null,
+      "translation": "{item}: рецепт исключён или не отмечено его открытие",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Checklist seed cost",
+      "previous": null,
+      "translation": "Стоимость семян для списка изготовления",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Assumes standard crops. Mutations are not guaranteed.",
+      "previous": null,
+      "translation": "Расчёт для обычного урожая. Мутации не гарантированы.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{n} batches",
+      "previous": null,
+      "translation": "{n} партий",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{n} Weird Jelly Beans for event seeds.",
+      "previous": null,
+      "translation": "{n} причудливых желейных бобов на семена события.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{field} must be a number",
+      "previous": null,
+      "translation": "Поле «{field}» должно содержать число",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{field} must be {kind} between {min} and {max}",
+      "previous": null,
+      "translation": "Поле «{field}» должно содержать {kind} от {min} до {max}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "a whole number",
+      "previous": null,
+      "translation": "целое число",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "a number",
+      "previous": null,
+      "translation": "число",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid Aniimo abilities",
+      "previous": null,
+      "translation": "Некорректные умения анимо",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{ability} ability",
+      "previous": null,
+      "translation": "Умение «{ability}»",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "This code contains no calculator setup",
+      "previous": null,
+      "translation": "В коде нет настроек калькулятора",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{field} must be true or false",
+      "previous": null,
+      "translation": "Поле «{field}» должно иметь значение «включено» или «выключено»",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Choose exactly one input, strategy or Aniimo mode",
+      "previous": null,
+      "translation": "Выберите ровно один режим настройки, стратегию и режим команды анимо",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Simple module levels above the RV limit were reduced.",
+      "previous": null,
+      "translation": "Уровни модулей в простом режиме снижены до предела автодома.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid rate unit",
+      "previous": null,
+      "translation": "Некорректная единица времени",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Choose a supported Power gap size",
+      "previous": null,
+      "translation": "Выберите допустимую ширину прохода для электросети",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid goal target",
+      "previous": null,
+      "translation": "Некорректная цель производства",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid facility settings",
+      "previous": null,
+      "translation": "Некорректные настройки объектов",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Unsupported facility skipped: {facility}.",
+      "previous": null,
+      "translation": "Неподдерживаемый объект пропущен: {facility}.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid tiers for {facility}",
+      "previous": null,
+      "translation": "Некорректные уровни объекта «{facility}»",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid tier for {facility}",
+      "previous": null,
+      "translation": "Некорректный уровень объекта «{facility}»",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{item} count",
+      "previous": null,
+      "translation": "Количество: {item}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{item} level",
+      "previous": null,
+      "translation": "Уровень: {item}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{item} stock",
+      "previous": null,
+      "translation": "Запас: {item}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid RV stock",
+      "previous": null,
+      "translation": "Некорректные запасы для автодома",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid {item}",
+      "previous": null,
+      "translation": "Некорректное значение: {item}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid priorities",
+      "previous": null,
+      "translation": "Некорректные приоритеты",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid priority",
+      "previous": null,
+      "translation": "Некорректный приоритет",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "An unsupported priority was skipped.",
+      "previous": null,
+      "translation": "Неподдерживаемый приоритет пропущен.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Duplicate priority",
+      "previous": null,
+      "translation": "Повторяющийся приоритет",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid Aniimo roster",
+      "previous": null,
+      "translation": "Некорректный список анимо",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid Aniimo name",
+      "previous": null,
+      "translation": "Некорректное имя анимо",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Unsupported Aniimo family. Choose Other / unspecified or a listed family.",
+      "previous": null,
+      "translation": "Неизвестное семейство анимо. Выберите «Другое / не указано» или семейство из списка.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Review Leisure Aniimo families: older or unspecified entries cannot work family-specific stations until you choose their family.",
+      "previous": null,
+      "translation": "Проверьте семейства анимо с умением «Досуг»: пока семейство не указано, они не могут работать на объектах, требующих определённого семейства.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Aniimo count",
+      "previous": null,
+      "translation": "Количество анимо",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Older setup: Aniimo mode was not included; using Best. Review the Aniimo settings.",
+      "previous": null,
+      "translation": "Старые настройки не содержат режима команды: выбран режим «Лучшая команда». Проверьте настройки анимо.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Unsupported setup fields were ignored.",
+      "previous": null,
+      "translation": "Неподдерживаемые поля настроек пропущены.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "code is too large",
+      "previous": null,
+      "translation": "слишком большой код",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "damaged code",
+      "previous": null,
+      "translation": "код повреждён",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "empty code",
+      "previous": null,
+      "translation": "пустой код",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "missing setup data",
+      "previous": null,
+      "translation": "нет данных настроек",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "not an Aniimax setup code",
+      "previous": null,
+      "translation": "это не код настроек Aniimax",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "not an Aniimax layout code",
+      "previous": null,
+      "translation": "это не код размещения Aniimax",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "missing layout data",
+      "previous": null,
+      "translation": "нет данных размещения",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "missing or invalid layout data",
+      "previous": null,
+      "translation": "данные размещения отсутствуют или повреждены",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "invalid layout coordinates",
+      "previous": null,
+      "translation": "некорректные координаты размещения",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "invalid layout storage",
+      "previous": null,
+      "translation": "некорректные данные хранилищ",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "invalid layout pieces",
+      "previous": null,
+      "translation": "некорректные данные объектов",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "layout is too large",
+      "previous": null,
+      "translation": "слишком большая схема размещения",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "unsupported layout facility",
+      "previous": null,
+      "translation": "неподдерживаемый объект размещения",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "invalid layout weight",
+      "previous": null,
+      "translation": "некорректная нагрузка объекта",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "invalid layout generators",
+      "previous": null,
+      "translation": "некорректные данные генераторов",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "invalid connection spaces",
+      "previous": null,
+      "translation": "некорректные проходы для подключения",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "layout is too complex",
+      "previous": null,
+      "translation": "слишком сложная схема размещения",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "invalid layout text",
+      "previous": null,
+      "translation": "некорректный текст в схеме размещения",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "invalid layout number",
+      "previous": null,
+      "translation": "некорректное число в схеме размещения",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Game Combo Codes cannot be imported into this calculator",
+      "previous": null,
+      "translation": "Игровые коды комбинаций нельзя импортировать в калькулятор",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Use an Aniimax setup code, layout code or shared setup link (unsupported format or version)",
+      "previous": null,
+      "translation": "Используйте код настроек, код размещения или ссылку на настройки Aniimax (этот формат или версия не поддерживается)",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Shared config is too large",
+      "previous": null,
+      "translation": "Передаваемые настройки слишком велики",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Shared config is too large for a link",
+      "previous": null,
+      "translation": "Настройки слишком велики для передачи ссылкой",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Invalid shared config",
+      "previous": null,
+      "translation": "Некорректные передаваемые настройки",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Could not load HiGHS ({reason})",
+      "previous": null,
+      "translation": "Не удалось загрузить HiGHS ({reason})",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Time limit reached",
+      "previous": null,
+      "translation": "Достигнут лимит времени",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "No plan can meet these production targets.",
+      "previous": null,
+      "translation": "Ни один план не позволяет достичь этих целей производства.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "no plan found for the most {item}",
+      "previous": null,
+      "translation": "не найден план максимального производства: {item}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "this setup isn't covered by the exact planner",
+      "previous": null,
+      "translation": "точный расчёт не поддерживает эти настройки",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "the plan failed its check",
+      "previous": null,
+      "translation": "план не прошёл проверку",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "No plan found with these Aniimo: {reason}.",
+      "previous": null,
+      "translation": "Для этой команды анимо не найден план: {reason}.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "No Magical Wonder Night plan found: {reason}. Check the Sugarcane reserve, facilities, Aniimo team, Jelly Bean cap and magical plots, then calculate again. The backup planner cannot preserve reserved stock.",
+      "previous": null,
+      "translation": "Не найден план для события «Волшебная Чудесная ночь»: {reason}. Проверьте запас сахарного тростника, объекты, команду анимо, лимит желейных бобов и магические грядки, затем повторите расчёт. Резервный алгоритм не учитывает неприкосновенные запасы.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "The minimum festival points cannot fit this setup and Wheat budget. Lower the minimum, raise the budget or check recipes and workers.",
+      "previous": null,
+      "translation": "При этих настройках и лимите пшеницы невозможно набрать минимальное количество очков события. Уменьшите минимум, увеличьте лимит или проверьте рецепты и работников.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Check before crafting: {items}.",
+      "previous": null,
+      "translation": "Проверьте перед изготовлением: {items}.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Budget conflict: {plots} plots require about {amount} Weird Jelly Beans/day; cap {limit}/day. Raise the cap or lower the plot minimum.",
+      "previous": null,
+      "translation": "Превышен лимит: для {plots} грядок нужно около {amount} причудливых желейных бобов в день, а лимит — {limit} в день. Увеличьте лимит или уменьшите минимум грядок.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{plots} plots require about {amount} Weird Jelly Beans/day ({watering}). {rest}",
+      "previous": null,
+      "translation": "Для {plots} грядок нужно около {amount} причудливых желейных бобов в день ({watering}). {rest}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{amount} per day available for other crops.",
+      "previous": null,
+      "translation": "Для других культур остаётся {amount} в день.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Umbral Sweet Spicy Sauce",
+      "previous": null,
+      "translation": "Теневой остро-сладкий соус",
+      "basis": "game",
+      "textId": "2129439476"
+    },
+    {
+      "source": "Sandcastle",
+      "previous": null,
+      "translation": "Песочный замок «Шепот прилива»",
+      "basis": "game",
+      "textId": "1102710380"
+    },
+    {
+      "source": "Enter your Aniimo; the plan uses their available abilities and time.",
+      "previous": null,
+      "translation": "Укажите своих анимо: план учитывает их умения и доступное рабочее время.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Other / unspecified",
+      "previous": null,
+      "translation": "Другое / не указано",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "About Aniimo family",
+      "previous": null,
+      "translation": "О семействах анимо",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "About Aniimo",
+      "previous": null,
+      "translation": "Об анимо",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Family matters for Leisure stations: Susuta → Sandcastle, Dewy → Dewy House, Nimbi → Nimbus Bed, Celestis → Star; Coinwisp → Gold-Speck Cap in the Starfall Hammock. Choose the family for evolved Aniimo too. Other / unspecified can work ordinary jobs, but cannot staff these four stations.",
+      "previous": null,
+      "translation": "Для объектов с умением «Досуг» важно семейство: Стесняша → Песочный замок «Шепот прилива», Отдушечка → Дом росы, Пушинка → Дождливое ложе, Селестис → Звезда; Монетгейст → Шляпка «Крупицы золота» на объекте «Гамак падающих звезд». Для эволюционировавших анимо также укажите семейство. Значение «Другое / не указано» допускает обычные работы, но не работу на этих четырёх объектах.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Could not import: {reason}. Your current setup was kept.",
+      "previous": null,
+      "translation": "Не удалось импортировать: {reason}. Текущие настройки сохранены.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Could not import: {reason}.",
+      "previous": null,
+      "translation": "Не удалось импортировать: {reason}.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Your current setup was kept.",
+      "previous": null,
+      "translation": "Текущие настройки сохранены.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Could not share this setup: {reason}",
+      "previous": null,
+      "translation": "Не удалось передать настройки: {reason}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "This shared link could not be loaded: {reason}.",
+      "previous": null,
+      "translation": "Не удалось загрузить настройки по ссылке: {reason}.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "This shared link is invalid: {reason}.",
+      "previous": null,
+      "translation": "Некорректная ссылка на настройки: {reason}.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Your saved setup was kept.",
+      "previous": null,
+      "translation": "Сохранённые настройки не изменены.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "The Minimum team plan failed: {reason}",
+      "previous": null,
+      "translation": "Не удалось рассчитать минимальную команду: {reason}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Plan calculation failed: {reason}",
+      "previous": null,
+      "translation": "Не удалось рассчитать план: {reason}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Gather first",
+      "previous": null,
+      "translation": "Сначала соберите",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Item / facility",
+      "previous": null,
+      "translation": "Предмет / объект",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Needed",
+      "previous": null,
+      "translation": "Требуется",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Craft in this order",
+      "previous": null,
+      "translation": "Изготовьте в указанном порядке",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "ecological_module",
+      "previous": null,
+      "translation": "Экомодуль",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "kitchen_module",
+      "previous": null,
+      "translation": "Кухонный модуль",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "resource_detector",
+      "previous": null,
+      "translation": "Детектор ресурсов",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "crafting_module",
+      "previous": null,
+      "translation": "Ремесленный модуль",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "power_module",
+      "previous": null,
+      "translation": "Энергетический модуль",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "home-level",
+      "previous": null,
+      "translation": "Уровень автодома",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "target-amount",
+      "previous": null,
+      "translation": "Целевое количество",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "current-amount",
+      "previous": null,
+      "translation": "Текущий запас",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "level-up-target",
+      "previous": null,
+      "translation": "Целевой уровень автодома",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "season-wheat-budget",
+      "previous": null,
+      "translation": "Лимит валюты события в день",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "season-points-min",
+      "previous": null,
+      "translation": "Минимум очков события",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "festival-batch-amount",
+      "previous": null,
+      "translation": "Количество для изготовления",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "season-mutation-plots",
+      "previous": null,
+      "translation": "Минимум магических грядок",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "layout-storage-count",
+      "previous": null,
+      "translation": "Количество хранилищ",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "layout-power-gap",
+      "previous": null,
+      "translation": "Ширина проходов электросети",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "strategy-level-up",
+      "previous": null,
+      "translation": "Повышение уровня",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "strategy-priorities",
+      "previous": null,
+      "translation": "Приоритеты",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "mode-simple",
+      "previous": null,
+      "translation": "Простой режим",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "mode-advanced",
+      "previous": null,
+      "translation": "Расширенный режим",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "simple-toolkit-upgrades",
+      "previous": null,
+      "translation": "Улучшения модулей",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "season-on",
+      "previous": null,
+      "translation": "Сезонное событие",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "layout-sim-on",
+      "previous": null,
+      "translation": "Анимация размещения",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "layout-whole",
+      "previous": null,
+      "translation": "Целые объекты",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "aniimo-best",
+      "previous": null,
+      "translation": "Лучшая команда",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "aniimo-minimum",
+      "previous": null,
+      "translation": "Минимальная команда",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "aniimo-custom",
+      "previous": null,
+      "translation": "Мои анимо",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "aniimo_exp",
+      "previous": null,
+      "translation": "Опыт анимо",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "aniipods",
+      "previous": null,
+      "translation": "Аниподы",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "season_points",
+      "previous": null,
+      "translation": "Очки события",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "ecological-module-level",
+      "previous": null,
+      "translation": "Уровень: Экомодуль",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "kitchen-module-level",
+      "previous": null,
+      "translation": "Уровень: Кухонный модуль",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "resource-detector-level",
+      "previous": null,
+      "translation": "Уровень: Детектор ресурсов",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "crafting-module-level",
+      "previous": null,
+      "translation": "Уровень: Ремесленный модуль",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "power-module-level",
+      "previous": null,
+      "translation": "Уровень: Энергетический модуль",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Cancelled by a newer calculation",
+      "previous": null,
+      "translation": "Отменено новым расчётом",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Wait for the current calculation to finish before importing",
+      "previous": null,
+      "translation": "Перед импортом дождитесь завершения текущего расчёта",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Wait for the current calculation to finish, then open the link again",
+      "previous": null,
+      "translation": "Дождитесь завершения текущего расчёта, затем снова откройте ссылку",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "(everything unlocked)",
+      "previous": null,
+      "translation": "(всё открыто)",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Aniimax layout code copied. It can be imported with the button beside it; it is not an in-game Combo Code.",
+      "previous": null,
+      "translation": "Код размещения Aniimax скопирован. Для импорта используйте соседнюю кнопку. Это код калькулятора, а не игровой код комбинации.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Copy this Aniimax layout code:",
+      "previous": null,
+      "translation": "Скопируйте этот код размещения Aniimax:",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Nothing in this plan needs hauling to storage.",
+      "previous": null,
+      "translation": "В этом плане доставка в хранилище не требуется.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Powered station",
+      "previous": null,
+      "translation": "Объект с электропитанием",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "The backup planner does not model E-Mode, so this fallback result is Normal Mode only.",
+      "previous": null,
+      "translation": "Резервный алгоритм не учитывает электрорежим, поэтому этот план использует только обычный режим.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "RV {level} layout · {n} Storage Unit(s). Placement only: this code does not contain calculator settings.",
+      "previous": null,
+      "translation": "Схема автодома ур. {level} · Хранилища: {n}. Код содержит только размещение, без настроек калькулятора.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Shared setup loaded. Review it before calculating. Your previous saved values are kept until you edit this setup. {details}",
+      "previous": null,
+      "translation": "Настройки по ссылке загружены. Проверьте их перед расчётом. Предыдущие сохранённые значения сохраняются до редактирования этих настроек. {details}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{item} copied. The recipient can review the settings before calculating.",
+      "previous": null,
+      "translation": "{item}: скопировано. Получатель сможет проверить настройки перед расчётом.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Setup imported. Review the values, then click Find the best plan. {details}",
+      "previous": null,
+      "translation": "Настройки импортированы. Проверьте значения и нажмите «Найти лучший план». {details}",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Setup imported.",
+      "previous": null,
+      "translation": "Настройки импортированы.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Review the values, then click Find the best plan.",
+      "previous": null,
+      "translation": "Проверьте значения и нажмите «Найти лучший план».",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Shared setup loaded.",
+      "previous": null,
+      "translation": "Настройки по ссылке загружены.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Review it before calculating.",
+      "previous": null,
+      "translation": "Проверьте их перед расчётом.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "Your previous saved values are kept until you edit this setup.",
+      "previous": null,
+      "translation": "Предыдущие сохранённые значения сохраняются до редактирования этих настроек.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "The recipient can review the settings before calculating.",
+      "previous": null,
+      "translation": "Получатель сможет проверить настройки перед расчётом.",
+      "basis": "interface",
+      "textId": null
+    },
+    {
+      "source": "{item} copied.",
+      "previous": null,
+      "translation": "{item}: скопировано.",
+      "basis": "interface",
+      "textId": null
+    }
+  ],
+  "unresolved": [
+    {
+      "source": "Reclaiming / Reclaiming crops",
+      "current": "Обработка почвы",
+      "reason": "В английском словаре клиента нет точного названия Reclaiming для этой работы. Есть Tilling → Вспашка (1487381132) и Cultivating → Возделывание (1926801134), но связь с действием калькулятора не подтверждена. Сохранён описательный перевод, не заявленный как официальный."
+    }
+  ],
+  "intentionallyUntranslated": [
+    "Aniimax, GitHub, HiGHS и имена авторов",
+    "Формулы, буквенные обозначения характера и компактные сокращения на схеме"
+  ]
+}

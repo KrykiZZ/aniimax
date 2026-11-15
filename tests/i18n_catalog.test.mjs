@@ -68,3 +68,13 @@ test('Reported GitHub Pages examples, including ability upgrades and dot-grouped
  assert.equal(translate('~+17% Home Coins (+26.472/hour)'),'≈Монеты дома: +17% (+26.472/ч)');
  assert.equal(translate('Unlock Ginseng Porridge'),'Открыть рецепт «Каша с женьшенем»');
 });
+
+test('Season checklist translates each blocked recipe independently',()=>{
+ const source='Check before crafting: Honey Glazed Pumpkin Cup: skipped or Recipe Note not ticked; Magic Pumpkin Cake: skipped or Recipe Note not ticked.';
+ assert.equal(translate(source),'Проверьте перед изготовлением: Тыквенная чаша в медовой глазури: рецепт исключён или не отмечено его открытие; Волшебный тыквенный пирог: рецепт исключён или не отмечено его открытие.');
+ assert.equal(translate('Magic Pumpkin Cake: needs kitchen_module Lv.3'),'Волшебный тыквенный пирог: требуется Кухонный модуль ур. 3');
+});
+test('Import diagnostics translate the reason as well as the outer message',()=>{
+ assert.equal(translate('Could not import: damaged code. Your current setup was kept.'),'Не удалось импортировать: код повреждён. Текущие настройки сохранены.');
+ assert.equal(translate('home-level must be a whole number between 1 and 20'),'Поле «Уровень автодома» должно содержать целое число от 1 до 20');
+});

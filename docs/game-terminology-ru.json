@@ -1649,6 +1649,23 @@
       "textId": "1965796953",
       "en": "Woven Toy",
       "ru": "Плетеная безделушка"
+    },
+    "Whimsy Points": {
+      "textId": "1745912909",
+      "en": "Whimsy Point",
+      "ru": "Очки причуд",
+      "note": "Alias used by the calculator: Whimsy Points"
+    },
+    "Umbral Sweet Spicy Sauce": {
+      "textId": "2129439476",
+      "en": "Umbral Sweet Spicy Sauce",
+      "ru": "Теневой остро-сладкий соус"
+    },
+    "Sandcastle": {
+      "textId": "1102710380",
+      "en": "Tidewhisper Sandcastle",
+      "ru": "Песочный замок «Шепот прилива»",
+      "note": "Alias used by the calculator: Sandcastle"
     }
   }
 }
