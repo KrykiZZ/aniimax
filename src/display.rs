@@ -4,7 +4,6 @@
 //! optimization results to the user in a readable format.
 
 use crate::models::{ProductionEfficiency, ProductionPath, ProductionStep};
-use crate::locale::Language;
 
 /// Formats a duration in seconds to a human-readable string.
 ///
@@ -39,12 +38,6 @@ pub fn format_time(seconds: f64) -> String {
     }
 }
 
-fn format_time_in(seconds: f64, language: Language) -> String {
-    if language == Language::En { return format_time(seconds); }
-    if language == Language::ZhTw { return crate::locale::zh_tw::format_duration(seconds); }
-    format_time(seconds).replace('h', "ч").replace('m', "м").replace('s', "с")
-}
-
 /// Displays the complete optimization results to stdout.
 ///
 /// This function prints:
@@ -62,19 +55,9 @@ pub fn display_results(
     efficiencies: &[ProductionEfficiency],
     optimize_energy: bool,
 ) {
-    display_results_in(path, efficiencies, optimize_energy, Language::En);
-}
-
-/// Prints the results in the selected display language.
-pub fn display_results_in(
-    path: &ProductionPath,
-    efficiencies: &[ProductionEfficiency],
-    optimize_energy: bool,
-    language: Language,
-) {
     println!();
     println!("+================================================================+");
-    println!("{}", language.text("|           ANIIMO PRODUCTION OPTIMIZATION RESULTS              |"));
+    println!("|           ANIIMO PRODUCTION OPTIMIZATION RESULTS              |");
     println!("+================================================================+");
     println!();
 
@@ -82,9 +65,9 @@ pub fn display_results_in(
     let is_parallel = path.steps.iter().any(|s| s.chain_id.is_some());
     
     if is_parallel {
-        println!("{}", language.text("[PARALLEL PRODUCTION CHAINS]"));
+        println!("[PARALLEL PRODUCTION CHAINS]");
         println!("----------------------------------------------------------------");
-        println!("  {}", language.text("All chains run simultaneously. Total time = longest chain."));
+        println!("  All chains run simultaneously. Total time = longest chain.");
         println!();
         
         // Group steps by chain_id
@@ -101,7 +84,7 @@ pub fn display_results_in(
                 .map(|s| s.facility.split(" (").next().unwrap_or(&s.facility))
                 .collect();
             let chain_desc = if facilities.len() == 1 {
-                language.facility(facilities[0])
+                facilities[0].to_string()
             } else {
                 // Show unique facilities in order (raw → processed)
                 let mut unique: Vec<&str> = Vec::new();
@@ -110,101 +93,89 @@ pub fn display_results_in(
                         unique.push(f);
                     }
                 }
-                unique.into_iter().map(|name| language.facility(name)).collect::<Vec<_>>().join(" → ")
+                unique.join(" → ")
             };
             
             let chain_profit: f64 = steps.iter().map(|s| s.profit_contribution).sum();
             let chain_time = steps.iter().map(|s| s.time).fold(0.0, f64::max);
             
-            println!("  {} {}: {} ({:.0} {} {})", language.text("Chain"),
+            println!("  Chain {}: {} ({:.0} coins in {})", 
                 chain_num + 1, 
                 chain_desc,
                 chain_profit,
-                language.text("coins in"),
-                format_time_in(chain_time, language)
+                format_time(chain_time)
             );
             
             for step in steps {
                 if step.profit_contribution > 0.0 {
-                    println!("    → {} x {} {} {}", step.quantity, language.item(&step.item_name), language.text("at"), language.facility(&step.facility));
+                    println!("    → {} x {} at {}", step.quantity, step.item_name, step.facility);
                 } else {
-                    println!("    → {} x {} {} {} ({})", step.quantity, language.item(&step.item_name), language.text("at"), language.facility(&step.facility), language.text("raw material"));
+                    println!("    → {} x {} at {} (raw material)", step.quantity, step.item_name, step.facility);
                 }
             }
             println!();
         }
     } else {
-        println!("{}", language.text("[BEST PRODUCTION PATH]"));
+        println!("[BEST PRODUCTION PATH]");
         println!("----------------------------------------------------------------");
 
         for (i, step) in path.steps.iter().enumerate() {
             if step.facility.starts_with("Unknown") {
                 println!(
-                    "  {} {}: {} {} x {}",
-                    language.text("Step"),
+                    "  Step {}: Gather {} x {}",
                     i + 1,
-                    language.text("Gather"),
                     step.quantity,
-                    language.item(&step.item_name)
+                    step.item_name
                 );
             } else {
                 println!(
-                    "  {} {}: {} {} x {} {} {}",
-                    language.text("Step"),
+                    "  Step {}: Produce {} x {} at {}",
                     i + 1,
-                    language.text("Produce"),
                     step.quantity,
-                    language.item(&step.item_name),
-                    language.text("at"),
-                    language.facility(&step.facility)
+                    step.item_name,
+                    step.facility
                 );
             }
         }
     }
 
     println!();
-    println!("{}", language.text("[SUMMARY]"));
+    println!("[SUMMARY]");
     println!("----------------------------------------------------------------");
-    println!("  {} {:.0} {}", language.text("Total Profit:"), path.total_profit, language.text(&path.currency));
-    println!("  {} {}", language.text("Total Time:"), format_time_in(path.total_time, language));
+    println!("  Total Profit:     {:.0} {}", path.total_profit, path.currency);
+    println!("  Total Time:       {}", format_time(path.total_time));
     if path.startup_time > 0.0 {
-        println!("    - {} {} ({})", language.text("Startup:"), format_time_in(path.startup_time, language), language.text("first batch"));
-        println!("    - {} {}", language.text("Steady-state:"), format_time_in(path.total_time - path.startup_time, language));
+        println!("    - Startup:      {} (first batch)", format_time(path.startup_time));
+        println!("    - Steady-state: {}", format_time(path.total_time - path.startup_time));
     }
     if let Some(energy) = path.total_energy {
-        println!("  {} {:.0}", language.text("Total Energy:"), energy);
+        println!("  Total Energy:     {:.0}", energy);
     }
-    println!("  {} {}", language.text("Items Produced:"), path.items_produced);
+    println!("  Items Produced:   {}", path.items_produced);
     
     if path.is_energy_self_sufficient {
         println!();
-        println!("  {}", language.text("[ENERGY SELF-SUFFICIENT]"));
+        println!("  [ENERGY SELF-SUFFICIENT]");
         if let Some(ref energy_item) = path.energy_item_name {
             if let Some(energy_count) = path.energy_items_produced {
-                println!("  {} {}x {}", language.text("Energy Item:"), energy_count, language.item(energy_item));
+                println!("  Energy Item:      {}x {}", energy_count, energy_item);
             }
         }
     }
 
-    if language == Language::ZhTw {
-        crate::locale::zh_tw::print_all_options(efficiencies, optimize_energy);
-        return;
-    }
     println!();
     println!(
-        "{} ({} {})",
-        language.text("[ALL OPTIONS RANKED]"),
-        language.text("by"),
+        "[ALL OPTIONS RANKED] (by {})",
         if optimize_energy {
-            language.text("energy efficiency")
+            "energy efficiency"
         } else {
-            language.text("time efficiency")
+            "time efficiency"
         }
     );
     println!("----------------------------------------------------------------");
     println!(
         "{:<20} {:>12} {:>12} {:>12}",
-        language.text("Item"), language.text("Profit/sec"), language.text("Profit/energy"), language.text("Time/unit")
+        "Item", "Profit/sec", "Profit/energy", "Time/unit"
     );
     println!("----------------------------------------------------------------");
 
@@ -228,13 +199,13 @@ pub fn display_results_in(
         let energy_str = eff
             .profit_per_energy
             .map(|e| format!("{:.4}", e))
-            .unwrap_or_else(|| language.text("N/A").to_string());
+            .unwrap_or_else(|| "N/A".to_string());
         println!(
             "{:<20} {:>12.4} {:>12} {:>12}",
-            language.item(&eff.item.name),
+            eff.item.name,
             eff.profit_per_second,
             energy_str,
-            format_time_in(eff.total_time_per_unit, language)
+            format_time(eff.total_time_per_unit)
         );
     }
 
@@ -250,11 +221,6 @@ pub fn display_results_in(
 ///
 /// * `efficiencies` - All calculated efficiency metrics
 pub fn display_energy_recommendations(efficiencies: &[ProductionEfficiency]) {
-    display_energy_recommendations_in(efficiencies, Language::En);
-}
-
-/// Prints energy recommendations in the selected display language.
-pub fn display_energy_recommendations_in(efficiencies: &[ProductionEfficiency], language: Language) {
     let items_with_energy: Vec<_> = efficiencies
         .iter()
         .filter(|e| e.profit_per_energy.is_some())
@@ -262,20 +228,16 @@ pub fn display_energy_recommendations_in(efficiencies: &[ProductionEfficiency], 
 
     if items_with_energy.is_empty() {
         println!();
-        println!("{}", language.text("[ENERGY] No items with energy data available."));
-        return;
-    }
-    if language == Language::ZhTw {
-        crate::locale::zh_tw::print_energy_rankings(&items_with_energy);
+        println!("[ENERGY] No items with energy data available.");
         return;
     }
 
     println!();
-    println!("{}", language.text("[ENERGY EFFICIENCY RANKINGS]"));
+    println!("[ENERGY EFFICIENCY RANKINGS]");
     println!("----------------------------------------------------------------");
     println!(
         "{:<20} {:>15} {:>15}",
-        language.text("Item"), language.text("Profit/Energy"), language.text("Energy/Unit")
+        "Item", "Profit/Energy", "Energy/Unit"
     );
     println!("----------------------------------------------------------------");
 
@@ -290,7 +252,7 @@ pub fn display_energy_recommendations_in(efficiencies: &[ProductionEfficiency], 
     for eff in sorted.iter().take(10) {
         println!(
             "{:<20} {:>15.6} {:>15.0}",
-            language.item(&eff.item.name),
+            eff.item.name,
             eff.profit_per_energy.unwrap_or(0.0),
             eff.total_energy_per_unit.unwrap_or(0.0)
         );

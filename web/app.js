@@ -1,15 +1,20 @@
 // Aniimax Web Application
 
-import { currentLocale, sourceAttribute, translate } from './i18n.js';
-import './math-translation.js';
-
 import {
-    FACILITIES, FACILITY_CATEGORIES, FACILITY_CATEGORY_BY_NAME, FACILITY_FOOTPRINTS, HOMELAND_PLOTS, HOMELAND_PLOT_SIZE,
-    MAX_HOME_LEVEL, ANIIMO_MAX, simpleSetup,
-    LEVEL_UP_COSTS, LEVEL_UP_CHAINS, SPECIAL_RECIPES, SEASON, ANIIPOD_TIERS, PERSONALITY_PAIRS, personalityLetter, opposedPersonality,
-} from './facility-config.js?v=rv14-rv20-facility-counts';
-import { allocateTurnFacilities, redistributeTurnFacilityRows } from './turn-jobs.js';
+    FACILITIES, FACILITY_CATEGORIES, FACILITY_CATEGORY_BY_NAME, FACILITY_FOOTPRINTS, FACILITY_OUTPUT_LIMITS, HOMELAND_PLOTS, HOMELAND_PLOT_SIZE,
+    MAX_HOME_LEVEL, ANIIMO_MAX, ANIIMO_FAMILIES, recipeFamily, STORAGE_PLACEMENT_LIMITS, simpleSetup, homeLevelForSetup, SIMPLE_MODULE_FIELDS,
+    LEVEL_UP_COSTS, LEVEL_UP_TIMERS, LEVEL_UP_CHAINS, SPECIAL_RECIPES, SEASON, ANIIPOD_TIERS, PERSONALITY_PAIRS, personalityLetter, opposedPersonality,
+} from './facility-config.js';
+import {
+    encodeLayoutCode, encodeSetupCode, readSetupImport,
+} from './share-code.js';
 import { createShareUrl, readShareHash, urlWithoutShare } from './share-config.js';
+import { normalizeSetupSettings } from './setup-config.js';
+import { harvestBudgetStatus } from './harvest-budget.js';
+import { festivalCraftChecklist } from './festival-crafting.js';
+import { infoButton, initContextHelp } from './context-help.js';
+
+initContextHelp();
 
 let wasmReady = false;
 
@@ -23,7 +28,10 @@ const pendingWorkerRequests = new Map();
 
 // Tags this page load's worker (and, through it, the wasm solver; see worker.js) so the browser
 // never runs a cached older solver next to newer page code.
-const WORKER_URL = `./worker.js?load=${Date.now()}`;
+const workerUrl = new URL('./worker.js', import.meta.url);
+workerUrl.search = new URL(import.meta.url).search;
+workerUrl.searchParams.set('load', Date.now());
+const WORKER_URL = workerUrl.href;
 
 function initWorker() {
     worker = new Worker(WORKER_URL, { type: 'module' });
@@ -115,8 +123,8 @@ function trialCountToPercent(count) {
 // change, since those invalidate the plan.
 let lastPlan = null;
 
-// Plans for both Aniimo setups from the latest Calculate: `{ best, minimum }`. Best is solved and
-// shown first; Minimum follows in the background (see `runFindPlan`). `planRunId` lets a newer
+// Plans for Aniimo setups from the latest Calculate. The selected team is solved and shown
+// first; other setups are cached as they are requested. `planRunId` lets a newer
 // Calculate click discard an older run's late Minimum result.
 let plansBySetup = {};
 let planRunId = 0;
@@ -173,6 +181,7 @@ function stopSetupSolve() {
 
 // Shows the selected setup, and works it out first if this is the first time it's been asked for.
 function switchAniimoSetup() {
+    renderSeasonBudgetNote();
     showSelectedPlan();
     ensurePlanFor(selectedAniimoSetup());
 }
@@ -185,7 +194,7 @@ function showSelectedPlan() {
     const content = document.getElementById('results-content');
     content.classList.toggle('stale', !plan);
     if (!plan) {
-        pending.style.display = 'block';
+        pending.style.display = lastPlanInput ? 'block' : 'none';
         return;
     }
     pending.style.display = 'none';
@@ -275,7 +284,7 @@ function renderFacilityCards() {
     grid.innerHTML = FACILITY_CATEGORIES.map(category => {
         const cards = FACILITIES.filter(f => f.category === category).map(f => `
             <div class="facility-card">
-                <h4>${f.name} <span class="info-icon" data-tooltip="${f.tooltip}">?</span></h4>
+                <h4>${f.name} ${infoButton(f.name, f.tooltip.replaceAll('&#10;', '\n'))}</h4>
                 <div class="facility-tiers" data-facility="${f.name}"></div>
                 ${f.hasLevels === false ? '' : '<button type="button" class="add-tier-btn" data-facility="' + f.name + '">+ Add level</button>'}
             </div>
@@ -354,6 +363,8 @@ const STORAGE_KEY = 'aniimax-config-v1';
 // True once the player has picked a rate unit themselves this visit. Until then a fresh plan
 // picks the unit it reads best at; after it, their choice stands.
 let rateUnitChosen = false;
+let defaultConfigData;
+let preferredGoalTarget = '';
 
 // Every plain input ID whose value should be persisted (facility tiers are saved separately;
 // see `facilityTiers`/`initFacilityTiers`, since they're a dynamic list rather than one fixed
@@ -361,11 +372,13 @@ let rateUnitChosen = false;
 function getPersistedFieldIds() {
     return [
         'target-amount', 'current-amount',
-        'strategy-level-up', 'strategy-priorities', 'level-up-target',
+        'strategy-level-up', 'strategy-priorities', 'level-up-target', 'simple-toolkit-upgrades',
         'mode-simple', 'mode-advanced', 'home-level',
+        ...SIMPLE_MODULE_FIELDS.map(field => field.id),
         'ecological-module-level', 'kitchen-module-level',
-        'resource-detector-level', 'crafting-module-level',
-        'rate-unit', 'season-on', 'layout-sim-on', 'season-currency-per-day',
+        'resource-detector-level', 'crafting-module-level', 'power-module-level',
+        'rate-unit', 'season-on', 'season-wheat-budget', 'season-mutation-plots', 'season-sugarcane-stock', 'season-points-min', 'festival-batch-amount',
+        'layout-sim-on', 'layout-storage-count', 'layout-power-gap', 'layout-whole',
         'aniimo-best', 'aniimo-minimum', 'aniimo-custom'
     ];
 }
@@ -398,6 +411,20 @@ function migrateSavedConfig(data) {
     if (data['resource-detector-level'] === undefined && data['mineral-detector-level'] !== undefined) {
         data['resource-detector-level'] = data['mineral-detector-level'];
     }
+    // A saved Harvest Moon cap, plots or unlocked Notes are not valid settings for
+    // Magical Wonder Night. Keep the user's normal RV setup, roster and priorities.
+    if (data.seasonId !== 'magical_wonder_night') {
+        data['season-on'] = false;
+        data['season-wheat-budget'] = '0';
+        data['season-mutation-plots'] = '0';
+        data['season-points-min'] = '0';
+        const oldNotes = new Set(['harvest_platter', 'umbral_pickle', 'umbral_hot_pot',
+            'umbral_sweet_and_spicy_sauce']);
+        if (Array.isArray(data.unlockedSpecial)) {
+            data.unlockedSpecial = data.unlockedSpecial.filter(name => !oldNotes.has(name));
+        }
+        data.seasonId = 'magical_wonder_night';
+    }
     return data;
 }
 
@@ -420,8 +447,18 @@ function initFacilityTiers(data) {
 
 }
 
-function currentConfig() {
-    const data = { facilityTiers, levelUpStock, skippedRecipes: [...skippedRecipes], unlockedSpecial: [...unlockedSpecial], priorities: priorityOrder, aniimoLevels, roster };
+function currentConfigData() {
+    const data = {
+        facilityTiers,
+        seasonId: 'magical_wonder_night',
+        levelUpStock,
+        skippedRecipes: [...skippedRecipes],
+        unlockedSpecial: [...unlockedSpecial],
+        priorities: priorityOrder,
+        aniimoLevels,
+        roster,
+        goalTarget: document.getElementById('goal-target').value || preferredGoalTarget,
+    };
     getPersistedFieldIds().forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -430,48 +467,169 @@ function currentConfig() {
     return data;
 }
 
+function saveInputsToStorage() {
+    document.getElementById('festival-batch-result').replaceChildren();
+    const data = currentConfigData();
+    const editedShare = clearShareHash();
+    document.getElementById('setup-export-panel').hidden = true;
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        if (editedShare) document.getElementById('setup-share-hint').textContent = 'Your edited setup is now saved in this browser.';
+        return true;
+    } catch (e) {
+        console.warn('Could not save inputs to localStorage:', e);
+        return false;
+    }
+}
+
 function clearShareHash() {
-    const url = urlWithoutShare(window.location.href);
-    if (url === window.location.href) return false;
-    window.history.replaceState(null, '', url);
+    const next = urlWithoutShare(window.location.href);
+    if (next === window.location.href) return false;
+    window.history.replaceState(null, '', next);
     return true;
 }
 
-function saveInputsToStorage() {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig()));
-        const imported = clearShareHash();
-        document.getElementById('share-config-status').textContent = imported
-            ? 'Your changes are saved in this browser.' : '';
-        document.getElementById('share-config-result').hidden = true;
-    } catch (e) {
-        console.warn('Could not save inputs to localStorage:', e);
-    }
+function showImportedLayout(imported) {
+    document.getElementById('imported-layout-summary').textContent =
+        `RV ${imported.homeLevel} layout · ${(imported.layout.storages || [imported.layout.storage]).length} Storage Unit(s). Placement only: this code does not contain calculator settings.`;
+    document.getElementById('imported-layout-diagram').innerHTML = homelandSvg(imported.layout, imported.homeLevel);
+    document.getElementById('imported-layout-card').hidden = false;
 }
 
-async function shareCurrentConfig() {
-    const link = document.getElementById('share-config-link');
-    const result = document.getElementById('share-config-result');
-    const status = document.getElementById('share-config-status');
-    try {
-        link.value = await createShareUrl(window.location.href, currentConfig());
-        result.hidden = false;
-        link.focus();
-        link.select();
+function applyImportedSetup(settings, clearSharedLink = true) {
+    // Discard every result/cache so changing Aniimo mode cannot revive a pre-import plan.
+    planRunId++;
+    stopRanking();
+    stopSetupSolve();
+    stopLayout();
+    plansBySetup = {};
+    rankingsBySetup = {};
+    lastPlan = lastPlanInput = lastGoalResult = null;
+    lastBestTeam = null;
+    // Goal options belong to the discarded plan. Keep the imported goal preference
+    // until fresh options are created rather than saving the previous plan's choice.
+    document.getElementById('goal-target').replaceChildren();
+    document.getElementById('aniimo-count').hidden = true;
+    ['aniimo-summary', 'aniimo-abilities', 'aniimo-collapsed-summary'].forEach(id => {
+        document.getElementById(id).replaceChildren();
+    });
+    document.getElementById('solve-progress').style.display = 'none';
+    document.getElementById('results-section').style.display = 'none';
+    document.getElementById('imported-layout-card').hidden = true;
+    document.getElementById('setup-export-panel').hidden = true;
+    document.getElementById('festival-batch-result').replaceChildren();
+    initFacilityTiers(settings);
+    loadInputsFromStorage(settings);
+    renderFacilityCards();
+    renderSkippedRecipes();
+    renderSpecialRecipes();
+    applyConfigMode();
+    showAniimoSetup();
+    rateUnitChosen = true;
+    if (clearSharedLink) clearShareHash();
+}
+
+function sharedSetupNotice(warnings) {
+    return `Shared setup loaded. Review it before calculating. Your previous saved values are kept until you edit this setup. ${warnings.join(' ')}`;
+}
+
+function attachSetupShareHandlers() {
+    const hint = document.getElementById('setup-share-hint');
+    const panel = document.getElementById('setup-import-panel');
+    const input = document.getElementById('setup-import-value');
+    const error = document.getElementById('setup-import-error');
+    const apply = document.getElementById('setup-import-apply');
+    const exportSetup = async asLink => {
         try {
-            await navigator.clipboard.writeText(link.value);
-            status.textContent = 'Link copied. It includes your current setup.';
-        } catch (_) {
-            status.textContent = 'Copy the link above to share your setup.';
+            const config = currentConfigData();
+            const value = asLink ? await createShareUrl(window.location.href, config) : encodeSetupCode(config);
+            const output = document.getElementById('setup-export-value');
+            output.value = value;
+            document.getElementById('setup-export-panel').hidden = false;
+            output.focus();
+            output.select();
+            try {
+                await navigator.clipboard.writeText(value);
+                hint.textContent = `${asLink ? 'Setup link' : 'Setup code'} copied. The recipient can review the settings before calculating.`;
+            } catch {
+                hint.textContent = 'Clipboard unavailable. Copy the selected text above to share this setup.';
+            }
+        } catch (e) {
+            hint.textContent = `Could not share this setup: ${e.message}`;
         }
-    } catch (error) {
-        status.textContent = 'Could not create a share link for this setup.';
-        console.warn('Could not create share link:', error);
-    }
+    };
+    document.getElementById('setup-copy-code').addEventListener('click', () => exportSetup(false));
+    document.getElementById('setup-copy-link').addEventListener('click', () => exportSetup(true));
+    const openImport = () => {
+        panel.hidden = false;
+        error.textContent = '';
+        input.focus();
+    };
+    document.getElementById('setup-import-code').addEventListener('click', openImport);
+    document.getElementById('layout-import-code').addEventListener('click', () => {
+        openImport();
+        panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    document.getElementById('setup-import-cancel').addEventListener('click', () => {
+        panel.hidden = true;
+        document.getElementById('setup-import-code').focus();
+    });
+    apply.addEventListener('click', async () => {
+        error.textContent = '';
+        apply.disabled = true;
+        try {
+            const imported = await readSetupImport(input.value);
+            if (document.getElementById('optimize-btn').disabled) {
+                throw new Error('Wait for the current calculation to finish before importing');
+            }
+            if (imported.kind === 'setup') {
+                const { settings, warnings } = normalizeSetupSettings(imported.settings, defaultConfigData);
+                applyImportedSetup(settings);
+                const saved = saveInputsToStorage();
+                hint.textContent = `Setup imported. Review the values, then click Find the best plan. ${warnings.join(' ')}${saved ? '' : ' Browser saving is unavailable; this setup works for this visit.'}`.trim();
+                if (selectedSetupTab() !== 'best') {
+                    document.getElementById('aniimo-toggle').setAttribute('aria-expanded', 'true');
+                    document.getElementById('aniimo-body').hidden = false;
+                }
+            } else {
+                showImportedLayout(imported.drawn);
+                hint.textContent = 'Older layout opened below. Your calculator settings were kept; use a setup code or link to restore inputs.';
+            }
+            panel.hidden = true;
+            input.value = '';
+        } catch (e) {
+            error.textContent = `Could not import: ${e.message || e}. Your current setup was kept.`;
+        } finally {
+            apply.disabled = false;
+        }
+    });
+    document.getElementById('imported-layout-close').addEventListener('click', () => {
+        document.getElementById('imported-layout-card').hidden = true;
+    });
+    // Navigating to a link for this already-open page only changes its fragment;
+    // it does not run DOMContentLoaded again. Review that setup without auto-saving it.
+    window.addEventListener('hashchange', async () => {
+        const hash = window.location.hash;
+        try {
+            const shared = await readShareHash(hash);
+            if (!shared || hash !== window.location.hash) return;
+            if (document.getElementById('optimize-btn').disabled) {
+                throw new Error('Wait for the current calculation to finish, then open the link again');
+            }
+            const { settings, warnings } = normalizeSetupSettings(shared, defaultConfigData);
+            applyImportedSetup(settings, false);
+            hint.textContent = sharedSetupNotice(warnings);
+        } catch (e) {
+            if (hash !== window.location.hash) return;
+            hint.textContent = `This shared link could not be loaded: ${e.message}. Your current setup was kept.`;
+        }
+    });
 }
 
 function loadInputsFromStorage(data) {
     if (!data) return;
+    data = migrateSavedConfig(data);
+    preferredGoalTarget = typeof data.goalTarget === 'string' ? data.goalTarget : '';
     if (data.levelUpStock && typeof data.levelUpStock === 'object') levelUpStock = { ...data.levelUpStock };
     if (Array.isArray(data.skippedRecipes)) skippedRecipes = new Set(data.skippedRecipes.filter(n => typeof n === 'string'));
     if (Array.isArray(data.unlockedSpecial)) unlockedSpecial = new Set(data.unlockedSpecial.filter(n => typeof n === 'string'));
@@ -496,6 +654,7 @@ function loadInputsFromStorage(data) {
             .filter(a => a && typeof a === 'object' && a.abilities && typeof a.abilities === 'object')
             .map(a => ({
                 name: typeof a.name === 'string' ? a.name : '',
+                family: ANIIMO_FAMILIES.includes(a.family) ? a.family : '',
                 count: Math.max(1, Math.round(Number(a.count)) || 1),
                 abilities: Object.fromEntries(Object.entries(a.abilities)
                     .filter(([ability, level]) => ABILITY_BY_NAME.has(ability) && Number.isInteger(Number(level)) && level >= 1 && level <= 4)
@@ -513,7 +672,9 @@ function loadInputsFromStorage(data) {
             el.value = data[id];
         }
     });
+    renderSimpleModuleControls(data);
     levelUpTargetChosen = 'level-up-target' in data;
+    layoutShowsWhole = document.getElementById('layout-whole').checked;
 }
 
 // Auto-save on every change to a persisted static field (facility tier inputs save themselves;
@@ -555,8 +716,8 @@ async function initWasm() {
 }
 
 // --- Simple / advanced mode -----------------------------------------------------------
-// Simple mode takes just the RV (Homeland) level and assumes everything that level allows is built
-// and upgraded (see `simpleSetup` in facility-config.js). Advanced mode is the full per-facility
+// Simple mode assumes all facilities allowed at the RV level and accepts owned module levels
+// (see `simpleSetup` in facility-config.js). Advanced mode is the full per-facility
 // input. Switching modes never overwrites the advanced inputs; "Fill from RV level" copies a
 // simple setup into them on purpose.
 
@@ -580,10 +741,34 @@ function populateHomeLevels() {
     }
 }
 
+function getSimpleSetup() {
+    const levels = Object.fromEntries(SIMPLE_MODULE_FIELDS.map(({ id, module }) =>
+        [module, document.getElementById(id).value]));
+    return simpleSetup(selectedHomeLevel(), document.getElementById('simple-toolkit-upgrades').checked, levels);
+}
+
+function renderSimpleModuleControls(settings) {
+    const caps = simpleSetup(selectedHomeLevel()).modules;
+    for (const { id, module } of SIMPLE_MODULE_FIELDS) {
+        const select = document.getElementById(id);
+        const value = settings
+            ? settings[id] ?? (settings['simple-toolkit-upgrades'] === false ? '0' : 'auto')
+            : select.value || 'auto';
+        select.innerHTML = `<option value="auto">RV max (Lv.${caps[module]})</option><option value="0">Lv.0</option>`
+            + Array.from({ length: caps[module] }, (_, i) => `<option value="${i + 1}">Lv.${i + 1}</option>`).join('');
+        select.value = value === 'auto' ? 'auto' : String(Math.max(0, Math.min(caps[module], numberOrDefault(value, 0))));
+    }
+    const automatic = SIMPLE_MODULE_FIELDS.filter(({ id }) => document.getElementById(id).value === 'auto').length;
+    const all = document.getElementById('simple-toolkit-upgrades');
+    all.checked = automatic === SIMPLE_MODULE_FIELDS.length;
+    all.indeterminate = automatic > 0 && !all.checked;
+}
+
 // One entry per built facility, e.g. "10 Farmland Lv.2".
 function renderSimpleSummary() {
+    renderSimpleModuleControls();
     const homeLevel = selectedHomeLevel();
-    const { facilities, modules } = simpleSetup(homeLevel);
+    const { facilities, modules } = getSimpleSetup();
     const chip = (count, name, level) => `
         <div class="chip"><span><span class="chip-count">${count}</span> ${name}</span>${level ? `<span class="chip-level">${level}</span>` : ''}</div>`;
     const built = FACILITIES
@@ -596,14 +781,25 @@ function renderSimpleSummary() {
         ['Kitchen Module', modules.kitchen_module],
         ['Resource Detector', modules.resource_detector],
         ['Crafting Module', modules.crafting_module],
+        ['Power Module', modules.power_module],
     ].map(([name, level]) => chip('', name, level > 0 ? `Lv.${level}` : 'not yet')).join('');
     const kinds = FACILITIES.filter(f => facilities[f.name][0].count > 0).length;
-    document.getElementById('simple-summary-title').textContent = `${kinds} facilities and 4 modules at RV ${homeLevel}`;
+    document.getElementById('simple-summary-title').textContent = `${kinds} facilities and 5 modules at RV ${homeLevel}`;
     document.getElementById('simple-summary').innerHTML = `
         <p class="assume-title">Facilities</p>
         <div class="chip-grid">${built}</div>
         <p class="assume-title">Modules</p>
         <div class="chip-grid">${moduleChips}</div>`;
+
+    const generators = tierCount(facilities['Crackle Generator']);
+    const active = modules.power_module > 0 && generators > 0;
+    const note = document.getElementById('simple-emode-note');
+    note?.classList.toggle('is-active', active);
+    document.getElementById('simple-emode-title').textContent = active ? 'E-Mode is available'
+        : homeLevel < 12 ? 'E-Mode unlocks at RV 12' : 'E-Mode needs a Power Module';
+    document.getElementById('simple-emode-copy').textContent = active
+        ? `Power Module Lv.${modules.power_module} + ${generators} Crackle Generator${generators === 1 ? '' : 's'}. Auto-selects powered or Aniimo production.`
+        : 'Requires a Power Module and Crackle Generator.';
 }
 
 // Whether the player has picked Advanced mode's level-up target; until then it follows the RV
@@ -635,17 +831,32 @@ function fillAdvancedFrom(homeLevel) {
     document.getElementById('kitchen-module-level').value = modules.kitchen_module;
     document.getElementById('resource-detector-level').value = modules.resource_detector;
     document.getElementById('crafting-module-level').value = modules.crafting_module;
+    document.getElementById('power-module-level').value = modules.power_module;
+    document.getElementById('home-level').value = String(homeLevel);
+    renderSimpleModuleControls();
     followLevelUpTarget(homeLevel);
     renderStrategy();
     saveInputsToStorage();
 }
 
 function attachModeHandlers() {
+    document.getElementById('simple-toolkit-upgrades').addEventListener('change', event => {
+        SIMPLE_MODULE_FIELDS.forEach(({ id }) => {
+            document.getElementById(id).value = event.target.checked ? 'auto' : '0';
+        });
+        renderSimpleSummary();
+        saveInputsToStorage();
+    });
+    document.getElementById('simple-module-levels').addEventListener('change', () => {
+        renderSimpleSummary();
+        saveInputsToStorage();
+    });
     document.getElementById('mode-simple').addEventListener('change', applyConfigMode);
     document.getElementById('mode-advanced').addEventListener('change', applyConfigMode);
     document.getElementById('home-level').addEventListener('change', () => {
         renderSimpleSummary();
         renderStrategy();
+        saveInputsToStorage();
     });
     document.getElementById('fill-btn').addEventListener('click', () => {
         fillAdvancedFrom(numberOrDefault(document.getElementById('fill-level').value, MAX_HOME_LEVEL));
@@ -697,6 +908,7 @@ const MODULE_NAMES = {
     kitchen_module: 'Kitchen Module',
     resource_detector: 'Resource Detector',
     crafting_module: 'Crafting Module',
+    power_module: 'Power Module',
 };
 
 function stopRanking() {
@@ -722,20 +934,7 @@ const tierLevel = tiers => Math.max(0, ...(tiers || []).filter(t => t.count > 0)
 
 // The lowest RV level whose facilities and modules cover everything in `input`, for Advanced
 // mode, where the player enters what they have rather than their RV level.
-function homeLevelCovering(input) {
-    for (let level = 1; level <= MAX_HOME_LEVEL; level++) {
-        const allowed = simpleSetup(level);
-        const facilitiesFit = FACILITIES.every(f => {
-            const have = input.facilities[f.name];
-            if (tierCount(have) === 0) return true;
-            const cap = allowed.facilities[f.name];
-            return tierCount(have) <= tierCount(cap) && (f.hasLevels === false || tierLevel(have) <= tierLevel(cap));
-        });
-        const modulesFit = Object.entries(input.modules).every(([name, level_]) => level_ <= (allowed.modules[name] ?? 0));
-        if (facilitiesFit && modulesFit) return level;
-    }
-    return MAX_HOME_LEVEL;
-}
+function homeLevelCovering(input) { return homeLevelForSetup(input); }
 
 // Every change within reach of `base` (a plan input), as `{ label, input, group }`. Changes
 // sharing a `group` are one thing taken further and further (a module at each level up to what
@@ -1051,17 +1250,43 @@ function improvementsChecked(best, status, open) {
 // there, so the busiest facilities sit closest. Environment buildings keep the plots they cover
 // exactly as planned, moving as one block. Facilities with no known size are left out and named.
 
-// Trips per hour for each unit of a plan row: one per finished batch.
-function tripsPerUnit(step) {
+// Hauling starts when a facility's finished-output stack reaches its cap, not after every batch.
+// Use the lowest owned tier that can run this recipe (conservative for mixed-level Advanced
+// setups); Simple mode owns one tier per facility so this is exact there.
+function outputLimitForStep(step, input = lastPlanInput) {
+    const limits = FACILITY_OUTPUT_LIMITS[step.facility];
+    if (!limits?.length) return 1;
+    const recipe = recipeIndex.find(r => r.name === basePlanItem(step.item_name));
+    const required = recipe?.facilityLevel || 1;
+    const tiers = (input?.facilities?.[step.facility] || [])
+        .filter(t => (t.count || 0) > 0 && (t.level || 1) >= required)
+        .map(t => t.level || 1);
+    const level = tiers.length ? Math.min(...tiers) : required;
+    return limits[Math.min(Math.max(1, level), limits.length) - 1] || limits[limits.length - 1] || 1;
+}
+
+function batchRatePerUnit(step) {
     if (step.status !== 'producing' || !step.cycle_time || !step.facility_count) return 0;
     const busy = step.busy_units ?? step.facility_count;
-    return (busy / step.cycle_time / step.facility_count) * 3600;
+    return busy / step.cycle_time / step.facility_count;
+}
+
+// Estimated full-stack pickups per hour for each physical unit in a plan row.
+function tripsPerUnit(step, input = lastPlanInput) {
+    const batches = batchRatePerUnit(step);
+    if (batches <= 0) return 0;
+    const recipe = recipeIndex.find(r => r.name === basePlanItem(step.item_name));
+    const yieldAmount = Math.max(1, recipe?.yieldAmount || 1);
+    const outputLimit = Math.max(1, outputLimitForStep(step, input));
+    // A completed batch lands as one output event. If a batch itself exceeds the nominal stack
+    // cap (Quick crops can), it still needs one pickup, not yield/cap fractional or repeated trips.
+    const batchesPerPickup = Math.max(1, Math.ceil(outputLimit / yieldAmount));
+    return batches / batchesPerPickup * 3600;
 }
 
 // Whether a crop needs a growing environment: grown without one, a building's temperature
 // would change it. Crops that need none grow the same anywhere.
-const needsEnvironment = item => !!recipeIndex.find(r => r.name === item)?.environment;
-const takesTurns = step => step.status === 'producing' && !!recipeIndex.find(r => r.name === step.item_name)?.turns;
+const needsEnvironment = item => !!recipeIndex.find(r => r.name === basePlanItem(item))?.environment;
 
 // The plan as pieces for `layOut`: environment blocks, then one piece per other facility unit,
 // then whatever the player owns that the plan doesn't use.
@@ -1107,11 +1332,24 @@ function homelandPieces(plan, input) {
             // Each plot in this zone gets one of the crops planned for its facility here.
             const crops = {};
             rows.forEach(r => {
-                for (let n = 0; n < r.facility_count; n++) (crops[r.facility] ||= []).push({ crop: r.item_name, trips: tripsPerUnit(r), cycle: r.cycle_time });
+                const job = {
+                    item: r.item_name,
+                    cycle: r.cycle_time,
+                    rate: batchRatePerUnit(r),
+                    outputLimit: outputLimitForStep(r, input),
+                };
+                for (let n = 0; n < r.facility_count; n++) {
+                    (crops[r.facility] ||= []).push({
+                        crop: r.item_name,
+                        trips: tripsPerUnit(r, input),
+                        cycle: r.cycle_time,
+                        job,
+                    });
+                }
             });
             layout.forEach(p => {
-                const crop = (crops[p.facility] || []).shift() || { crop: null, trips: 0 };
-                plots.push({ w: p.size, h: p.size, weight: crop.trips, cycle: crop.cycle, zone: unit.partner ? zone : 0, facility: p.facility, crop: crop.crop });
+                const crop = (crops[p.facility] || []).shift() || { crop: null, trips: 0, job: null };
+                plots.push({ w: p.size, h: p.size, weight: crop.trips, cycle: crop.cycle, jobs: crop.job ? [crop.job] : [], zone: unit.partner ? zone : 0, facility: p.facility, crop: crop.crop });
                 planned.push({ x: p.x, y: p.y });
                 count(p.facility);
                 placedInBlocks[`${p.facility}|${crop.crop}`] = (placedInBlocks[`${p.facility}|${crop.crop}`] || 0) + 1;
@@ -1120,25 +1358,40 @@ function homelandPieces(plan, input) {
         pieces.push({ cluster: true, buildings, plots, planned });
     });
 
-    // For every facility type, recipes allowed to take turns share a unit only when there are not
-    // enough owned units to give each recipe its own. No facility names are special-cased here.
-    const turnAllocations = allocateTurnFacilities(steps, facility => tierCount(input.facilities[facility]), takesTurns);
-    turnAllocations.forEach((allocations, facility) => {
+    // Recipes taking turns on the same units (the Bench's and Kiln's tiers) share them: as many
+    // units as their busy time together needs, each running every tier in turn at its share.
+    const takesTurns = step => step.status === 'producing' && !!recipeIndex.find(r => r.name === basePlanItem(step.item_name))?.turns;
+    const turnGroups = new Map();
+    steps.filter(takesTurns).forEach(step => {
+        const key = `${step.facility}|${isElectricItem(step.item_name) ? 'electric' : 'normal'}`;
+        turnGroups.set(key, [...(turnGroups.get(key) || []), step]);
+    });
+    turnGroups.forEach((rows, key) => {
+        const split = key.lastIndexOf('|');
+        const facility = key.slice(0, split);
+        const electric = key.slice(split + 1) === 'electric';
         const footprint = FACILITY_FOOTPRINTS[facility];
         if (!footprint) {
             unplaced.add(facility);
             return;
         }
-        allocations.forEach(jobs => {
-            const weight = jobs.reduce((sum, j) => sum + j.rate * 3600, 0);
-            pieces.push({ members: [{ x: 0, y: 0, w: footprint[0], h: footprint[1], weight, jobs: jobs.length ? jobs : undefined, cycle: jobs[0]?.cycle, facility, crop: jobs[0]?.item ?? null, sensitive: false }] });
-        });
-        count(facility, allocations.length);
+        const busy = rows.reduce((sum, r) => sum + (r.busy_units ?? r.facility_count), 0);
+        const n = Math.max(1, Math.ceil(busy - 1e-6));
+        const jobs = rows.filter(r => r.cycle_time > 0).map(r => ({
+            item: r.item_name,
+            cycle: r.cycle_time,
+            rate: (r.busy_units ?? r.facility_count) / r.cycle_time / n,
+            outputLimit: outputLimitForStep(r, input),
+        }));
+        const weight = rows.reduce((sum, r) => sum + tripsPerUnit(r, input) * r.facility_count / n, 0);
+        for (let i = 0; i < n; i++) {
+            pieces.push({ members: [{ x: 0, y: 0, w: footprint[0], h: footprint[1], weight, jobs, cycle: jobs[0]?.cycle, facility, crop: jobs[0]?.item ?? null, sensitive: false, electric }] });
+        }
+        count(facility, n);
     });
 
-    // Everything else, one unit at a time; environment crops no map took count here too. Rows for
-    // a turn facility are already represented above, including its idle row and physical units.
-    steps.filter(step => !turnAllocations.has(step.facility)).forEach(step => {
+    // Everything else, one unit at a time; environment crops no map took count here too.
+    steps.filter(step => !takesTurns(step)).forEach(step => {
         let n = step.facility_count;
         if (step.environment && step.status === 'producing') {
             const key = `${step.facility}|${step.item_name}`;
@@ -1155,13 +1408,20 @@ function homelandPieces(plan, input) {
             // A crop that needs an environment but is grown without one stays out of every
             // coverage square, so no building's temperature changes it.
             const growing = step.status === 'producing';
-            pieces.push({ members: [{ x: 0, y: 0, w: footprint[0], h: footprint[1], weight: tripsPerUnit(step), cycle: step.cycle_time, facility: step.facility, crop: growing ? step.item_name : null, sensitive: growing && needsEnvironment(step.item_name) }] });
+            const jobs = growing && step.cycle_time > 0 ? [{
+                item: step.item_name,
+                cycle: step.cycle_time,
+                rate: batchRatePerUnit(step),
+                outputLimit: outputLimitForStep(step, input),
+            }] : [];
+            pieces.push({ members: [{ x: 0, y: 0, w: footprint[0], h: footprint[1], weight: tripsPerUnit(step, input), cycle: step.cycle_time, jobs, facility: step.facility, crop: growing ? step.item_name : null, sensitive: growing && needsEnvironment(step.item_name), electric: isElectricItem(step.item_name) }] });
         }
         count(step.facility, n);
     });
 
     // What's owned but not in the plan at all, such as environment buildings it didn't need.
     FACILITIES.forEach(f => {
+        if (f.name === 'Crackle Generator') return; // active generators are placed by verified 11x11 power coverage
         const owned = tierCount(input.facilities[f.name]);
         const extra = owned - (placed[f.name] || 0);
         if (extra <= 0) return;
@@ -1215,9 +1475,27 @@ function attachLayoutHandlers() {
     document.getElementById('layout-sim-on').addEventListener('change', () => {
         if (lastLayout) drawLayout(lastLayout);
     });
+    for (const id of ['layout-storage-count', 'layout-power-gap']) {
+        document.getElementById(id).addEventListener('change', () => {
+            saveInputsToStorage();
+            if (lastPlan?.success && lastPlanInput) renderHomelandLayout(lastPlan);
+        });
+    }
     document.getElementById('layout-replay').addEventListener('click', () => {
         if (layoutSim) resetLayoutSim(layoutSim);
     });
+    document.getElementById('layout-copy-code').addEventListener('click', async () => {
+        if (!lastLayout) return;
+        const code = encodeLayoutCode(lastLayout);
+        const hint = document.getElementById('layout-share-hint');
+        try {
+            await navigator.clipboard.writeText(code);
+            hint.textContent = 'Aniimax layout code copied. It can be imported with the button beside it; it is not an in-game Combo Code.';
+        } catch {
+            window.prompt('Copy this Aniimax layout code:', code);
+        }
+    });
+
 }
 
 function drawLayout(drawn) {
@@ -1247,6 +1525,12 @@ function renderHomelandLayout(plan) {
     const { pieces, unplaced } = homelandPieces(plan, lastPlanInput);
     const homeLevel = layoutHomeLevel();
     const cells = homelandPlots().filter(p => p.number <= homeLevel);
+    const requestedStorages = Math.max(1, Math.min(24, Math.round(numberOrDefault(document.getElementById('layout-storage-count').value, 2))));
+    const storageLimit = STORAGE_PLACEMENT_LIMITS[homeLevel];
+    const storageCount = Math.min(requestedStorages, storageLimit || 24);
+    document.getElementById('layout-storage-hint').textContent = storageLimit
+        ? `RV ${homeLevel} allows at most ${storageLimit} Storage Units.${requestedStorages > storageLimit ? ` This layout uses ${storageCount} of the ${requestedStorages} requested.` : ''}`
+        : 'Enter the number you can place in game. Storage Unit caps at this RV level have not been verified.';
     if (layoutWorker) layoutWorker.terminate();
     layoutWorker = new Worker(WORKER_URL.replace('worker.js', 'layout-worker.js'), { type: 'module' });
     layoutWorker.onmessage = (event) => {
@@ -1254,11 +1538,15 @@ function renderHomelandLayout(plan) {
         layoutWorker = null;
         if (runId !== layoutRunId) return;
         const layout = event.data;
-        const at = layout.storageAt;
-        // Buildings carry nothing themselves.
+        const storages = layout.storages?.length ? layout.storages : [layout.storage];
+        // Buildings carry nothing themselves. Each delivery goes to the nearest Storage Unit.
         const members = layout.pieces.flatMap(p => p.members).map(m => ({ ...m, weight: m.weight || 0 }));
         const trips = members.reduce((sum, m) => sum + m.weight, 0);
-        const walked = members.reduce((sum, m) => sum + m.weight * Math.hypot(m.x + m.w / 2 - at.x, m.y + m.h / 2 - at.y), 0);
+        const distanceToStorage = m => Math.min(...storages.map(s => Math.hypot(
+            m.x + m.w / 2 - (s.x + s.w / 2),
+            m.y + m.h / 2 - (s.y + s.h / 2),
+        )));
+        const walked = members.reduce((sum, m) => sum + m.weight * distanceToStorage(m), 0);
         const noRoom = [...new Set(layout.unplaced.map(i => {
             const piece = pieces[i];
             return piece.cluster ? `${piece.buildings[0].facility} and its plots` : piece.members[0].facility;
@@ -1266,10 +1554,12 @@ function renderHomelandLayout(plan) {
         const notes = [
             noRoom.length ? `No room found in RV ${homeLevel}'s plots for: ${noRoom.join(', ')}.` : '',
             unplaced.length ? `Not placed, size unknown: ${unplaced.join(', ')}.` : '',
+            layout.unplacedGenerators ? `${layout.unplacedGenerators} active Crackle Generator(s) could not be fitted.` : '',
+            layout.needsPowerPole ? `${layout.needsPowerPole} E-Mode machine(s) need Power Pole coverage.` : '',
         ].filter(Boolean).join(' ');
         document.getElementById('layout-summary').textContent = `${trips > 0
-            ? `${formatNumber(Math.round(trips))} trips/hour to the Storage Unit, ${(walked / trips).toFixed(1)} tiles each on average, in the ${cells.length} plot${cells.length === 1 ? '' : 's'} open at RV ${homeLevel}.`
-            : 'Nothing in this plan is carried to the Storage Unit.'}${notes ? ` ${notes}` : ''}`;
+            ? `${formatNumber(Math.round(trips))} batch deliveries/hour before Hauling batching, to ${storages.length} Storage Unit${storages.length === 1 ? '' : 's'}, an estimated ${(walked / trips).toFixed(1)} tiles each on average, in the ${cells.length} plot${cells.length === 1 ? '' : 's'} open at RV ${homeLevel}.`
+            : 'Nothing in this plan needs hauling to storage.'}${notes ? ` ${notes}` : ''}`;
         lastLayout = { layout, homeLevel };
         drawLayout(lastLayout);
         setStep('layout', 'done');
@@ -1281,7 +1571,13 @@ function renderHomelandLayout(plan) {
         document.getElementById('layout-summary').textContent = 'The layout couldn\'t be worked out.';
         setStep('layout', 'fail');
     };
-    layoutWorker.postMessage({ pieces, cells: cells.map(({ x, y, w, h }) => ({ x, y, w, h })) });
+    layoutWorker.postMessage({
+        pieces,
+        cells: cells.map(({ x, y, w, h }) => ({ x, y, w, h })),
+        storageCount,
+        generatorCount: plan.generators_used || 0,
+        powerGap: Number(document.getElementById('layout-power-gap').value || 1.5),
+    });
 }
 
 // Stops a layout still being worked out, so it can't land over a newer plan.
@@ -1306,7 +1602,10 @@ function homelandSvg(layout, homeLevel) {
     // The whole homeland, its plots marked out and the ones not open yet shaded.
     const plots = homelandPlots();
     // Zoomed to what's placed, a couple of tiles around it, unless the whole homeland is asked for.
-    const placed = [layout.storage, ...layout.pieces.flatMap(p => p.members)];
+    const storages = layout.storages?.length ? layout.storages : [layout.storage];
+    const generators = layout.generators || [];
+    const powerSpaces = layout.powerSpaces || [];
+    const placed = [...storages, ...powerSpaces, ...generators.flatMap(g => [g, g.coverage]), ...layout.pieces.flatMap(p => p.members)];
     const whole = layoutShowsWhole;
     const minX = whole ? -1 : Math.floor(Math.min(...placed.map(r => r.x))) - 2;
     const minY = whole ? -1 : Math.floor(Math.min(...placed.map(r => r.y))) - 2;
@@ -1325,10 +1624,18 @@ function homelandSvg(layout, homeLevel) {
     const maxTrips = Math.max(...layout.pieces.flatMap(p => p.members.map(m => m.weight || 0)), 1e-9);
     const shapes = layout.pieces.flatMap(p => p.members).map(m => {
         const color = layoutColor(m);
-        const away = Math.hypot(m.x + m.w / 2 - (layout.storage.x + layout.storage.w / 2), m.y + m.h / 2 - (layout.storage.y + layout.storage.h / 2));
+        const away = Math.min(...storages.map(s => Math.hypot(
+            m.x + m.w / 2 - (s.x + s.w / 2),
+            m.y + m.h / 2 - (s.y + s.h / 2),
+        )));
+        const directPower = !m.electric || generators.some(g => {
+            const q = g.coverage;
+            return m.x < q.x + q.w && m.x + m.w > q.x && m.y < q.y + q.h && m.y + m.h > q.y;
+        });
+        const detail = m.jobs ? m.jobs.map(j => prettyItem(j.item)).join(', ') : m.crop ? prettyItem(m.crop) : m.building && m.mode ? m.mode : 'Idle';
         const tip = tipAttrs(m.facility, {
-            detail: m.jobs ? m.jobs.map(j => prettyItem(j.item)).join(', ') : m.crop ? prettyItem(m.crop) : m.building && m.mode ? m.mode : 'Idle',
-            stats: m.weight > 0 ? `${formatRate(m.weight)} trips/hour · ${away.toFixed(1)} tiles from storage` : '',
+            detail: `${detail}${m.electric ? directPower ? ' · E-Mode · direct generator coverage' : ' · E-Mode · needs Power Pole coverage' : ''}`,
+            stats: m.weight > 0 ? `${formatRate(m.weight)} batch deliveries/hour · ${away.toFixed(1)} tiles from storage` : '',
             color,
         });
         const label = Math.min(m.w, m.h) >= 1.5 ? `<text x="${m.x + m.w / 2}" y="${m.y + m.h / 2}" font-size="${Math.min(0.8, m.w / 3)}">${initialsOf(m.facility)}</text>` : '';
@@ -1340,7 +1647,7 @@ function homelandSvg(layout, homeLevel) {
                 fill="${color}" fill-opacity="${m.mode ? 1 : 0.25}" stroke="currentColor" stroke-opacity="0.6" stroke-width="0.08" />
                 ${m.mode ? environmentBuildingIcon(m.facility, m.mode, m.x + m.w / 2, m.y + m.h / 2) : ''}</g>`;
         }
-        return `<g class="layout-piece" ${tip}><rect x="${m.x + 0.04}" y="${m.y + 0.04}" width="${m.w - 0.08}" height="${m.h - 0.08}" rx="0.2"
+        return `<g class="layout-piece${m.electric ? directPower ? ' electric' : ' electric needs-pole' : ''}" ${tip}><rect x="${m.x + 0.04}" y="${m.y + 0.04}" width="${m.w - 0.08}" height="${m.h - 0.08}" rx="0.2"
             fill="${color}" fill-opacity="${fill.toFixed(2)}" stroke="${color}" stroke-width="0.06" />${label}</g>`;
     }).join('');
     const coverageShapes = coverage.map(c => {
@@ -1354,9 +1661,19 @@ function homelandSvg(layout, homeLevel) {
         return `<rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" fill="none"
             stroke="${tint}" stroke-opacity="0.8" stroke-dasharray="0.35,0.25" stroke-width="0.08" />`;
     }).join('');
-    const s = layout.storage;
-    // A line from everything carried to the Storage Unit, each drawn once its first batch is in,
-    // and a ring for the batch it's on (see "Deliveries"), in the same order as `layoutFlows`.
+    const powerCoverage = generators.map(g => `<rect x="${g.coverage.x}" y="${g.coverage.y}" width="${g.coverage.w}" height="${g.coverage.h}" class="layout-power-coverage" />`).join('');
+    const connectionSpaces = powerSpaces.map(r => `
+        <g class="layout-piece layout-connection-space" ${tipAttrs('E-Mode connection space', {
+            detail: `${r.facility || 'Powered station'} · leave this ground clear for connections`,
+            stats: `${r.w}×${r.h} tiles reserved · check Power Pole size and reach in game`,
+        })}><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="0.1" /></g>`).join('');
+    const generatorShapes = generators.map((g, i) => `
+        <g class="layout-piece layout-generator" ${tipAttrs('Crackle Generator', { detail: 'Active E-Mode generator', stats: '11×11 direct power coverage' })}>
+            <rect x="${g.x + 0.04}" y="${g.y + 0.04}" width="${g.w - 0.08}" height="${g.h - 0.08}" rx="0.15" />
+            <text x="${g.x + g.w / 2}" y="${g.y + g.h / 2}" font-size="0.55">CG${generators.length > 1 ? i + 1 : ''}</text>
+        </g>`).join('');
+    // A line from everything carried to its nearest Storage Unit, each drawn once its first
+    // batch is in, and a ring for the batch it's on (see "Deliveries").
     const flowList = layoutFlows(layout);
     const flows = flowList.map(f => `<line x1="${f.x1}" y1="${f.y1}" x2="${f.x2}" y2="${f.y2}" class="layout-flow-line" />`).join('');
     const rings = flowList.map(f => `<g class="layout-ring" transform="translate(${f.rx.toFixed(2)} ${f.ry.toFixed(2)})">
@@ -1368,12 +1685,18 @@ function homelandSvg(layout, homeLevel) {
         <g class="env-grid">${lines.join('')}</g>
         <g class="layout-plots">${plotShapes}</g>
         <g class="layout-coverage">${coverageShapes}</g>
+        <g class="layout-power-ranges" pointer-events="none">${powerCoverage}</g>
+        ${connectionSpaces}
         ${shapes}
+        ${generatorShapes}
         <g class="layout-coverage-edges" pointer-events="none">${coverageEdges}</g>
         <g class="layout-rings" pointer-events="none">${rings}</g>
         <g class="layout-flows" pointer-events="none">${flows}<g class="layout-dots"></g></g>
-        <g class="layout-piece layout-storage-unit" ${tipAttrs('Storage Unit', { detail: 'Where everything is carried', stats: totalTrips > 0 ? `${formatRate(totalTrips)} trips/hour` : '' })}><rect x="${s.x + 0.04}" y="${s.y + 0.04}" width="${s.w - 0.08}" height="${s.h - 0.08}" rx="0.2" class="layout-storage" />
-        <text x="${s.x + s.w / 2}" y="${s.y + s.h / 2}" font-size="0.8" class="layout-storage-text">SU</text></g>
+        <g class="layout-storages">${storages.map((s, i) => `
+            <g class="layout-piece layout-storage-unit" ${tipAttrs(`Storage Unit ${i + 1}`, { detail: 'Haulers use the nearest Storage Unit', stats: totalTrips > 0 ? `${formatRate(totalTrips)} total trips/hour` : '' })}>
+                <rect x="${s.x + 0.04}" y="${s.y + 0.04}" width="${s.w - 0.08}" height="${s.h - 0.08}" rx="0.2" class="layout-storage" />
+                <text x="${s.x + s.w / 2}" y="${s.y + s.h / 2}" font-size="0.8" class="layout-storage-text">SU${storages.length > 1 ? i + 1 : ''}</text>
+            </g>`).join('')}</g>
     </svg>`;
 }
 
@@ -1402,12 +1725,16 @@ let layoutSim = null;
 // long a batch takes and its pace in the plan (batches a second). Most pieces have one; a Bench
 // or Kiln unit has one per tier it takes turns on (see `homelandPieces`).
 function layoutFlows(layout) {
-    const s = layout.storage;
-    const x2 = s.x + s.w / 2;
-    const y2 = s.y + s.h / 2;
+    const storages = layout.storages?.length ? layout.storages : [layout.storage];
     return layout.pieces.flatMap(p => p.members).filter(m => m.weight > 0 && m.crop && m.cycle > 0).map(m => {
         const x1 = m.x + m.w / 2;
         const y1 = m.y + m.h / 2;
+        const s = storages.reduce((best, candidate) => {
+            const d = Math.hypot(x1 - (candidate.x + candidate.w / 2), y1 - (candidate.y + candidate.h / 2));
+            return !best || d < best.d ? { s: candidate, d } : best;
+        }, null).s;
+        const x2 = s.x + s.w / 2;
+        const y2 = s.y + s.h / 2;
         const ring = Math.min(0.45, Math.min(m.w, m.h) * 0.22);
         return {
             x1, y1, x2, y2, length: Math.hypot(x2 - x1, y2 - y1),
@@ -1420,10 +1747,11 @@ function layoutFlows(layout) {
 // What a recipe takes and gives, from the recipe list: ingredients with amounts, its item and
 // yield (a quick variant makes the regular item), and its byproduct.
 function recipeTerms(name) {
-    const r = recipeIndex.find(r => r.name === name);
+    const base = basePlanItem(name);
+    const r = recipeIndex.find(r => r.name === base);
     return {
         takes: (r?.ingredients || []).map((ingredient, i) => [ingredient, r.amounts?.[i] ?? 1]),
-        makes: name.replace(/^quick_/, ''),
+        makes: base.replace(/^quick_/, ''),
         yield: r?.yieldAmount || 1,
         byproduct: r?.byproduct ? [r.byproduct, r.byproductAmount || 0] : null,
     };
@@ -1475,6 +1803,8 @@ function startLayoutSim(svg, flows, stock) {
         flow,
         jobs: flow.jobs.map(job => ({ ...job, terms: recipeTerms(job.item) })),
         line: lines[k], ring: rings[k], fill: rings[k]?.querySelector('.ring-fill'),
+        held: new Map(),
+        heldCount: 0,
     }));
     // Something no piece here makes, and no stock covers, is taken as always there, so a recipe
     // using it isn't held up forever.
@@ -1501,6 +1831,8 @@ function resetLayoutSim(sim) {
         unit.job = null;
         unit.until = null;
         unit.free = 0;
+        unit.held = new Map();
+        unit.heldCount = 0;
         unit.lastDot = -Infinity;
         unit.line?.classList.remove('live');
         showRing(unit, 0, false);
@@ -1540,6 +1872,27 @@ function simStart(sim, unit, at) {
     unit.until = at + job.cycle;
 }
 
+// Finished output sits at the facility until its local output stack reaches the station cap.
+// A Hauling pickup then exposes that stack to the shared Home storage. Hauler travel/carry time is
+// still not modeled because no reliable movement/carry-capacity data is available.
+function simFinishBatch(sim, unit, job, age) {
+    const { makes, byproduct, yield: amount } = job.terms;
+    unit.held.set(makes, (unit.held.get(makes) || 0) + amount);
+    unit.heldCount += amount;
+    if (byproduct) {
+        unit.held.set(byproduct[0], (unit.held.get(byproduct[0]) || 0) + byproduct[1]);
+        unit.heldCount += byproduct[1];
+    }
+
+    const limit = Math.max(1, job.outputLimit || 1);
+    if (unit.heldCount + 1e-9 < limit) return;
+
+    unit.held.forEach((n, item) => sim.store.set(item, (sim.store.get(item) || 0) + n));
+    unit.held.clear();
+    unit.heldCount = 0;
+    deliver(sim, unit, age);
+}
+
 function stepLayoutSim(sim, dt) {
     const from = sim.game;
     sim.game += dt;
@@ -1553,10 +1906,7 @@ function stepLayoutSim(sim, dt) {
         unit.jobs.forEach(job => { job.pace = Math.min(1 + job.rate * SIM_STEP, job.pace + job.rate * dt); });
         // Each batch finished within the step is delivered then, and the next starts right away.
         while (unit.until != null && unit.until <= sim.game) {
-            const { makes, byproduct, yield: amount } = unit.job.terms;
-            sim.store.set(makes, (sim.store.get(makes) || 0) + amount);
-            if (byproduct) sim.store.set(byproduct[0], (sim.store.get(byproduct[0]) || 0) + byproduct[1]);
-            deliver(sim, unit, (sim.game - unit.until) / sim.speed);
+            simFinishBatch(sim, unit, unit.job, (sim.game - unit.until) / sim.speed);
             unit.free = unit.until;
             unit.until = null;
             unit.job = null;
@@ -1620,10 +1970,7 @@ function showSimClock(seconds) {
     const hours = Math.floor(minutes / 60) % 24;
     const text = `${days ? `${days}d ` : ''}${hours}h ${String(minutes % 60).padStart(2, '0')}m`;
     const clock = document.getElementById('layout-clock');
-    if (clock.dataset.sourceText !== text) {
-        clock.dataset.sourceText = text;
-        clock.textContent = text;
-    }
+    if (clock.textContent !== text) clock.textContent = text;
 }
 
 // --- Progress card ---------------------------------------------------------------------
@@ -1651,7 +1998,7 @@ function startProgress(input, runId) {
 }
 
 // The worker's solves that make up the card's 'plan' step; it's done once the plan is checked.
-const PLAN_SOLVES = ['level_up', 'final', 'stock_up', 'check'];
+const PLAN_SOLVES = ['level_up', 'final', 'free_aniimo', 'stock_up', 'check'];
 
 // Moves step `key` on: 'start', 'done', 'skip' or 'fail', with an optional note such as
 // "3 of 12", and for a solve, whether HiGHS proved its answer. The backup planner only appears
@@ -1741,8 +2088,8 @@ let roster = [];
 // The Best plan's team, to start a roster from (see `renderAniimoSummary`).
 let lastBestTeam = null;
 
-function newRosterAniimo(abilities = {}, personalities = null) {
-    return { name: '', count: 1, abilities, personalities: personalities || PERSONALITY_PAIRS.map(pair => pair.names[0]) };
+function newRosterAniimo(abilities = {}, personalities = null, family = '') {
+    return { name: '', family, count: 1, abilities, personalities: personalities || PERSONALITY_PAIRS.map(pair => pair.names[0]) };
 }
 
 // Facilities whose Aniimo lives there: every Aniimo Materials facility.
@@ -1751,7 +2098,7 @@ const RESIDENT_FACILITIES = new Set(FACILITIES.filter(f => f.category === 'Aniim
 // The roster for the solver (see `JsRoster` in wasm.rs).
 function rosterPayload() {
     return {
-        members: roster.map(a => ({ count: a.count, abilities: a.abilities, personalities: a.personalities })),
+        members: roster.map(a => ({ count: a.count, family: a.family || null, abilities: a.abilities, personalities: a.personalities })),
         residents: [...RESIDENT_FACILITIES],
         environment: ENVIRONMENT_BUILDING_ABILITY,
         personalities: Object.fromEntries(FACILITIES.filter(f => f.personality).map(f => [f.name, f.personality])),
@@ -1764,7 +2111,7 @@ const escapeText = text => String(text).replace(/[&<>"]/g, c => ({ '&': '&amp;',
 function rosterLabel(aniimo, i) {
     if (aniimo.name?.trim()) return escapeText(aniimo.name.trim());
     const abilities = Object.entries(aniimo.abilities).map(([ability, level]) => `${ability} ${level}`).join(', ');
-    return abilities || `Aniimo ${i + 1}`;
+    return `${aniimo.family ? `${aniimo.family} · ` : ''}${abilities || `Aniimo ${i + 1}`}`;
 }
 
 function renderRoster() {
@@ -1775,7 +2122,7 @@ function renderRoster() {
                 `<label><input type="radio" name="roster-${i}-${ability}" data-level="${i}|${ability}" value="${l}"${l === level ? ' checked' : ''}> ${l}</label>`).join('')}</span><button type="button" class="roster-x" data-drop="${i}|${ability}" aria-label="Remove ${ability}" title="Remove ${ability}">✕</button></span>`).join('');
         const missing = ABILITIES.map(a => a.name).filter(name => !(name in aniimo.abilities));
         const add = missing.length
-            ? `<select class="roster-add-ability" data-add="${i}" aria-label="Add an ability"><option value="">+ Ability</option>${missing.map(name => `<option value="${name}">${name}</option>`).join('')}</select>`
+            ? `<select class="roster-add-ability" data-add="${i}" aria-label="Add an ability"><option value="">+ Ability</option>${missing.map(name => `<option>${name}</option>`).join('')}</select>`
             : '';
         const personalities = PERSONALITY_PAIRS.map((pair, p) => `<span class="tabs level-picker roster-pair" role="radiogroup" aria-label="${pair.names.join(' or ')}">${pair.names.map((name, k) =>
             `<label title="${name}"><input type="radio" name="roster-${i}-pair-${p}" data-personality="${i}|${p}" value="${name}"${aniimo.personalities[p] === name ? ' checked' : ''}> ${pair.letters[k]}</label>`).join('')}</span>`).join('');
@@ -1786,6 +2133,12 @@ function renderRoster() {
                     <span class="roster-count" title="How many you have that are alike"><button type="button" data-count="${i}|-1" aria-label="One fewer">−</button><span>×${aniimo.count}</span><button type="button" data-count="${i}|1" aria-label="One more">+</button></span>
                     <button type="button" class="roster-x" data-remove="${i}" aria-label="Remove this Aniimo" title="Remove">✕</button>
                 </div>
+                <div class="roster-family-control"><label class="roster-family-label">Family
+                    <select class="roster-family" data-family="${i}" aria-label="Aniimo family">
+                        <option value="">Other / unspecified</option>
+                        ${ANIIMO_FAMILIES.map(family => `<option value="${family}"${aniimo.family === family ? ' selected' : ''}>${family}</option>`).join('')}
+                    </select>
+                </label>${infoButton('Aniimo family', 'Family matters for Leisure stations: Susuta → Sandcastle, Dewy → Dewy House, Nimbi → Nimbus Bed, Celestis → Star; Coinwisp → Gold-Speck Cap in the Starfall Hammock. Choose the family for evolved Aniimo too. Other / unspecified can work ordinary jobs, but cannot staff these four stations.')}</div>
                 <div class="roster-abilities">${abilities}${add}</div>
                 <div class="roster-personalities">${personalities}</div>
             </div>`;
@@ -1849,9 +2202,9 @@ function attachRosterHandlers() {
             const cards = new Map();
             lastBestTeam.forEach(g => {
                 const personalities = PERSONALITY_PAIRS.map(pair => pair.names.find(name => g.personalities?.has(name)) || pair.names[0]);
-                const key = `${g.ability}|${g.level}|${personalities.join()}`;
+                const key = `${g.ability}|${g.level}|${personalities.join()}|${g.family || ''}`;
                 if (cards.has(key)) cards.get(key).count += g.count;
-                else cards.set(key, { ...newRosterAniimo({ [g.ability]: g.level }, personalities), count: g.count });
+                else cards.set(key, { ...newRosterAniimo({ [g.ability]: g.level }, personalities, g.family || ''), count: g.count });
             });
             roster = [...cards.values()];
         } else {
@@ -1860,7 +2213,7 @@ function attachRosterHandlers() {
         rosterChanged();
     });
     editor.addEventListener('change', (e) => {
-        const { level, personality, add, name } = e.target.dataset;
+        const { level, personality, add, name, family } = e.target.dataset;
         if (level) {
             const [i, ability] = level.split('|');
             roster[Number(i)].abilities[ability] = Number(e.target.value);
@@ -1870,6 +2223,8 @@ function attachRosterHandlers() {
         } else if (add) {
             if (!e.target.value) return;
             roster[Number(add)].abilities[e.target.value] = 1;
+        } else if (family !== undefined) {
+            roster[Number(family)].family = e.target.value;
         } else if (name !== undefined) {
             roster[Number(name)].name = e.target.value;
             saveInputsToStorage();
@@ -1897,21 +2252,13 @@ function renderRosterSummary(plan) {
         busy[member] += share;
         where[member].set(building, (where[member].get(building) || 0) + share);
     });
-    // The growing jobs (sowing, reaping and the like) take seconds a harvest, so they don't count
-    // as busy time, but someone has to do them: each goes to the least busy Aniimo able to.
-    const jobs = new Map();
-    (plan.coin_items || []).forEach(step => {
-        if (step.status !== 'producing' || !(step.facility === 'Farmland' || step.facility === 'Woodland')) return;
-        (recipeIndex.find(r => r.name === step.item_name)?.jobs || []).forEach(([job, ability, level]) => {
-            jobs.set(`${job}|${ability}|${level}|${step.facility}`, { job, ability, level, facility: step.facility });
-        });
-    });
-    jobs.forEach(({ job, ability, level, facility }) => {
-        const able = roster.map((a, i) => i).filter(i => (roster[i].abilities[ability] || 0) >= level);
-        if (!able.length) return;
-        const pick = able.reduce((a, b) => (busy[b] / roster[b].count < busy[a] / roster[a].count ? b : a));
-        const place = `${job} on ${facility}`;
-        if (!where[pick].has(place)) where[pick].set(place, 1);
+    // The exact solver now assigns every Reclaiming/Sowing/Watering/harvest job too, so a busy
+    // Earth worker at the Mine cannot be reused for unlimited soil reclamation.
+    (plan.grower_staffing || []).forEach(([item, job, member, share]) => {
+        if (!roster[member]) return;
+        busy[member] += share;
+        const place = `${job} (${prettyItem(item)})`;
+        where[member].set(place, (where[member].get(place) || 0) + share);
     });
     const have = roster.reduce((sum, a) => sum + a.count, 0);
     const working = roster.reduce((sum, a, i) => sum + Math.min(a.count, Math.ceil(busy[i] - 1e-6)), 0);
@@ -1921,9 +2268,10 @@ function renderRosterSummary(plan) {
         const letters = aniimo.personalities.map(personalityLetter).join('');
         return `<tr><td data-label="Aniimo">${rosterLabel(aniimo, i)}<div class="hint small">${abilities} · ${letters}</div></td><td data-label="How many">${aniimo.count}</td><td data-label="Busy on average">${busy[i].toFixed(1)}</td><td data-label="Where">${places || '<span class="hint small">idle</span>'}</td></tr>`;
     }).join('');
+    const dailyFood = have * 10 * 60 * 24;
     document.getElementById('aniimo-summary').innerHTML = roster.length
         ? `<table class="aniimo-table"><thead><tr><th>Aniimo</th><th>How many</th><th>Busy on average</th><th>Where</th></tr></thead><tbody>${rows}</tbody></table>
-           <p class="hint small">${working} of your ${have} Aniimo have work in this plan.</p>`
+           <p class="hint small">${working} of ${have} Aniimo working · <strong>${formatNumber(dailyFood)} food Energy/day</strong> ${infoButton('Food Energy', 'All residents eat 10 Energy/min, even while idle. The calculator assumes the food bowl stays stocked; an empty bowl drops Aniimo work to 20%.')}</p>`
         : '<p class="hint">Add the Aniimo you have under My Aniimo to plan with them.</p>';
     document.getElementById('aniimo-collapsed-summary').textContent = '';
     document.getElementById('aniimo-abilities').innerHTML = '';
@@ -1938,24 +2286,44 @@ function renderRosterSummary(plan) {
 }
 
 // --- Season ----------------------------------------------------------------------------
-// The Harvest Moon Festival (see `SEASON`): on the page from RV 10, or always in Advanced mode,
+// The Magical Wonder Night (see `SEASON`): on the page from RV 10, or always in Advanced mode,
 // where there's no RV level to go by. While it's on, plans may use the season's recipes, bar Recipe
-// Notes the player hasn't unlocked, and say how much Moonray Wheat their seeds use. An event that
-// has ended (`SEASON.over`) is off the page altogether, so nothing can turn it on.
-
-// The Moonray Wheat a day the player can spend on seeds, or `null` when blank (no limit).
-function seasonCurrencyPerDay() {
-    const value = document.getElementById('season-currency-per-day').value.trim();
-    return value !== '' && Number(value) >= 0 ? Number(value) : null;
-}
+// Notes the player hasn't unlocked, and say how much Weird Jelly Beans their seeds use.
 
 function seasonAvailable() {
-    if (SEASON.over) return false;
     return !isSimpleMode() || selectedHomeLevel() >= SEASON.minHomeLevel;
 }
 
 function seasonActive() {
     return seasonAvailable() && document.getElementById('season-on').checked;
+}
+
+function seasonWheatBudget() {
+    const value = Number(document.getElementById('season-wheat-budget')?.value);
+    return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function seasonMutationPlots() {
+    const value = Number(document.getElementById('season-mutation-plots')?.value);
+    return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 1;
+}
+
+function renderSeasonBudgetNote() {
+    const note = document.getElementById('season-budget-note');
+    if (!note) return;
+    const plots = seasonMutationPlots();
+    const budget = seasonWheatBudget();
+    const watered = selectedSetupTab() !== 'custom' || roster.some(a => a.count > 0 && (a.abilities.Water || 0) >= 1);
+    const { needed, spare, conflict } = harvestBudgetStatus(plots, budget, watered);
+    note.classList.remove('warning');
+    if (!plots) {
+        note.textContent = 'No magical crop plots are required. The optimizer may still select them when useful. Set a realistic Jelly Bean spending cap, or leave 0 for unlimited.';
+    } else if (conflict) {
+        note.classList.add('warning');
+        note.textContent = `Budget conflict: ${plots * 2} plots require about ${formatNumber(needed)} Weird Jelly Beans/day; cap ${formatNumber(budget)}/day. Raise the cap or lower the plot minimum.`;
+    } else {
+        note.textContent = `${plots * 2} plots require about ${formatNumber(needed)} Weird Jelly Beans/day (${watered ? 'with watering' : 'without watering'}). ${budget === null ? 'No spending cap set.' : formatNumber(spare) + ' per day available for other crops.'}`;
+    }
 }
 
 function renderSeason() {
@@ -1966,16 +2334,35 @@ function renderSeason() {
             <input type="checkbox" data-special="${r.name}"${unlockedSpecial.has(r.name) ? ' checked' : ''}>
             <span>${prettyItem(r.name)}</span>
         </label>`).join('');
+    renderSeasonBudgetNote();
 }
 
 function attachSeasonHandlers() {
     document.getElementById('season-on').addEventListener('change', renderStrategy);
+    document.getElementById('festival-batch-build').addEventListener('click', renderFestivalChecklist);
+    ['season-wheat-budget', 'season-mutation-plots'].forEach(id =>
+        document.getElementById(id).addEventListener('input', renderSeasonBudgetNote));
     document.getElementById('season-notes').addEventListener('change', (e) => {
         const name = e.target.dataset.special;
         if (!name) return;
         if (e.target.checked) unlockedSpecial.add(name); else unlockedSpecial.delete(name);
         saveInputsToStorage();
     });
+}
+
+async function renderFestivalChecklist() {
+    const result = document.getElementById('festival-batch-result');
+    try {
+        if (!recipeIndex.length) await loadRecipeIndex();
+        const list = festivalCraftChecklist(recipeIndex,
+            Number(document.getElementById('festival-batch-amount').value), getPlanInputValues());
+        const rows = values => values.map(r => `<tr><td>${prettyItem(r.name)}<br><span class="hint small">${r.facility} Lv.${r.facilityLevel}</span></td><td>${r.need}</td><td>${r.produced}<br><span class="hint small">${r.batches} batches</span></td></tr>`).join('');
+        const table = values => `<table class="level-up-lines"><thead><tr><th>Item / facility</th><th>Needed</th><th>Produce</th></tr></thead><tbody>${rows(values)}</tbody></table>`;
+        result.innerHTML = `${list.blocked.length ? `<p class="warning">Check before crafting: ${list.blocked.map(prettyItem).join('; ')}.</p>` : ''}
+            <p class="hint small">${list.wheat} ${SEASON.currency} for event seeds. ${infoButton('Checklist seed cost', 'Assumes standard crops. Mutations are not guaranteed.')}</p>
+            <p class="assume-title">Gather first</p>${table(list.raw)}
+            <p class="assume-title">Craft in this order</p>${table(list.steps)}`;
+    } catch (error) { result.textContent = error.message; }
 }
 
 // Every recipe plans may not use: the player's skips and any special recipe not unlocked.
@@ -1997,32 +2384,16 @@ let skippedRecipes = new Set();
 let recipeIndex = [];
 
 function recipeLabel(recipe) {
-    return `${translate(prettyItem(recipe.name))} (${translate(recipe.facility)})`;
+    return `${prettyItem(recipe.name)} (${recipe.facility})`;
 }
-
-function renderRecipeOptions() {
-    document.getElementById('skip-options').innerHTML =
-        recipeIndex.map(r => `<option value="${escapeText(recipeLabel(r))}"></option>`).join('');
-}
-
-document.addEventListener('aniimax-language-change', () => {
-    const input = document.getElementById('skip-input');
-    const options = document.getElementById('skip-options');
-    const selected = Array.from(options.options)
-        .findIndex(option => option.value.toLowerCase() === input.value.trim().toLowerCase());
-    renderRecipeOptions();
-    if (selected >= 0) {
-        input.value = options.options[selected].value;
-        input.setCustomValidity('');
-    }
-});
 
 async function loadRecipeIndex() {
     try {
         recipeIndex = JSON.parse(await callWorker('get_all_items'))
-            .map(r => ({ name: r.name, facility: r.facility, cost: r.cost || 0, seasonSeedCost: r.season_seed_cost || 0, environment: r.environment || null, jobs: r.jobs || [], ingredients: r.raw_materials || [], amounts: r.required_amount || [], yieldAmount: r.yield_amount || 1, byproduct: r.byproduct_item || null, byproductAmount: r.byproduct?.[1] || 0, turns: r.sell_currency === 'none' }))
+            .map(r => ({ season: r.season, moduleRequirement: r.module_requirement, name: r.name, facility: r.facility, facilityLevel: r.facility_level || 1, cost: r.cost || 0, seasonSeedCost: r.season_seed_cost || 0, environment: r.environment || null, jobs: r.jobs || [], ingredients: r.raw_materials || [], amounts: r.required_amount || [], yieldAmount: r.yield_amount || 1, byproduct: r.byproduct_item || null, byproductAmount: r.byproduct?.[1] || 0, turns: r.sell_currency === 'none' }))
             .sort((a, b) => a.facility.localeCompare(b.facility) || a.name.localeCompare(b.name));
-        renderRecipeOptions();
+        document.getElementById('skip-options').innerHTML =
+            recipeIndex.map(r => `<option value="${recipeLabel(r)}"></option>`).join('');
         renderSkippedRecipes();
     } catch (error) {
         console.warn('Could not load the recipe list:', error);
@@ -2066,7 +2437,7 @@ function addSkipFromInput() {
         if (partial.length === 1) match = partial[0];
     }
     if (!match) {
-        input.setCustomValidity(translate('Pick a recipe from the list.'));
+        input.setCustomValidity('Pick a recipe from the list.');
         input.reportValidity();
         return;
     }
@@ -2177,7 +2548,7 @@ function showAniimoSetup() {
     document.getElementById('ability-levels').hidden = tab !== 'best';
     document.getElementById('roster-editor').hidden = tab !== 'custom';
     document.getElementById('aniimo-setup-hint').textContent = tab === 'custom'
-        ? 'The Aniimo you have. The plan shares their hours out, so it only counts on what they can do.'
+        ? 'Enter your Aniimo; the plan uses their available abilities and time.'
         : 'The best Aniimo you have of each ability.';
     if (tab === 'best') renderAbilityLevels();
     if (tab === 'custom') renderRoster();
@@ -2188,12 +2559,15 @@ const ITEM_NAMES = {
     coins: 'Home Coins',
     wood_block: 'Wood Blocks',
     mineral_sand: 'Mineral Sand',
-    umbral_sweet_and_spicy_sauce: 'Umbral Sweet and Spicy Sauce',
+    umbral_sweet_and_spicy_sauce: 'Umbral Sweet Spicy Sauce',
     coarse_sifted_ore: 'Coarse-Sifted Ore',
     river_washed_stones: 'River-Washed Stones',
     premium_river_washed_stones: 'Premium River-Washed Stones',
     sugar_roasted_chestnuts: 'Sugar-Roasted Chestnuts',
     flowers_in_a_bottle: 'Flowers in a Bottle',
+    // Keep old recipe IDs for saved settings and share codes; use current in-game names.
+    advanced_wind_chime: 'Premium Wind Chime',
+    advanced_gemstone_dust: 'Premium Gemstone Dust',
 };
 
 function isLevelUpStrategy() {
@@ -2210,7 +2584,7 @@ const PRIORITY_TARGETS = [
     { id: 'aniipods', label: 'Aniipods' },
     { id: 'Wood Blocks', label: 'Wood Blocks' },
     { id: 'Mineral Sand', label: 'Mineral Sand' },
-    { id: 'season_points', label: SEASON.points, season: true },
+    // Whimsy Points are deliberately not an optimization objective until earning is verified.
 ];
 
 // Drawn arrows rather than the ↑/↓ characters, which some systems render as colored emoji.
@@ -2226,7 +2600,8 @@ function isPriorityStrategy() {
 // The priorities on the page: season points only while the season is on.
 function shownPriorities() {
     const season = seasonActive();
-    return priorityOrder.filter(p => season || !PRIORITY_TARGETS.find(t => t.id === p.target)?.season);
+    return priorityOrder.filter(p => PRIORITY_TARGETS.some(t => t.id === p.target)
+        && (season || !PRIORITY_TARGETS.find(t => t.id === p.target)?.season));
 }
 
 // The ticked priorities, best first; none for the level-up strategy.
@@ -2376,6 +2751,7 @@ function populateLevelUpTargets() {
 function renderStrategy() {
     renderSeason();
     const levelUp = isLevelUpStrategy();
+    document.getElementById('level-up-strategy-hint').textContent = 'Gets your RV upgrade resources as quickly as possible, then earns extra Home Coins.';
     document.getElementById('level-up-config').style.display = levelUp ? 'block' : 'none';
     document.getElementById('priorities-config').style.display = levelUp ? 'none' : 'block';
     if (!levelUp) {
@@ -2475,7 +2851,10 @@ function renderLevelUp(plan) {
     const label = document.getElementById('level-up-label');
     const time = document.getElementById('level-up-time');
     const lines = document.getElementById('level-up-lines');
-    label.textContent = `RV ${context.target} level-up`;
+    label.textContent = `Resources for RV ${context.target}`;
+    const timer = LEVEL_UP_TIMERS[context.target];
+    document.getElementById('level-up-prerequisites').textContent =
+        timer ? `${formatDuration(timer)} in-game upgrade timer after you start it.` : '';
     const report = plan.level_up;
     if (context.unavailable) {
         time.textContent = '-';
@@ -2542,7 +2921,7 @@ function renderSeedTable(plan) {
     const rows = (plan.coin_items || [])
         .filter(s => (s.facility === 'Farmland' || s.facility === 'Woodland') && s.status === 'producing' && s.cycle_time > 0)
         .map(s => {
-            const perSecond = (s.busy_units ?? s.facility_count) / s.cycle_time;
+            const perSecond = s.facility_count / s.cycle_time;
             const recipe = recipeIndex.find(r => r.name === s.item_name);
             const cost = recipe?.cost || 0;
             // Whole seeds when counting to the level-up.
@@ -2566,7 +2945,7 @@ function renderSeedTable(plan) {
     const per = levelUp
         ? `until RV ${planContext.target}`
         : { second: 'per second', minute: 'per minute', hour: 'per hour', day: 'per day' }[unit] || 'per second';
-    document.getElementById('seed-card-unit').textContent = `Seeds ${per}: one per planting, for every Farmland and Woodland crop in the plan.`;
+    document.getElementById('seed-card-unit').textContent = `Seeds ${per}.`;
     el.innerHTML = `
         <table>
             <thead><tr><th>Crop</th><th>Plots</th><th>Seeds</th><th>Cost</th></tr></thead>
@@ -2619,15 +2998,18 @@ function getPlanInputValues() {
     // `attachFacilityTierHandlers`), sent straight through as a list of tiers per facility; see
     // `JsPlanInput::facilities` in wasm.rs for the shape (`[{count, level}, ...]` per facility).
     if (isSimpleMode()) {
-        const { facilities, modules } = simpleSetup(selectedHomeLevel());
+        const { facilities, modules } = getSimpleSetup();
         return {
             currency: 'coins',
             priorities: activePriorities(),
             prioritize_byproducts: false,
+            season_points_per_day: 0,
             level_up: levelUpInput(),
             exclude: excludedRecipes(),
             season: seasonActive(),
-            season_currency_per_day: seasonCurrencyPerDay(),
+            season_currency_per_day: seasonActive() ? seasonWheatBudget() : null,
+            harvest_mutation_plots: seasonActive() ? seasonMutationPlots() : 0,
+            reserve_season_sugarcane: seasonActive() && document.getElementById('season-sugarcane-stock').checked,
             facilities,
             modules
         };
@@ -2645,17 +3027,21 @@ function getPlanInputValues() {
         ecological_module: numberOrDefault(document.getElementById('ecological-module-level').value, 0),
         kitchen_module: numberOrDefault(document.getElementById('kitchen-module-level').value, 0),
         resource_detector: numberOrDefault(document.getElementById('resource-detector-level').value, 0),
-        crafting_module: numberOrDefault(document.getElementById('crafting-module-level').value, 0)
+        crafting_module: numberOrDefault(document.getElementById('crafting-module-level').value, 0),
+        power_module: numberOrDefault(document.getElementById('power-module-level').value, 0)
     };
 
     return {
         currency: 'coins',
         priorities: activePriorities(),
         prioritize_byproducts: false,
+        season_points_per_day: 0,
         level_up: levelUpInput(),
         exclude: excludedRecipes(),
         season: seasonActive(),
-        season_currency_per_day: seasonCurrencyPerDay(),
+        season_currency_per_day: seasonActive() ? seasonWheatBudget() : null,
+        harvest_mutation_plots: seasonActive() ? seasonMutationPlots() : 0,
+            reserve_season_sugarcane: seasonActive() && document.getElementById('season-sugarcane-stock').checked,
         facilities,
         modules
     };
@@ -2665,8 +3051,22 @@ function getPlanInputValues() {
 // at all (blank/invalid); unlike `value || fallback`, these correctly keep a legitimate 0 (e.g.
 // "I own zero of this facility"), which `||` would silently discard since 0 is falsy in JS.
 // "quick_aromathyst" -> "Quick Aromathyst": the data uses snake_case names.
+function basePlanItem(name) {
+    if (!name) return name;
+    return name
+        .replace(/__electric_boost$/, '')
+        .replace(/__electric$/, '')
+        .replace(/__uncovered$/, '')
+        .replace(/__by\d+$/, '');
+}
+
+function isElectricItem(name) {
+    return !!name && (name.endsWith('__electric') || name.endsWith('__electric_boost'));
+}
+
 function prettyItem(name) {
     if (!name) return name;
+    name = basePlanItem(name);
     if (ITEM_NAMES[name]) return ITEM_NAMES[name];
     return name.split('_').map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(' ');
 }
@@ -2697,7 +3097,7 @@ function floatOrDefault(value, fallback) {
 
 // Format number with commas
 function formatNumber(num) {
-    return num.toLocaleString(currentLocale(), { maximumFractionDigits: 2 });
+    return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 // A rate at the chosen unit: a whole number once it's big enough to read that way, otherwise two
@@ -2723,7 +3123,7 @@ function showError(message) {
 // current choice when the new plan still has it.
 function renderGoalTargets(plan) {
     const select = document.getElementById('goal-target');
-    const previous = select.value;
+    const previous = preferredGoalTarget || select.value;
     const rows = priorityRows(plan);
     select.innerHTML = rows.map(r => `<option value="${r.target}">${goalName(r)}</option>`).join('');
     if (rows.some(r => r.target === previous)) select.value = previous;
@@ -2756,7 +3156,7 @@ function renderProductBreakdown(goalResult) {
     const { multiplier, suffix } = RATE_UNIT_SECONDS[unit] || RATE_UNIT_SECONDS.second;
     document.getElementById('product-breakdown-rate-header').innerHTML = `Profit <span class="th-unit">Home Coins${suffix}</span>`;
     // During the season, what each item counts toward the season's points.
-    const season = lastPlan?.season_points != null;
+    const season = SEASON.pointsVerified && lastPlan?.season_points != null;
     const pointsEach = new Map((lastPlan?.income_streams || []).map(s => [s.item_name, s.points || 0]));
     document.getElementById('product-breakdown-points-header').hidden = !season;
     const pointsCell = amount => season ? `<td>${amount > 0 ? formatNumber(amount) : '&mdash;'}</td>` : '';
@@ -2777,7 +3177,7 @@ function renderProductBreakdown(goalResult) {
         row.innerHTML = `
             <td>${prettyItem(p.item_name)}</td>
             <td>${p.facility}</td>
-            <td>${wholeAmount.toLocaleString(currentLocale())}</td>
+            <td>${wholeAmount.toLocaleString()}</td>
             <td>${formatRate(p.rate_per_second * multiplier)}</td>
             <td>${formatNumber(worth)}</td>
             ${pointsCell(wholeAmount * (pointsEach.get(p.item_name) || 0))}
@@ -2791,7 +3191,7 @@ function renderProductBreakdown(goalResult) {
         row.innerHTML = `
             <td>${name} <span class="hint small">(bonus)</span></td>
             <td>&mdash;</td>
-            <td>${Math.floor(amount).toLocaleString(currentLocale())}</td>
+            <td>${Math.floor(amount).toLocaleString()}</td>
             <td>&mdash;</td>
             <td>not sold</td>
             ${pointsCell(0)}
@@ -2819,9 +3219,9 @@ function renderSeedsNeeded(goalResult) {
         <tr>
             <td>${prettyItem(r.item_name)}</td>
             <td>${r.facility}</td>
-            <td>${r.facility_count.toLocaleString(currentLocale())}</td>
-            <td>${r.seeds_per_plot.toLocaleString(currentLocale())}</td>
-            <td>${r.total_seeds.toLocaleString(currentLocale())}</td>
+            <td>${r.facility_count.toLocaleString()}</td>
+            <td>${r.seeds_per_plot.toLocaleString()}</td>
+            <td>${r.total_seeds.toLocaleString()}</td>
         </tr>
     `).join('');
 }
@@ -2867,14 +3267,15 @@ function abilityTag(name) {
 
 // A colored circle with the Aniimo level in it, for the facility plan's Aniimo column; the
 // tooltip has the ability, level and personality.
-function abilityDot(name, level, note) {
+function abilityDot(name, level, note, bonus = !!note) {
     const a = ABILITY_BY_NAME.get(name);
     const color = a ? a.color : '#888888';
     const tip = `${name} Lv.${level}${note ? ` · ${note}` : ''}`;
-    return `<span class="ability-dot${a && a.dark ? ' dark' : ''}${note ? ' bonus' : ''}" style="--ability:${color}" title="${tip}" aria-label="${tip}">${level}</span>`;
+    return `<span class="ability-dot${a && a.dark ? ' dark' : ''}${bonus ? ' bonus' : ''}" style="--ability:${color}" title="${tip}" aria-label="${tip}">${level}</span>`;
 }
 
 function aniimoLabel(step) {
+    if (isElectricItem(step.item_name)) return '<span class="tag emode" title="Powered by E-Mode; no production Aniimo needed">⚡ E-Mode</span>';
     const a = step.aniimo;
     if (!a) {
         // Crops and trees: the abilities their planting and harvesting jobs need.
@@ -2887,20 +3288,24 @@ function aniimoLabel(step) {
         const personality = FACILITIES.find(f => f.name === step.facility)?.personality;
         note = `${personality ? `${personality} personality` : 'matching personality'} (+20% speed)`;
     }
-    return `<span class="ability-dots">${abilityDot(a.ability, a.level, note)}</span>`;
+    const family = recipeFamily(step.facility, step.item_name);
+    if (family) note = `${family} family${note ? ` · ${note}` : ''}`;
+    return `<span class="ability-dots">${abilityDot(a.ability, a.level, note, a.personality_bonus)}</span>${family ? ` <span class="hint small">${family} family</span>` : ''}`;
 }
 
 // "Fire Lv.4 · Practical": one kind of Aniimo, with the facility's personality when the plan
 // counts on its bonus. `tagged` shows the ability as a colored tag.
-function taskLabel(task, facility, tagged = false) {
+function taskLabel(task, facility, tagged = false, itemName = '') {
     const ability = tagged ? abilityTag(task.ability) : task.ability;
-    if (!task.personality_bonus) return `${ability} Lv.${task.level}`;
+    const family = task.jobs?.length ? null : recipeFamily(facility, itemName);
+    const label = `${ability} Lv.${task.level}${family ? ` · ${family} family` : ''}`;
+    if (!task.personality_bonus) return label;
     const personality = FACILITIES.find(f => f.name === facility)?.personality;
-    if (!personality) return `${ability} Lv.${task.level} · matching personality`;
+    if (!personality) return `${label} · matching personality`;
     // The letter the game shows over an Aniimo's portrait, so a player can read a team off the
     // four it carries.
     const letter = personalityLetter(personality);
-    return `${ability} Lv.${task.level} · ${personality}${letter ? ` (${letter})` : ''}`;
+    return `${label} · ${personality}${letter ? ` (${letter})` : ''}`;
 }
 
 function facilityPlanTable(rows) {
@@ -2911,7 +3316,7 @@ function facilityPlanTable(rows) {
 // rows follow a band naming it, so the column headers are written once.
 function facilityPlanTableOf(groups) {
     const body = groups
-        .map(group => (group.label ? `<tr class="facility-plan-group"><td colspan="5">${group.label}</td></tr>` : '') + planRows(group.rows))
+        .map(group => (group.label ? `<tr class="facility-plan-group"><td colspan="6">${group.label}</td></tr>` : '') + planRows(group.rows))
         .join('');
     return `
         <div class="table-wrapper">
@@ -2920,6 +3325,7 @@ function facilityPlanTableOf(groups) {
                     <tr>
                         <th>Facility</th>
                         <th>Count</th>
+                        <th>Minimum level</th>
                         <th>Producing</th>
                         <th>Aniimo</th>
                         <th>Why</th>
@@ -2936,7 +3342,8 @@ function planRows(rows) {
                     <tr class="status-${step.status}">
                         <td data-label="Facility">${step.facility}</td>
                         <td data-label="Count">${step.facility_count}</td>
-                        <td data-label="Producing">${step.item_name ? prettyItem(step.item_name) : '-'}${unverifiedRowKeys.has(`${step.facility}|${step.item_name}`) ? '<span class="tag unverified" title="Not yet checked in game">unverified</span>' : ''}${step.item_name && step.status === 'producing' ? `<button type="button" class="skip-row" data-skip="${step.item_name}" title="Can't make this? Skip it and plan again" aria-label="Skip ${prettyItem(step.item_name)} and plan again">✕</button>` : ''}</td>
+                        <td data-label="Minimum level">${step.minimum_facility_level != null ? `Lv. ${step.minimum_facility_level}+` : '—'}</td>
+                        <td data-label="Producing">${step.item_name ? prettyItem(step.item_name) : '-'}${isElectricItem(step.item_name) ? '<span class="tag emode" title="Powered by E-Mode; no production Aniimo needed">⚡ E-Mode</span>' : ''}${unverifiedRowKeys.has(`${step.facility}|${basePlanItem(step.item_name)}`) ? '<span class="tag unverified" title="Not yet checked in game">unverified</span>' : ''}${step.item_name && step.status === 'producing' ? `<button type="button" class="skip-row" data-skip="${basePlanItem(step.item_name)}" title="Can't make this? Skip it and plan again" aria-label="Skip ${prettyItem(step.item_name)} and plan again">✕</button>` : ''}</td>
                         <td data-label="Aniimo">${aniimoLabel(step)}</td>
                         <td data-label="Why">${prettyReason(step.reason)}</td>
                     </tr>
@@ -2967,15 +3374,15 @@ function whereText(g) {
 }
 
 // What one Aniimo of a team row has to be: its level, then every personality it carries, each
-// with the letter the game shows. "Lv.4 · Judicious (J), Faithful (F)" is one Aniimo working a
-// Nimbus Bed and a Starfall Hammock, which it can because those never want opposites.
+// with the letter the game shows, and any station's required family. Compatible personalities
+// can share ordinary work, but a Nimbi can never cover a Celestis-only job.
 function aniimoNeeds(g) {
     if (g.environment) return g.label.slice(g.ability.length).trim();
     const personalities = [...g.personalities]
         .sort()
         .map(name => `${name} (${personalityLetter(name)})`)
         .join(', ');
-    return `Lv.${g.level}${personalities ? ` · ${personalities}` : ''}`;
+    return `Lv.${g.level}${g.family ? ` · ${g.family} family` : ''}${personalities ? ` · ${personalities}` : ''}`;
 }
 
 // The Aniimo team the shown plan needs, one row per distinct ability / level / personality.
@@ -2991,12 +3398,13 @@ function renderAniimoSummary(plan) {
     const groups = new Map();
     (plan.coin_items || []).forEach(step => {
         (step.aniimo_tasks || []).forEach(task => {
-            const key = taskLabel(task, step.facility);
+            const key = taskLabel(task, step.facility, false, step.item_name);
             if (!groups.has(key)) {
                 const personality = task.personality_bonus
                     ? FACILITIES.find(f => f.name === step.facility)?.personality ?? null
                     : null;
-                groups.set(key, { label: key, ability: task.ability, level: task.level, bonus: task.personality_bonus, personality, busy: 0, where: new Map(), jobs: new Map() });
+                const family = task.jobs?.length ? null : recipeFamily(step.facility, step.item_name);
+                groups.set(key, { label: key, family, ability: task.ability, level: task.level, bonus: task.personality_bonus, personality, busy: 0, where: new Map(), jobs: new Map() });
             }
             const g = groups.get(key);
             g.busy += task.busy;
@@ -3043,6 +3451,32 @@ function renderAniimoSummary(plan) {
         needsAniimo(building, units, `${building} (${modes[0]})`);
         needsAniimo(partner, units, `${partner} (${modes[1]})`);
     });
+    // Every active Crackle Generator keeps one Lightning Aniimo resident. Rated generator
+    // output assumes the station's recommended Lightning level: Lv.1 / Lv.2 / Lv.3+ generators
+    // need Lightning 1 / 2 / 3 respectively. Keep levels separate so the team summary does not
+    // overstate a low-level worker's power output.
+    const generatorRequirement = tier => tier <= 1 ? 1 : tier === 2 ? 2 : 3;
+    (plan.generator_tiers || []).forEach(([tier, count]) => {
+        if (!count) return;
+        const ability = 'Lightning';
+        const level = generatorRequirement(tier);
+        const key = `${ability} (power ${level})`;
+        if (!groups.has(key)) {
+            groups.set(key, {
+                label: `${ability} Lv.${level} (generator)`,
+                ability,
+                level,
+                bonus: false,
+                busy: 0,
+                where: new Map(),
+                jobs: new Map(),
+                environment: true,
+            });
+        }
+        const g = groups.get(key);
+        g.busy += count;
+        g.where.set(`Crackle Generator Lv.${tier}`, (g.where.get(`Crackle Generator Lv.${tier}`) || 0) + count);
+    });
     const collapsedSummary = document.getElementById('aniimo-collapsed-summary');
     if (groups.size === 0) {
         container.innerHTML = '<p class="hint">Nothing in this plan needs an Aniimo.</p>';
@@ -3069,6 +3503,7 @@ function renderAniimoSummary(plan) {
         // One Aniimo can take another row's work when it has the ability at a high enough level,
         // hours to spare, and nothing on it already wanting the opposite personality.
         const holds = (host, g) => host.ability === g.ability && host.level >= g.level && host.spare >= g.busy - 1e-6
+            && (host.family || null) === (g.family || null)
             && (!g.personality || !host.personalities.has(opposedPersonality(g.personality)));
         rows.forEach(g => {
             // A facility with a resident Aniimo keeps it to itself.
@@ -3103,7 +3538,7 @@ function renderAniimoSummary(plan) {
             return `<tr><td data-label="Aniimo">${abilityTag(g.ability)} ${aniimoNeeds(g)}</td><td data-label="How many">${g.count}</td><td data-label="Busy on average">${g.busy.toFixed(1)}</td><td data-label="Where">${where}</td></tr>`;
         })
         .join('');
-    const haulingRow = `<tr><td data-label="Aniimo">${abilityTag('Hauling')} any level</td><td data-label="How many">1+</td><td data-label="Busy on average">?</td><td data-label="Where">Carries produce to storage. How much work this is isn't known yet; add more if produce piles up.</td></tr>`;
+    const haulingRow = `<tr><td data-label="Aniimo">${abilityTag('Hauling')} any level</td><td data-label="How many">1+</td><td data-label="Busy on average">?</td><td data-label="Where">Carries produce to storage. ${infoButton('Hauling', "The amount of hauling work is not known yet. Add more Aniimo if produce piles up.")}</td></tr>`;
 
     // The count above says how many; this is only said when it's more than the homeland holds.
     const cap = homelandHolds;
@@ -3156,6 +3591,7 @@ function renderAniimoSummary(plan) {
                 <span class="ability-count">${n}</span><span class="ability-name">${a.name}</span>
             </div>${stack}</div>`;
     }).join('');
+    const minimumFood = total * 10 * 60 * 24;
     container.innerHTML = `
         <div class="table-wrapper">
             <table class="facility-plan-table">
@@ -3164,6 +3600,8 @@ function renderAniimoSummary(plan) {
             </table>
         </div>
         ${capNote}
+        ${cap && total < cap ? `<p class="hint">${cap - total} Aniimo slot${cap - total === 1 ? '' : 's'} available for other Homeland stations, including stations that earn stars for decorations.</p>` : ''}
+        <p class="hint small"><strong>${formatNumber(minimumFood)} food Energy/day</strong> for this team. ${infoButton('Food Energy', 'Each Aniimo eats 10 Energy/min. Extra residents also eat while idle. Production assumes a stocked food bowl; an empty bowl drops Aniimo work to 20%.')}</p>
     `;
 }
 
@@ -3503,13 +3941,24 @@ function renderEnvironmentDiagram(layout, mode, building, rows = [], unit = null
 // needs more than one building unit, that group splits into one table per unit (see
 // `splitByEnvironmentUnit`) so it's clear which crops go in which physical building. Everything
 // else falls back to the original per-facility-category grouping (FACILITY_CATEGORIES).
+function renderHarvestOrderStock(plan) {
+    const rows = plan.harvest_order_stock || [];
+    document.getElementById('harvest-order-card').hidden = rows.length === 0;
+    document.getElementById('harvest-order-stock').innerHTML = rows.length ? `
+        <table class="level-up-lines">
+            <thead><tr><th>Keep raw</th><th>Units</th><th>Held / day</th><th>First batch</th></tr></thead>
+            <tbody>${rows.map(row => `<tr>
+                <td>${prettyItem(row.item_name)}<br><span class="hint small">${row.facility}</span></td>
+                <td>${row.units}</td><td>${formatNumber(row.units_per_second * 86400)}</td>
+                <td>${formatDuration(row.first_batch_seconds)}</td>
+            </tr>`).join('')}</tbody>
+        </table>` : '';
+}
+
 function renderFacilityPlan(plan) {
+    renderHarvestOrderStock(plan);
     const container = document.getElementById('facility-plan-container');
-    const steps = redistributeTurnFacilityRows(
-        plan.coin_items || [],
-        facility => tierCount(lastPlanInput?.facilities?.[facility]),
-        takesTurns
-    );
+    const steps = plan.coin_items || [];
 
     if (steps.length === 0) {
         container.innerHTML = '<p class="hint">Nothing profitable to produce with the current facilities.</p>';
@@ -3613,7 +4062,13 @@ function renderFacilityPlan(plan) {
         `;
     }).join('');
 
-    container.innerHTML = environmentSections + categorySections;
+    const poweredTiers = (plan.powered_facility_tiers || []).flatMap(([facility, tiers]) =>
+        tiers.map(([level, count]) => `${count} × Lv. ${level} ${facility}`));
+    const levelNote = '<p class="hint small">Minimum level is the lowest facility level that can make each product; higher levels also work. Rows for recipes that take turns can share a facility.</p>';
+    const poweredNote = poweredTiers.length
+        ? `<p class="hint small">E-Mode levels used for this plan: ${poweredTiers.join(', ')}. Actual levels determine power use.</p>`
+        : '';
+    container.innerHTML = levelNote + poweredNote + environmentSections + categorySections;
 }
 
 // Re-renders "Your Rate" from `lastPlan` at whichever unit is currently selected in the
@@ -3693,8 +4148,8 @@ function priorityRows(plan) {
     if (!rows.some(r => r.target === 'coins')) {
         rows.push({ rank: null, target: 'coins', label: rows.length ? "Home Coins, from what's left" : 'Home Coins', perSecond: plan.rate_per_second, items: [], missing: null });
     }
-    // During the season, points come with every season item sold, ranked or not.
-    if (plan.season_points != null && !rows.some(r => r.target === 'season_points')) {
+    // Do not claim sale-based Whimsy Points until the earning mechanism is verified.
+    if (SEASON.pointsVerified && plan.season_points != null && !rows.some(r => r.target === 'season_points')) {
         rows.push({ rank: null, target: 'season_points', label: SEASON.points, perSecond: plan.season_points, items: [], missing: null });
     }
     return rows;
@@ -3712,6 +4167,52 @@ function updateRateUnitDisplays() {
     }
     if (lastGoalResult) {
         renderProductBreakdown(lastGoalResult);
+    }
+}
+
+function renderPowerSummary(plan) {
+    const card = document.getElementById('power-card');
+    const el = document.getElementById('power-summary');
+    if (!card || !el) return;
+    const capacity = plan.power_capacity || 0;
+    if (capacity <= 0) {
+        card.style.display = 'none';
+        return;
+    }
+    card.style.display = 'block';
+    document.getElementById('emode-plan-kind').textContent = 'Automatic';
+    const used = plan.power_used || 0;
+    const activeSupply = plan.power_supply || 0;
+    const configuredSpare = Math.max(0, capacity - used);
+    const activeSpare = Math.max(0, activeSupply - used);
+    const generators = plan.generators_used || 0;
+    const efficiency = plan.power_efficiency || 0;
+    const generatorMix = (plan.generator_tiers || [])
+        .filter(([, count]) => count > 0)
+        .map(([tier, count]) => `${count}×Lv.${tier}`)
+        .join(' + ');
+    const boostLimit = { 1: 500, 2: 660, 3: 800, 4: 1000, 5: 1200 };
+    const ratedLimit = { 1: 600, 2: 800, 3: 1000, 4: 1200, 5: 1500 };
+    const moduleLevel = Math.max(1, Number(lastPlanInput?.modules?.power_module || 1));
+    const bandLimit = (plan.generator_tiers || []).reduce((sum, [tier, count]) => {
+        const operating = Math.min(Number(tier) || 1, moduleLevel);
+        const table = efficiency === 120 ? boostLimit : ratedLimit;
+        return sum + (table[operating] || table[5]) * count;
+    }, 0);
+    el.innerHTML = `
+        <div class="summary-grid">
+            <div class="summary-item"><span class="summary-label">E-Mode draw</span><span class="summary-value">${formatNumber(used)}</span></div>
+            <div class="summary-item"><span class="summary-label">Grid efficiency</span><span class="summary-value">${efficiency ? efficiency + '%' : '—'}</span></div>
+            <div class="summary-item"><span class="summary-label">Active rated supply</span><span class="summary-value">${formatNumber(activeSupply)}</span></div>
+            <div class="summary-item"><span class="summary-label">Current band limit</span><span class="summary-value">${formatNumber(bandLimit)}</span></div>
+            <div class="summary-item"><span class="summary-label">Configured capacity</span><span class="summary-value">${formatNumber(capacity)}</span></div>
+            <div class="summary-item"><span class="summary-label">Generators active</span><span class="summary-value">${generators}</span><span class="hint small">${generatorMix || '—'}</span></div>
+        </div>`;
+    const note = document.getElementById('power-spare-note');
+    if (note) {
+        note.textContent = used <= 0
+            ? `This plan uses Normal Mode. Each active generator needs a Lightning Aniimo; the optimizer selects E-Mode only when it helps production or staffing.`
+            : `The selected ${efficiency}% grid band uses ${formatNumber(used)} / ${formatNumber(bandLimit)} power. ${generators} Lightning Aniimo ${generators === 1 ? 'is' : 'are'} included in the team for the active generators. Active rated spare: ${formatNumber(activeSpare)}; total configured spare: ${formatNumber(configuredSpare)}.`;
     }
 }
 
@@ -3758,7 +4259,10 @@ function displayPlan(plan) {
         explored.textContent = `Best plan found in the time allowed; the best possible is at most ${gap.toFixed(1)}% higher.`;
     } else {
         const reason = plan.fallback_reason ? ` (${plan.fallback_reason})` : '';
-        explored.textContent = `The exact planner couldn't run${reason}, so this plan comes from the backup planner and may not be the very best. Reloading the page usually fixes this.`;
+        const emode = (plan.power_capacity || 0) > 0
+            ? ' The backup planner does not model E-Mode, so this fallback result is Normal Mode only.'
+            : '';
+        explored.textContent = `The exact planner couldn't run${reason}, so this plan comes from the backup planner and may not be the very best.${emode} Reloading the page usually fixes this.`;
     }
 
     const unverifiedEl = document.getElementById('plan-unverified');
@@ -3779,6 +4283,7 @@ function displayPlan(plan) {
     renderSeedTable(plan);
     renderLevelUp(plan);
     renderProfitBreakdown(plan);
+    renderPowerSummary(plan);
     renderFacilityPlan(plan);
     renderAniimoSummary(plan);
     // The page stays where the player is; the results appear without scrolling to them.
@@ -3808,6 +4313,7 @@ function displayGoal(goalResult) {
 // Solve for the best achievable plan (facilities + currency + modules); the heavier computation,
 // triggered explicitly by the Calculate button or Enter in a facility/module field.
 async function runFindPlan() {
+    document.getElementById('imported-layout-card').hidden = true;
     if (!wasmReady) {
         showError('Optimizer not ready. Please wait...');
         return;
@@ -3856,11 +4362,11 @@ async function runFindPlan() {
         // bar above for however long this takes, instead of freezing. `onTrialProgress` receives
         // the solver's own real, running trial-solve count after every trial solve; converted to
         // a fill percentage by `trialCountToPercent` below.
-        // Only the backup planner reports progress (see worker.js); the exact planner is quick.
-        // Whichever Best the player has asked for; the other one waits until they switch to it.
-        const bestSetup = selectedAniimoSetup() === 'minimum' ? bestAniimoSetup() : selectedAniimoSetup();
-        Object.assign(input, aniimoInput(bestSetup));
-        const bestJson = await callWorker('find_plan', JSON.stringify({ ...input, aniimo: bestSetup }), (count) => {
+        // Solve the team on screen first. Minimum must not wait for a potentially much longer
+        // Best solve before it can show its powered plan.
+        const firstSetup = selectedAniimoSetup();
+        Object.assign(input, aniimoInput(firstSetup));
+        const firstJson = await callWorker('find_plan', JSON.stringify({ ...input, aniimo: firstSetup }), (count) => {
             // The exact planner reports each solve; the backup planner counts its trials.
             if (typeof count === 'object') {
                 setStep(count.step, count.state, undefined, count.proven);
@@ -3873,16 +4379,25 @@ async function runFindPlan() {
         progressFill.style.width = '100%';
         if (runId !== planRunId) return;
         finishSolveSteps();
-        plansBySetup[bestSetup] = JSON.parse(bestJson);
+        plansBySetup[firstSetup] = JSON.parse(firstJson);
         showSelectedPlan();
         // With no plan there's nothing to lay out or improve on.
-        if (!plansBySetup[bestSetup].success && progress) {
+        if (!plansBySetup[firstSetup].success && progress) {
             progress.steps.forEach(s => { if ((s.key === 'layout' || s.key === 'improve') && s.state === 'pending') s.state = 'skipped'; });
             renderProgress();
         }
 
-        // The Minimum setup solves after Best is already on screen; switching to it before it's
-        // done shows a short "still working" note until it arrives.
+        // Minimum is already ready when it was selected. Best is worked out on demand by
+        // ensurePlanFor when the player switches to it.
+        if (firstSetup === 'minimum') {
+            setStep('minimum', 'skip');
+            return;
+        }
+        // Avoid repeating a Minimum solve already completed or started by a tab switch.
+        if (plansBySetup.minimum || setupSolve?.setup === 'minimum') {
+            setStep('minimum', plansBySetup.minimum ? 'done' : 'skip');
+            return;
+        }
         setStep('minimum', 'start');
         callWorker('find_plan', JSON.stringify({ ...input, aniimo: 'minimum' }))
             .then(json => {
@@ -4074,7 +4589,8 @@ function formatRecipeAniimo(recipe, facility) {
     }
     const [ability, minLevel] = recipe.aniimo;
     const best = `best Lv.${bestAniimoLevel(ability)}${facility.personality ? ' ' + facility.personality : ''}`;
-    return `<span>${abilityTag(ability)} Lv.${minLevel}+<span class="recipe-best">${best}</span></span>`;
+    const family = recipe.family || facility.family;
+    return `<span>${abilityTag(ability)} Lv.${minLevel}+${family ? ` · ${family} family` : ''}<span class="recipe-best">${best}</span></span>`;
 }
 
 // "44 Home Coins", or what a level-up material is for.
@@ -4112,12 +4628,9 @@ function renderRecipeTables(recipes) {
         const tables = facilitiesInCategory.map(f => {
             // `data-label` names each cell when rows stack on phones; empty cells are left out there.
             const cell = (label, value) => `<td data-label="${label}"${value === '-' ? ' class="empty"' : ''}>${value}</td>`;
-            // A row's classes: unchecked numbers, and items from an event that has ended.
-            const rowClass = r => [r.verified === false && 'unverified', r.season && SEASON.over && 'ended']
-                .filter(Boolean).join(' ');
             const rows = byFacility.get(f.name).map(r => `
-                <tr${rowClass(r) ? ` class="${rowClass(r)}"` : ''}>
-                    <td class="recipe-name">${prettyItem(r.name)}${SPECIAL_NAMES.has(r.name) ? ' <span class="tag special" title="Takes a rare currency to unlock">special</span>' : ''}${r.season ? ` <span class="tag ${SEASON.over ? 'ended' : 'special'}" title="${SEASON.over ? `${SEASON.name} has ended; these are no longer available` : `${SEASON.name} only`}">season</span>` : ''}${r.verified === false ? ' <span class="info-icon" data-tooltip="Not yet checked in game.">?</span>' : ''}</td>
+                <tr${r.verified === false ? ' class="unverified"' : ''}>
+                    <td class="recipe-name">${prettyItem(r.name)}${SPECIAL_NAMES.has(r.name) ? ' <span class="tag special" title="Takes a rare currency to unlock">special</span>' : ''}${r.season ? ` <span class="tag special" title="${SEASON.name} only">season</span>` : ''}${r.verified === false ? infoButton('Unverified recipe', 'Not yet checked in game.') : ''}</td>
                     ${cell('Level', r.facility_level)}
                     ${cell('Inputs', formatRecipeInputs(r))}
                     ${cell('Yield', formatRecipeYield(r))}
@@ -4139,10 +4652,10 @@ function renderRecipeTables(recipes) {
                                     <th>Level</th>
                                     <th>Inputs</th>
                                     <th>Yield</th>
-                                    <th>Time <span class="info-icon" data-tooltip="Grow time for crops and trees, before watering takes an eighth off it twice. Everything else lists workload: at 100% Efficiency a processor gets through one workload a second, a gathering facility 1.25 on a level-2 recipe and 1.5 on a level-3 one. An Aniimo at the level a recipe needs works at 100%; higher levels are faster, up to level 4 (at a processor, 300% one level above, then +100% per level; at gathering facilities each level adds half a workload a second, reading as +50% on a level-1 recipe, +40% on a level-2 one and +33% on a level-3 one).">?</span></th>
+                                    <th>Time ${infoButton("Time", "Grow time for crops and trees, before watering takes an eighth off it twice. Everything else lists workload: at 100% Efficiency a processor gets through one workload a second, a gathering facility 1.25 on a level-2 recipe and 1.5 on a level-3 one. An Aniimo at the level a recipe needs works at 100%; higher levels are faster, up to level 4 (at a processor, 300% one level above, then +100% per level; at gathering facilities each level adds half a workload a second, reading as +50% on a level-1 recipe, +40% on a level-2 one and +33% on a level-3 one).")}</th>
                                     <th>Sell</th>
                                     <th>Module</th>
-                                    <th>Aniimo <span class="info-icon" data-tooltip="The lowest ability level that can make this, and the best Aniimo for it: level 4, the top, with the facility's personality (+20% speed). For crops and trees, the ability each job needs, in order.">?</span></th>
+                                    <th>Aniimo ${infoButton("Aniimo", "The lowest ability level that can make this, and the best Aniimo for it: level 4, the top, with the facility's personality (+20% speed). For crops and trees, the ability each job needs, in order.")}</th>
                                 </tr>
                             </thead>
                             <tbody>${rows}</tbody>
@@ -4191,19 +4704,26 @@ window.closeFacilitiesOnBackdrop = function(event) {
 }
 
 // Event listeners
-async function initApp() {
-    let sharedData = null;
-    try {
-        sharedData = await readShareHash(window.location.hash);
-    } catch (error) {
-        document.getElementById('share-config-status').textContent = 'This share link is invalid. Your saved setup was kept.';
-        console.warn('Could not load shared config:', error);
-    }
-    const savedData = sharedData ? migrateSavedConfig(sharedData) : readStorage();
-    initFacilityTiers(savedData);
-    renderFacilityCards();
+document.addEventListener('DOMContentLoaded', async () => {
+    initFacilityTiers(null);
     populateHomeLevels();
     populateLevelUpTargets();
+    renderSimpleModuleControls();
+    defaultConfigData = structuredClone(currentConfigData());
+    let savedData = readStorage();
+    let shareNotice = '';
+    try {
+        const shared = await readShareHash(window.location.hash);
+        if (shared) {
+            const { settings, warnings } = normalizeSetupSettings(shared, defaultConfigData);
+            savedData = settings;
+            shareNotice = sharedSetupNotice(warnings);
+        }
+    } catch (e) {
+        shareNotice = `This shared link is invalid: ${e.message}. Your saved setup was kept.`;
+    }
+    initFacilityTiers(savedData);
+    renderFacilityCards();
     loadInputsFromStorage(savedData);
     attachAutoSave();
     attachFacilityTierHandlers();
@@ -4216,6 +4736,8 @@ async function initApp() {
     attachSeasonHandlers();
     attachRosterHandlers();
     attachLayoutHandlers();
+    attachSetupShareHandlers();
+    if (shareNotice) document.getElementById('setup-share-hint').textContent = shareNotice;
     attachPriorityHandlers();
     showAniimoSetup();
     applyConfigMode();
@@ -4223,8 +4745,6 @@ async function initApp() {
 
     document.getElementById('optimize-btn').addEventListener('click', runFindPlan);
     document.getElementById('clear-saved-btn').addEventListener('click', clearSavedInputs);
-    document.getElementById('share-config-btn').addEventListener('click', shareCurrentConfig);
-    if (sharedData) document.getElementById('share-config-status').textContent = 'Shared setup loaded. Your saved setup is kept until you edit this one.';
     document.getElementById('rate-unit').addEventListener('change', () => {
         rateUnitChosen = true;
         updateRateUnitDisplays();
@@ -4242,9 +4762,9 @@ async function initApp() {
         const { name, value, checked } = event.target;
         const unheardOf = event.target.dataset?.confirm;
         if (unheardOf && checked) {
-            const ok = window.confirm(translate(
+            const ok = window.confirm(
                 `No level-${value} ${unheardOf} Aniimo is known in the game yet. Plan as though you have one?`
-            ));
+            );
             if (!ok) {
                 showAniimoSetup();
                 return;
@@ -4263,7 +4783,11 @@ async function initApp() {
     // goal amount changed.
     document.getElementById('target-amount').addEventListener('input', runTimeToGoal);
     document.getElementById('current-amount').addEventListener('input', runTimeToGoal);
-    document.getElementById('goal-target').addEventListener('change', runTimeToGoal);
+    document.getElementById('goal-target').addEventListener('change', () => {
+        preferredGoalTarget = document.getElementById('goal-target').value;
+        saveInputsToStorage();
+        runTimeToGoal();
+    });
 
     // Allow Enter key to trigger a full plan recalculation; but not in the goal fields, which
     // already update live on every keystroke via the listeners above. Facility tier inputs are
@@ -4279,16 +4803,13 @@ async function initApp() {
             }
         });
     });
-}
-
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initApp);
-else initApp();
+});
 
 // --- Hover tips --------------------------------------------------------------------------
 // One card for hover tips, shown at once instead of after the browser's delay. Diagram pieces
 // carry `data-tip` (see `tipAttrs`); anything else with a `title` shows it in the same card, the
-// title moved aside so the browser's own tip doesn't show as well. (The info icons' `data-tooltip`
-// is a CSS tip of its own; see style.css.)
+// title moved aside so the browser's own tip doesn't show as well. Setting and section help
+// uses the accessible info buttons in context-help.js.
 const tipCard = document.createElement('div');
 tipCard.className = 'tip-card';
 tipCard.setAttribute('role', 'tooltip');
@@ -4307,7 +4828,7 @@ function tipAttrs(title, { detail = '', stats = '', color = '' } = {}) {
 function showTip(el) {
     // A title set since the last hover replaces the one kept aside.
     if (el.hasAttribute('title')) {
-        const text = sourceAttribute(el, 'title');
+        const text = el.getAttribute('title');
         el.removeAttribute('title');
         el.dataset.tipText = text;
         if (!el.hasAttribute('aria-label')) el.setAttribute('aria-description', text);
@@ -4332,7 +4853,7 @@ function showTip(el) {
         if (el.dataset.tipDetail) line('tip-detail', el.dataset.tipDetail);
         if (el.dataset.tipStats) line('tip-stats', el.dataset.tipStats);
     } else {
-        line('tip-text', translate(el.dataset.tipText));
+        line('tip-text', el.dataset.tipText);
     }
     tipTarget = el;
     tipCard.hidden = false;
@@ -4342,8 +4863,6 @@ function hideTip() {
     tipTarget = null;
     tipCard.hidden = true;
 }
-
-document.addEventListener('aniimax-language-change', hideTip);
 
 // Above the point, centered on it and kept on screen; below it where there's no room above.
 function placeTip(x, y, below = y) {

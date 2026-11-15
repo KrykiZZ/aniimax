@@ -14,6 +14,35 @@ use crate::models::{
     ProductionItem, WoodlandRow,
 };
 
+/// Raw ingredients for every seasonal recipe, including dependencies of processed inputs.
+/// Call before filtering locked/skipped recipes or adding worker/environment variants: keeping
+/// order ingredients does not mean automatically crafting the seasonal dishes.
+pub fn season_raw_ingredients(items: &[ProductionItem]) -> Result<Vec<String>, String> {
+    use std::collections::{BTreeSet, HashMap};
+    let recipes: HashMap<&str, &ProductionItem> = items.iter().map(|item| (item.name.as_str(), item)).collect();
+    fn visit<'a>(name: &'a str, recipes: &HashMap<&str, &'a ProductionItem>, path: &mut Vec<&'a str>, raw: &mut BTreeSet<String>) -> Result<(), String> {
+        if path.contains(&name) {
+            return Err(format!("Season recipe dependency cycle at {name}"));
+        }
+        let item = recipes.get(name).ok_or_else(|| format!("Missing season ingredient recipe: {name}"))?;
+        if let Some(inputs) = &item.raw_materials {
+            path.push(name);
+            for input in inputs {
+                visit(input, recipes, path, raw)?;
+            }
+            path.pop();
+        } else {
+            raw.insert(name.to_string());
+        }
+        Ok(())
+    }
+    let mut raw = BTreeSet::new();
+    for item in items.iter().filter(|item| item.season.is_some()) {
+        visit(&item.name, &recipes, &mut Vec::new(), &mut raw)?;
+    }
+    Ok(raw.into_iter().collect())
+}
+
 /// One row of `aniimo_requirements.csv`.
 #[derive(Debug, serde::Deserialize)]
 struct AniimoRequirementRow {
@@ -69,6 +98,52 @@ pub fn load_grower_steps(data_dir: &Path) -> Result<GrowerSteps, Box<dyn Error>>
     Ok(parse_grower_steps(&std::fs::read_to_string(data_dir.join("grower_steps.csv"))?)?.with_watering())
 }
 
+/// One row of `e_mode.csv`: the base recipe and its fixed full-power timer.
+#[derive(Debug, serde::Deserialize)]
+struct EModeRow {
+    name: String,
+    production_time: f64,
+}
+
+/// Adds internal electric variants for recipes with independently documented fixed timers.
+/// Normal Aniimo production remains available for the optimizer to compare. Unknown names
+/// are ignored, but duplicate, non-finite or non-positive timers must not enter the solver.
+pub fn add_e_mode_variants(items: &mut Vec<ProductionItem>, csv_text: &str) -> Result<usize, Box<dyn Error>> {
+    let source = items.clone();
+    let mut rdr = ReaderBuilder::new().trim(csv::Trim::All).from_reader(csv_text.as_bytes());
+    let mut added = 0usize;
+    let mut seen = std::collections::HashSet::new();
+    for row in rdr.deserialize::<EModeRow>() {
+        let row = row?;
+        if !row.production_time.is_finite() || row.production_time <= 0.0 {
+            return Err(format!("Invalid E-Mode timer for {}: {}", row.name, row.production_time).into());
+        }
+        if !seen.insert(row.name.clone()) {
+            return Err(format!("Duplicate E-Mode recipe: {}", row.name).into());
+        }
+        let Some(base) = source.iter().find(|item| item.name == row.name) else { continue };
+        if !crate::models::e_mode_allowed(base) { continue; }
+        let mut electric = base.clone();
+        electric.name = format!("{}{}", row.name, crate::models::ELECTRIC_SUFFIX);
+        electric.production_time = row.production_time;
+        electric.workload = None;
+        electric.crew = None;
+        items.push(electric);
+
+        // The game's verified low-draw power band runs E-Mode at 120% efficiency. Keep this as a
+        // distinct internal recipe so the mixed-integer model can choose one grid-wide band
+        // without inventing the still-unknown below-100% overload curve.
+        let mut boosted = base.clone();
+        boosted.name = format!("{}{}", row.name, crate::models::ELECTRIC_BOOST_SUFFIX);
+        boosted.production_time = row.production_time / 1.2;
+        boosted.workload = None;
+        boosted.crew = None;
+        items.push(boosted);
+        added += 1;
+    }
+    Ok(added)
+}
+
 /// One row of `unverified.csv`.
 #[derive(Debug, serde::Deserialize)]
 struct UnverifiedRow {
@@ -112,10 +187,16 @@ struct SeasonRow {
     #[serde(rename = "yield")]
     yield_amount: u32,
     facility_level: u32,
+    /// Food Energy, when verified in game; older season CSVs can omit this column.
+    #[serde(default)]
+    energy: Option<f64>,
+    /// Optional climate requirement for seasonal crops; the older Harvest Moon CSV has none.
+    #[serde(default)]
+    environment: Option<String>,
 }
 
 /// Parses a season's recipes (columns `name, facility, raw_materials, required_amount, seed_cost,
-/// sell_value, points, production_time, workload, yield, facility_level`; see
+/// sell_value, points, production_time, workload, yield, facility_level[, energy]`; see
 /// [`crate::models::SeasonTerms`]). Crops are watered like any other; call
 /// [`crate::models::apply_watering`] on them.
 pub fn parse_season(csv_text: &str) -> Result<Vec<ProductionItem>, Box<dyn Error>> {
@@ -139,16 +220,15 @@ pub fn parse_season(csv_text: &str) -> Result<Vec<ProductionItem>, Box<dyn Error
             sell_value: row.sell_value,
             production_time,
             yield_amount: row.yield_amount,
-            energy: None,
+            energy: row.energy,
             facility_level: row.facility_level,
             module_requirement: None,
             workload: row.workload,
             byproduct: None,
-            environment: None,
+            environment: row.environment,
             season: Some(crate::models::SeasonTerms {
                 points: row.points,
                 seed_cost: row.seed_cost.unwrap_or(0.0),
-                currency_per_day: None,
             }),
             crew: None,
         });

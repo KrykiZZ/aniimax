@@ -4,15 +4,17 @@
 // thread stays free to paint a progress indicator while a solve is in flight. See `web/app.js`'s
 // `callWorker` for the request/response contract this expects.
 import highsModule from './vendor/highs/highs.mjs';
+import { aniimoTeamCount } from './aniimo-team.js';
 
-// The page starts this worker as `worker.js?load=<page load time>` (see app.js), and the wasm
-// module is loaded with the same query and a revalidated fetch, so a page never pairs new page
-// code with an older cached solver.
+// Deployed pages carry the commit's version through the worker, JS modules and both WASM
+// binaries. Each build has distinct cache keys; reloads can reuse the same build's bytes.
 // The message handler below is installed right away and waits on this, so no request can arrive
 // before there's a handler for it.
-const load = new URL(import.meta.url).search;
+const source = new URL(import.meta.url);
+const revision = source.searchParams.get('v');
+const load = revision ? `?v=${encodeURIComponent(revision)}` : source.search;
 const ready = import('./pkg/aniimax.js' + load).then(async (pkg) => {
-    await pkg.default({ module_or_path: fetch(new URL('./pkg/aniimax_bg.wasm', import.meta.url), { cache: 'no-cache' }) });
+    await pkg.default({ module_or_path: fetch(new URL('./pkg/aniimax_bg.wasm' + load, import.meta.url), { cache: revision ? 'default' : 'no-cache' }) });
     return pkg;
 });
 
@@ -25,7 +27,7 @@ const HANDLER_NAMES = ['time_to_reach', 'get_version', 'get_all_items'];
 let highsBytes = null;
 async function newHighs() {
     if (!highsBytes) {
-        highsBytes = fetch(new URL('./vendor/highs/highs.wasm', import.meta.url)).then(r => {
+        highsBytes = fetch(new URL('./vendor/highs/highs.wasm' + load, import.meta.url)).then(r => {
             if (!r.ok) throw new Error(`Could not load HiGHS (${r.status})`);
             return r.arrayBuffer();
         });
@@ -35,6 +37,8 @@ async function newHighs() {
 
 // Seconds HiGHS may search before settling for the best plan found so far.
 const EXACT_TIME_LIMIT = 30;
+// Staffing is a refinement of an already valid production plan, so keep its extra wait short.
+const STAFFING_TIME_LIMIT = 5;
 
 // HiGHS options for every solve.
 const SOLVE_OPTIONS = { mip_rel_gap: 0, time_limit: EXACT_TIME_LIMIT };
@@ -84,12 +88,18 @@ function tiebreakOf(problem, values) {
 // Returns the plan's JSON, or throws with the reason it couldn't, so the caller can fall back to
 // `find_plan` and say why. `step(key, state, proven)` reports each solve as it starts and ends,
 // and whether it proved its answer, for the page's progress card: `priority:<target>`,
-// `level_up`, `final`, `stock_up` and `check`. `first(top)` gets the plan's first solve with
+// `level_up`, `final`, `free_aniimo`, `stock_up` and `check`. `first(top)` gets the plan's first solve with
 // nothing before it, `{ measure, objective, proven }`: the most of its first priority, its
 // level-up pace, or its Home Coins. The page's Opportunities solve that same model for the plan
 // as it stands, so they take it from here.
 async function exactPlanJson(pkg, payload, step = () => {}, first = () => {}) {
     const { exact_byproduct_problems, exact_priority_problem, exact_level_up_problem, exact_problem, exact_plan } = pkg;
+    const input = JSON.parse(payload);
+    const inputError = pkg.plan_input_error && JSON.parse(pkg.plan_input_error(payload));
+    if (inputError) throw Object.assign(new Error(inputError), { noFallback: true });
+    const infeasible = () => Object.assign(new Error(input.season_points_per_day > 0
+        ? 'The minimum festival points cannot fit this setup and Wheat budget. Lower the minimum, raise the budget or check recipes and workers.'
+        : 'No plan can meet these production targets.'), { noFallback: !!input.season });
     const stage = { floors: [] };
     let allProven = true;
     for (const problem of JSON.parse(exact_byproduct_problems(payload))) {
@@ -107,7 +117,7 @@ async function exactPlanJson(pkg, payload, step = () => {}, first = () => {}) {
         if (!priority.lp) throw new Error('this setup isn\'t covered by the exact planner');
         const most = await solveModel(priority);
         step(`priority:${target}`, 'done', most?.proven);
-        if (!most) throw new Error(`no plan found for the most ${target}`);
+        if (!most) throw infeasible();
         if (alone) first({ measure: target, objective: most.objective, proven: most.proven });
         allProven &&= most.proven;
         stage.floors.push([target, Math.max(0, most.objective)]);
@@ -119,7 +129,7 @@ async function exactPlanJson(pkg, payload, step = () => {}, first = () => {}) {
         step('level_up', 'start');
         const fastest = await solveModel(levelUp);
         step('level_up', 'done', fastest?.proven);
-        if (!fastest) throw new Error('no plan found for the level-up');
+        if (!fastest) throw infeasible();
         if (stage.floors.length === 0) first({ measure: 'level_up', objective: fastest.objective, proven: fastest.proven });
         if (fastest.objective > 1e-9) {
             allProven &&= fastest.proven;
@@ -134,7 +144,7 @@ async function exactPlanJson(pkg, payload, step = () => {}, first = () => {}) {
     step('final', 'start');
     const alone = stage.floors.length === 0 && !stage.pace;
     let solved = await solveModel(problem);
-    if (!solved) throw new Error('the solver found no plan');
+    if (!solved) throw infeasible();
     if (alone) first({ measure: 'coins', objective: solved.objective, proven: solved.proven });
     let proven = solved.proven && allProven;
     let bound = solved.objective;
@@ -146,24 +156,6 @@ async function exactPlanJson(pkg, payload, step = () => {}, first = () => {}) {
         }
     }
     step('final', 'done', solved.proven);
-    if (stage.pace) {
-        // Keeping that pace and those coins, spare Bench and Kiln time goes to the level-up. If
-        // that solve fails, the plan above already has the pace and coins, so it stands.
-        const stockStage = { ...stage, coins: solved.objective };
-        const stockJson = JSON.stringify(stockStage);
-        step('stock_up', 'start');
-        const stocked = await solveModel(JSON.parse(exact_problem(payload, stockJson)));
-        step('stock_up', 'done', stocked?.proven);
-        step('check', 'start');
-        const stockedPlan = stocked
-            && JSON.parse(exact_plan(payload, stockJson, JSON.stringify({ values: stocked.values, proven: proven && stocked.proven, bound })));
-        if (stockedPlan && stockedPlan.success) {
-            step('check', 'done');
-            stockedPlan.level_up_note = levelUpNote;
-            return JSON.stringify(stockedPlan);
-        }
-        console.warn('Level-up stock solve found no usable plan; keeping the plan without it.');
-    }
     step('check', 'start');
     let json = exact_plan(payload, stageJson, JSON.stringify({ values: solved.values, proven, bound }));
     let plan = JSON.parse(json);
@@ -177,8 +169,50 @@ async function exactPlanJson(pkg, payload, step = () => {}, first = () => {}) {
         }
     }
     if (!plan.success) throw new Error(plan.error || 'the plan failed its check');
+
+    if (plan.power_capacity > 0) {
+        // Preserve coins, priorities and the RV pace, then minimize the Aniimo team. This is
+        // deliberately separate from maximizing production: slower E-Mode can still cover a
+        // material-limited station and free its worker for a star-generating station.
+        const freeJson = JSON.stringify({ ...stage, coins: plan.rate_per_second, free_aniimo: true });
+        step('free_aniimo', 'start');
+        let freed = null;
+        try {
+            const freeProblem = JSON.parse(exact_problem(payload, freeJson));
+            freed = await solveModel(freeProblem, { ...SOLVE_OPTIONS, time_limit: STAFFING_TIME_LIMIT });
+            const candidate = freed && JSON.parse(exact_plan(payload, freeJson,
+                JSON.stringify({ values: freed.values, proven: proven && freed.proven, bound })));
+            // The staffing model has numerical slack around the coin floor. Do not replace
+            // a higher-income plan just to free Aniimo slots, or silently give up a priority
+            // target due to LP feasibility tolerances. E-Mode is automatic, never forced.
+            const rateSlack = value => Math.max(1e-8, Math.abs(value) * 1e-8);
+            const preservesIncome = candidate?.success
+                && candidate.rate_per_second >= plan.rate_per_second - rateSlack(plan.rate_per_second);
+            const preservesPriorities = preservesIncome && (plan.priorities || []).every((target, i) =>
+                candidate.priorities?.[i]?.target === target.target
+                && candidate.priorities[i].per_second >= target.per_second - rateSlack(target.per_second));
+            if (preservesPriorities && aniimoTeamCount(candidate, input) <= aniimoTeamCount(plan, input)) {
+                candidate.aniimo_slots_saved = aniimoTeamCount(plan, input) - aniimoTeamCount(candidate, input);
+                candidate.workforce_optimized = true;
+                plan = candidate;
+            }
+        } catch (error) {
+            console.warn('Aniimo staffing refinement failed; keeping the verified production plan:', error);
+        }
+        step('free_aniimo', 'done', freed?.proven);
+    }
+    // Power-enabled plans prefer spare Aniimo slots over speculative extra stock. RV material
+    // production still covers the selected pace, even if the staffing search runs out of time.
+    if (stage.pace && !(plan.power_capacity > 0)) {
+        const stockJson = JSON.stringify({ ...stage, coins: plan.rate_per_second });
+        step('stock_up', 'start');
+        const stocked = await solveModel(JSON.parse(exact_problem(payload, stockJson)));
+        step('stock_up', 'done', stocked?.proven);
+        const stockedPlan = stocked && JSON.parse(exact_plan(payload, stockJson,
+            JSON.stringify({ values: stocked.values, proven: proven && stocked.proven, bound })));
+        if (stockedPlan?.success) plan = stockedPlan;
+    }
     step('check', 'done');
-    if (!levelUpNote) return json;
     plan.level_up_note = levelUpNote;
     return JSON.stringify(plan);
 }
@@ -266,7 +300,11 @@ self.onmessage = async (event) => {
             } catch (error) {
                 fallbackReason = error && error.message ? error.message : String(error);
                 // The backup planner doesn't know the player's roster, so a roster plan stops here.
-                if (JSON.parse(payload).aniimo?.startsWith('roster')) {
+                if (error?.noFallback) {
+                    result = JSON.stringify({ success: false, error: fallbackReason });
+                } else if (JSON.parse(payload).season) {
+                    result = JSON.stringify({ success: false, error: `No Magical Wonder Night plan found: ${fallbackReason}. Check the Sugarcane reserve, facilities, Aniimo team, Jelly Bean cap and magical plots, then calculate again. The backup planner cannot preserve reserved stock.` });
+                } else if (JSON.parse(payload).aniimo?.startsWith('roster')) {
                     console.warn('Exact planner failed on a roster:', error);
                     result = JSON.stringify({ success: false, error: `No plan found with these Aniimo: ${fallbackReason}.` });
                 } else {

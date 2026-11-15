@@ -11,7 +11,6 @@
     <header>
         <h1>aniimax</h1>
         <div class="header-buttons">
-            <select id="language-switch" class="toggle-button" aria-label="Language"></select>
             <button class="toggle-button" onclick="showFacilities()" id="facilitiesToggle">facilities</button>
             <button class="toggle-button" onclick="showMath()" id="mathToggle">math</button>
             <button class="toggle-button" onclick="showHelp()" id="helpToggle">help</button>
@@ -19,24 +18,37 @@
         </div>
     </header>
     <p class="subtitle">aniimo homeland production optimizer</p>
-    <p class="disclaimer"><span class="disclaimer-icon" aria-hidden="true">⚠</span>A few recipes, facility levels and counts haven't been confirmed in game yet; they're marked where they're used.</p>
+    <p class="disclaimer"><span class="disclaimer-icon" aria-hidden="true">⚠</span>Some game data is unverified or missing. <button type="button" class="info-button" data-help="Some recipe data and facility limits are unverified. Some higher-level materials and recipes are missing, so plans can only compare the options in Aniimax's data. Premium Potato and Quick Agave use assumed growing-job workloads pending in-game verification." aria-label="About Unverified data" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></p>
 
     <div class="container">
 
         <main>
             <section class="card config-section">
                 <div class="card-head">
-                    <h2>Your Homeland</h2>
-                    <div class="config-actions">
-                        <button type="button" id="share-config-btn" class="toggle-button small">Share setup</button>
-                        <button type="button" id="clear-saved-btn" class="toggle-button small" title="Your inputs are saved in this browser automatically.">Clear saved values</button>
+                    <h2>Your Homeland <button type="button" class="info-button" data-help="Choose Simple to fill facilities from your RV level, or Advanced to enter the counts and levels you actually own. Inputs are saved automatically in this browser." aria-label="About Your Homeland" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h2>
+                    <div class="setup-actions">
+                        <button type="button" id="setup-copy-link" class="toggle-button small">Share setup link</button>
+                        <button type="button" id="setup-copy-code" class="toggle-button small" title="Copy these calculator settings so another player can import them.">Copy setup code</button>
+                        <button type="button" id="setup-import-code" class="toggle-button small" title="Import an Aniimax setup code before calculating. Layout-only codes also open here.">Import code</button>
+                        <button type="button" id="clear-saved-btn" class="toggle-button small">Clear saved values</button>
+                        <button type="button" class="info-button" data-help="Share a setup link or copy a setup code to send your calculator settings. Import lets you review them before calculating. Clear saved values resets the settings stored in this browser. Aniimax codes differ from in-game Combo Codes." aria-label="About Sharing and saved settings" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button>
                     </div>
                 </div>
-                <div id="share-config-result" class="share-config-result" hidden>
-                    <label for="share-config-link">Shareable link</label>
-                    <input type="text" id="share-config-link" readonly>
+                <p class="hint small setup-share-hint" id="setup-share-hint" role="status" aria-live="polite"></p>
+                <div id="setup-export-panel" hidden>
+                    <label for="setup-export-value">Copy this setup link or code</label>
+                    <textarea id="setup-export-value" rows="2" readonly spellcheck="false"></textarea>
                 </div>
-                <p id="share-config-status" class="hint small" role="status" aria-live="polite"></p>
+                <div id="setup-import-panel" hidden>
+                    <div class="label-with-help"><label for="setup-import-value">Setup link or Aniimax code</label><button type="button" class="info-button" data-help-source="setup-import-help" aria-label="About Setup link or Aniimax code" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div>
+                    <textarea id="setup-import-value" rows="3" placeholder="Paste a setup link, setup code or older layout code" spellcheck="false" aria-describedby="setup-import-help setup-import-error"></textarea>
+                    <p id="setup-import-help" hidden>Replaces your setup; review before calculating. Older codes open layouts only. Aniimax codes differ from in-game Combo Codes.</p>
+                    <div class="setup-actions">
+                        <button type="button" id="setup-import-apply" class="skip-add-btn">Load setup</button>
+                        <button type="button" id="setup-import-cancel" class="toggle-button small">Cancel</button>
+                    </div>
+                    <p id="setup-import-error" role="alert"></p>
+                </div>
 
                 <div class="tabs" role="radiogroup" aria-label="Input mode">
                     <label><input type="radio" name="config-mode" id="mode-simple" value="simple" checked> Simple</label>
@@ -46,25 +58,39 @@
                 <div id="simple-config">
                     <div class="input-row">
                         <div class="input-field">
-                            <label for="home-level">RV level</label>
+                            <div class="label-with-help"><label for="home-level">RV level</label><button type="button" class="info-button" data-help="Uses every facility available at this RV level. Choose Advanced to change individual facility counts and levels." aria-label="About RV level" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div>
                             <select id="home-level"></select>
                         </div>
                     </div>
-                    <p class="hint">Assumes you've built and upgraded everything your RV level allows.</p>
+                    <p class="assume-title">Toolkit modules <button type="button" class="info-button" data-help="Choose the levels you own. 0 means not upgraded. RV max uses the highest module level available at the selected RV level." aria-label="About Toolkit modules" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></p>
+                    <div class="setting-with-help"><label><input type="checkbox" id="simple-toolkit-upgrades" checked> Use RV max for all modules</label><button type="button" class="info-button" data-help="Sets every module to the highest level available at your selected RV level. Turn this off to enter the levels you actually own." aria-label="About Use RV max for all modules" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div>
+                    <div class="stock-grid" id="simple-module-levels">
+                        <div class="input-field"><div class="label-with-help"><label for="simple-ecological-module-level">Ecological Module</label><button type="button" class="info-button" data-help-source="ecological-module-help" aria-label="About Ecological Module" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div><select id="simple-ecological-module-level"><option value="auto">RV max</option></select></div>
+                        <div class="input-field"><div class="label-with-help"><label for="simple-kitchen-module-level">Kitchen Module</label><button type="button" class="info-button" data-help-source="kitchen-module-help" aria-label="About Kitchen Module" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div><select id="simple-kitchen-module-level"><option value="auto">RV max</option></select></div>
+                        <div class="input-field"><div class="label-with-help"><label for="simple-resource-detector-level">Resource Detector</label><button type="button" class="info-button" data-help-source="resource-detector-help" aria-label="About Resource Detector" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div><select id="simple-resource-detector-level"><option value="auto">RV max</option></select></div>
+                        <div class="input-field"><div class="label-with-help"><label for="simple-crafting-module-level">Crafting Module</label><button type="button" class="info-button" data-help-source="crafting-module-help" aria-label="About Crafting Module" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div><select id="simple-crafting-module-level"><option value="auto">RV max</option></select></div>
+                        <div class="input-field"><div class="label-with-help"><label for="simple-power-module-level">Power Module</label><button type="button" class="info-button" data-help-source="power-module-help" aria-label="About Power Module" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div><select id="simple-power-module-level"><option value="auto">RV max</option></select></div>
+                    </div>
                     <details class="explain simple-details">
                         <summary id="simple-summary-title">Facilities and modules</summary>
                         <div id="simple-summary"></div>
                     </details>
+                    <div class="emode-auto-note" id="simple-emode-note">
+                        <span class="emode-bolt" aria-hidden="true">⚡</span>
+                        <div class="title-with-help">
+                            <strong id="simple-emode-title">E-Mode unlocks at RV 12</strong> <button type="button" class="info-button" data-help-source="simple-emode-copy" aria-label="About Automatic E-Mode" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button>
+                            <span id="simple-emode-copy" hidden>Requires a Power Module and Crackle Generator.</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="advanced-config">
-                    <h3>Facilities</h3>
-                    <p class="hint">Set the count and level for each facility you have.</p>
+                    <h3>Facilities <button type="button" class="info-button" data-help="Set the count and level of each facility you own. Add a level when you have the same facility at different levels." aria-label="About Facilities" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h3>
                     <div class="fill-row">
                         <label for="fill-level">Fill from RV level</label>
                         <select id="fill-level"></select>
                         <button type="button" id="fill-btn" class="skip-add-btn">Fill</button>
-                        <span class="hint small">Replaces every count and level below with what that RV level allows.</span>
+                        <button type="button" class="info-button" data-help="Replaces the facility counts and levels below with the defaults for the selected RV level." aria-label="About Fill from RV level" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button>
                     </div>
 
                     <!-- Facility cards are generated dynamically by app.js from the FACILITIES config,
@@ -72,12 +98,27 @@
                          Processing), so new facilities can be added without editing this file. -->
                     <div class="facilities-container" id="facilities-grid"></div>
 
-                    <h3>Item Upgrade Modules</h3>
-                    <p class="hint">Set the level for each upgrade module you have unlocked (0 = not unlocked).</p>
+                    <h3>Item Upgrade Modules <button type="button" class="info-button" data-help="Enter the Toolkit module levels you actually own. 0 means not owned. The info beside each module lists its unlocks." aria-label="About Item Upgrade Modules" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h3>
 
                     <div class="modules-grid">
                         <div class="module-card">
-                            <h4>Ecological Module <span class="info-icon" data-tooltip="Lv.1: Quick Wheat&#10;Lv.2: Quick Bamboo&#10;Lv.3: Quick Potato&#10;Lv.4: Quick Lemon&#10;Lv.5: Quick Rice&#10;Lv.6: Quick Maple Syrup&#10;Lv.7: Quick Strawberry&#10;Lv.8: Quick Coconut">?</span></h4>
+                            <h4>Ecological Module <button type="button" class="info-button" data-help="0 = not owned. Upgrades unlock the following:
+Lv.1: Quick Wheat
+Lv.2: Quick Bamboo
+Lv.3: Quick Potato
+Lv.4: Quick Lemon
+Lv.5: Quick Rice
+Lv.6: Quick Maple Syrup
+Lv.7: Quick Strawberry
+Lv.8: Quick Coconut" aria-label="About Ecological Module" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button><span id="ecological-module-help" hidden>0 = not owned. Upgrades unlock the following:
+Lv.1: Quick Wheat
+Lv.2: Quick Bamboo
+Lv.3: Quick Potato
+Lv.4: Quick Lemon
+Lv.5: Quick Rice
+Lv.6: Quick Maple Syrup
+Lv.7: Quick Strawberry
+Lv.8: Quick Coconut</span></h4>
                             <div class="input-field">
                                 <label for="ecological-module-level">Level</label>
                                 <input type="number" id="ecological-module-level" value="0" min="0" max="10">
@@ -85,7 +126,19 @@
                         </div>
 
                         <div class="module-card">
-                            <h4>Kitchen Module <span class="info-icon" data-tooltip="Lv.2: Premium Bread&#10;Lv.3: Premium Potato Soup&#10;Lv.4: Premium Sweet Rice Wine&#10;Lv.5: Premium Salted Lemon&#10;Lv.6: Premium Jello&#10;Lv.7: Premium Berry Chocolate Coconut Pudding">?</span></h4>
+                            <h4>Kitchen Module <button type="button" class="info-button" data-help="0 = not owned. Upgrades unlock the following:
+Lv.2: Premium Bread
+Lv.3: Premium Potato Soup
+Lv.4: Premium Sweet Rice Wine
+Lv.5: Premium Salted Lemon
+Lv.6: Premium Jello
+Lv.7: Premium Berry Chocolate Coconut Pudding" aria-label="About Kitchen Module" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button><span id="kitchen-module-help" hidden>0 = not owned. Upgrades unlock the following:
+Lv.2: Premium Bread
+Lv.3: Premium Potato Soup
+Lv.4: Premium Sweet Rice Wine
+Lv.5: Premium Salted Lemon
+Lv.6: Premium Jello
+Lv.7: Premium Berry Chocolate Coconut Pudding</span></h4>
                             <div class="input-field">
                                 <label for="kitchen-module-level">Level</label>
                                 <input type="number" id="kitchen-module-level" value="0" min="0" max="10">
@@ -93,7 +146,27 @@
                         </div>
 
                         <div class="module-card">
-                            <h4>Resource Detector <span class="info-icon" data-tooltip="Lv.1: Quick Well Water&#10;Lv.2: Quick Sea Salt&#10;Lv.3: Quick Aromathyst&#10;Lv.4: Quick Fresh Water&#10;Lv.5: Quick Wool&#10;Lv.6: Quick Deep Rock Spring Water&#10;Lv.7: Quick Natural Mineral Spring Water&#10;Lv.8: Quick Scales">?</span></h4>
+                            <h4>Resource Detector <button type="button" class="info-button" data-help="0 = not owned. Upgrades unlock the following:
+Lv.1: Quick Well Water
+Lv.2: Quick Sea Salt
+Lv.3: Quick Aromathyst
+Lv.4: Quick Fresh Water
+Lv.5: Quick Wool
+Lv.6: Quick Deep Rock Spring Water
+Lv.7: Quick Natural Mineral Spring Water
+Lv.8: Quick Scales
+Lv.9: Quick Pearl
+Lv.10: Quick Snowmelt Cold Spring" aria-label="About Resource Detector" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button><span id="resource-detector-help" hidden>0 = not owned. Upgrades unlock the following:
+Lv.1: Quick Well Water
+Lv.2: Quick Sea Salt
+Lv.3: Quick Aromathyst
+Lv.4: Quick Fresh Water
+Lv.5: Quick Wool
+Lv.6: Quick Deep Rock Spring Water
+Lv.7: Quick Natural Mineral Spring Water
+Lv.8: Quick Scales
+Lv.9: Quick Pearl
+Lv.10: Quick Snowmelt Cold Spring</span></h4>
                             <div class="input-field">
                                 <label for="resource-detector-level">Level</label>
                                 <input type="number" id="resource-detector-level" value="0" min="0" max="10">
@@ -101,68 +174,126 @@
                         </div>
 
                         <div class="module-card">
-                            <h4>Crafting Module <span class="info-icon" data-tooltip="Lv.1: Premium River-Washed Stones&#10;Lv.2: Premium Rose Freshener&#10;Lv.3: Advanced Lemon Incense&#10;Lv.4: Advanced Wind Chime&#10;Lv.5: Premium Soap&#10;Lv.6: Advanced Gemstone Dust&#10;Lv.7: Premium Mixed Perfume">?</span></h4>
+                            <h4>Crafting Module <button type="button" class="info-button" data-help="0 = not owned. Upgrades unlock the following:
+Lv.1: Premium River-Washed Stones
+Lv.2: Premium Rose Freshener
+Lv.3: Advanced Lemon Incense
+Lv.4: Premium Wind Chime
+Lv.5: Premium Soap
+Lv.6: Premium Gemstone Dust
+Lv.7: Premium Mixed Perfume" aria-label="About Crafting Module" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button><span id="crafting-module-help" hidden>0 = not owned. Upgrades unlock the following:
+Lv.1: Premium River-Washed Stones
+Lv.2: Premium Rose Freshener
+Lv.3: Advanced Lemon Incense
+Lv.4: Premium Wind Chime
+Lv.5: Premium Soap
+Lv.6: Premium Gemstone Dust
+Lv.7: Premium Mixed Perfume</span></h4>
                             <div class="input-field">
                                 <label for="crafting-module-level">Level</label>
                                 <input type="number" id="crafting-module-level" value="0" min="0" max="10">
                             </div>
                         </div>
+
+                        <div class="module-card">
+                            <h4>Power Module <button type="button" class="info-button" data-help="0 = not owned. Upgrades unlock the following:
+Unlocks E-Mode at RV 12.
+Generator Lv.1–5 rated output: 600 / 800 / 1000 / 1200 / 1500.
+Verified 120% efficiency band: up to 500 / 660 / 800 / 1000 / 1200 draw." aria-label="About Power Module" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button><span id="power-module-help" hidden>0 = not owned. Upgrades unlock the following:
+Unlocks E-Mode at RV 12.
+Generator Lv.1–5 rated output: 600 / 800 / 1000 / 1200 / 1500.
+Verified 120% efficiency band: up to 500 / 660 / 800 / 1000 / 1200 draw.</span></h4>
+                            <div class="input-field">
+                                <label for="power-module-level">Level</label>
+                                <input type="number" id="power-module-level" value="0" min="0" max="5">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="emode-auto-note">
+                        <span class="emode-bolt" aria-hidden="true">⚡</span>
+                        <div class="title-with-help">
+                            <strong>E-Mode is automatic</strong> <button type="button" class="info-button" data-help="Compares timed electric recipes with Aniimo production to improve output or free workers. Requires a Power Module, powered station and Crackle Generator; a generator needs a Lightning Aniimo." aria-label="About Automatic E-Mode" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="strategy">
-                    <h3>Strategy</h3>
+                    <h3>Strategy <button type="button" class="info-button" data-help-source="level-up-strategy-hint priorities-help" aria-label="About Strategy" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h3>
                     <div class="tabs" role="radiogroup" aria-label="Strategy">
                         <label><input type="radio" name="strategy" id="strategy-level-up" value="level-up" checked> Level up</label>
                         <label><input type="radio" name="strategy" id="strategy-priorities" value="priorities"> Priorities</label>
                     </div>
 
                     <div id="priorities-config" style="display: none;">
-                        <p class="hint">Switch on what you want and drag to rank it. The plan makes as much of the first as it can, then as much of the next as that allows, and so on. Whatever's left always goes to Home Coins.</p>
+                        <p id="priorities-help" hidden>Priorities: enable and drag to rank your goals. Each is maximized in order; spare capacity earns Home Coins.</p>
                         <ol class="priority-list" id="priority-list"></ol>
                     </div>
 
                     <div id="level-up-config">
-                        <p class="hint">Gets everything your next RV level costs as soon as possible, then earns as many Home Coins as that leaves room for.</p>
+                        <p id="level-up-strategy-hint" hidden>Gets your RV upgrade resources as quickly as possible, then earns extra Home Coins.</p>
                         <div class="input-row" id="level-up-target-row">
                             <div class="input-field">
-                                <label for="level-up-target">Level up to RV</label>
+                                <div class="label-with-help"><label for="level-up-target">Level up to RV</label><button type="button" class="info-button" data-help="Choose the RV upgrade to collect resources for. Existing stock counts toward the upgrade. Placement, habitability, title and quest requirements must be met in game." aria-label="About Level up to RV" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div>
                                 <select id="level-up-target"></select>
                             </div>
                         </div>
                         <div id="level-up-cost"></div>
                         <details class="explain" id="level-up-stock">
                             <summary>What you already have</summary>
-                            <p class="hint small">Counts toward the level-up. Wood Blocks, Mineral Sand and lower tiers get processed up.</p>
+                            <p class="assume-title">Owned resources <button type="button" class="info-button" data-help="Counts toward the level-up. Wood Blocks, Mineral Sand and lower tiers get processed up. Enter only what you already have in storage." aria-label="About Owned resources" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></p>
                             <div class="stock-grid" id="level-up-stock-grid"></div>
                         </details>
                     </div>
                 </div>
 
+
                 <div class="season" id="season-section" hidden>
-                    <label class="priority-switch season-switch">
+                    <div class="setting-with-help"><label class="priority-switch season-switch">
                         <input type="checkbox" role="switch" id="season-on">
                         <span class="switch-track" aria-hidden="true"></span>
-                        <span class="season-title">Harvest Moon Festival</span>
-                    </label>
+                        <span class="season-title">Magical Wonder Night</span>
+                    </label><button type="button" class="info-button" id="season-info" data-help-source="season-details" aria-label="About Magical Wonder Night" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div>
                     <div id="season-config" hidden>
-                        <p class="hint">A seasonal event with its own currency, Moonray Wheat, which buys the season's seeds. Keeping enough wheat on hand is up to you; plans show how much their seeds use. Season items also earn Harvest Moon Points, which you can rank under Priorities.</p>
-                        <div class="input-field">
-                            <label for="season-currency-per-day">Moonray Wheat you can spend on seeds a day</label>
-                            <input type="number" id="season-currency-per-day" min="0" placeholder="No limit">
+                        <div class="input-row season-limits">
+                            <div class="input-field">
+                                <div class="label-with-help"><label for="season-wheat-budget">Max Weird Jelly Beans spend / day</label><button type="button" class="info-button" data-help-source="season-budget-help" aria-label="About Jelly Bean budget" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div>
+                                <input type="number" id="season-wheat-budget" value="0" min="0" step="1" aria-describedby="season-budget-help season-budget-note">
+                                <span id="season-budget-help" hidden>Optional seed spending limit: 0 = unlimited. Wonder Dailies pay 200 Jelly Beans per task and Pumpkin God orders can award more. Count only currency you can earn and spend.</span>
+                            </div>
+                            <div class="input-field">
+                                <div class="label-with-help"><label for="season-mutation-plots">Minimum magical plots / crop</label><button type="button" class="info-button" data-help-source="season-mutation-help" aria-label="About magical crop plots" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div>
+                                <input type="number" id="season-mutation-plots" value="0" min="0" max="40" step="1" aria-describedby="season-mutation-help season-budget-note">
+                                <span id="season-mutation-help" hidden>Optional continuously cycling plots of both crops. 0 leaves the optimizer free to choose. Mutations are chance-based.</span>
+                            </div>
                         </div>
-                        <p class="assume-title">Recipe Notes</p>
+                        <p class="harvest-mutation-note" id="season-budget-note" role="status" aria-live="polite"></p>
+                        <div class="setting-with-help">
+                            <label class="special-option"><input type="checkbox" id="season-sugarcane-stock" checked> Keep one Sugarcane plot for seasonal crafting</label>
+                            <button type="button" class="info-button" data-help="One Farmland Lv.5+ plot grows Sugarcane continuously and keeps its output for manual crafting. Sugarcane makes Rock Candy for Candied Lanternfruit. This is a preparation choice, not a fixed Pumpkin God order. Turn it off to prioritize other production." aria-label="About Sugarcane stock" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button>
+                        </div>
+                        <input type="hidden" id="season-points-min" value="0">
+                        <div id="season-details" hidden>
+                            <p>Magical Wonder Night is the current season. Magic Pumpkin and Memory Lanternfruit cost 4 Weird Jelly Beans each. Wonder Dailies and Pumpkin God orders award more Jelly Beans.</p>
+                            <p>Pumpkin God requests change. The optional Sugarcane stock is preparation for manual crafting, not a predicted order. Whimsy Point values appear on cards, but the method of earning them remains unverified and points are not optimized.</p>
+                        </div>
+                        <p class="assume-title">Formula Notes <button type="button" class="info-button" data-help="Tick only Formula Notes you own. Locked seasonal recipes will not be recommended." aria-label="About Formula Notes" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></p>
                         <div class="special-grid" id="season-notes"></div>
+                        <details class="explain" id="festival-batch">
+                            <summary>Crafting checklist</summary>
+                            <div class="input-row">
+                                <div class="input-field"><div class="label-with-help"><label for="festival-batch-amount">Amount of each seasonal product</label><button type="button" class="info-button" data-help="Lists materials for each of the nine crafted items. Not tied to rotating Pumpkin God orders." aria-label="About Crafting checklist" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div><input id="festival-batch-amount" type="number" value="1" min="1" max="100000" step="1"></div>
+                                <button type="button" id="festival-batch-build" class="skip-add-btn">Build checklist</button>
+                            </div>
+                            <div id="festival-batch-result" class="table-wrapper" role="status"></div>
+                        </details>
                     </div>
                 </div>
 
                 <details class="explain recipes-section" id="recipes-section">
                     <summary>Recipes<span class="skip-count" id="recipe-count"></span></summary>
-                    <p class="assume-title">Special recipes</p>
-                    <p class="hint small">These take a rare currency to unlock. Plans only use the ones you tick.</p>
+                    <p class="assume-title">Special recipes <button type="button" class="info-button" data-help="These take a rare currency to unlock. Plans only use the ones you tick." aria-label="About Special recipes" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></p>
                     <div class="special-grid" id="special-grid"></div>
-                    <p class="assume-title">Recipes to skip</p>
-                    <p class="hint small">Plans won't use these, e.g. recipes behind unlocks you don't have yet. You can also skip one straight from a plan with its ✕.</p>
+                    <p class="assume-title">Recipes to skip <button type="button" class="info-button" data-help="Plans will not use these recipes. Use this for unlocks you do not have yet. You can also skip a recipe from a plan with its × button." aria-label="About Recipes to skip" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></p>
                     <div class="skip-add">
                         <input type="text" id="skip-input" list="skip-options" placeholder="Search recipes" autocomplete="off" aria-label="Recipe to skip">
                         <button type="button" id="skip-add-btn" class="skip-add-btn">Skip</button>
@@ -170,6 +301,36 @@
                     <datalist id="skip-options"></datalist>
                     <div class="skip-chips" id="skip-chips"></div>
                 </details>
+                <div class="card aniimo-card" id="aniimo-card">
+                    <div class="card-head">
+                        <div class="title-with-help"><button type="button" class="collapse-toggle" id="aniimo-toggle" aria-expanded="false" aria-controls="aniimo-body">
+                            <span class="chevron" aria-hidden="true"></span>
+                            <h2>Aniimo Team</h2>
+                        </button><button type="button" class="info-button" data-help-source="aniimo-team-help" aria-label="About Aniimo Team" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div>
+                        <div class="tabs compact" role="radiogroup" aria-label="Aniimo setup">
+                            <label title="The best Aniimo you have, with each facility's personality"><input type="radio" name="aniimo-setup" id="aniimo-best" value="best" checked> Best</label>
+                            <label title="The lowest ability level each recipe accepts: the least you can get by with"><input type="radio" name="aniimo-setup" id="aniimo-minimum" value="minimum"> Minimum</label>
+                            <label title="Plan with the Aniimo you actually have"><input type="radio" name="aniimo-setup" id="aniimo-custom" value="custom"> My Aniimo</label>
+                        </div>
+                    </div>
+                    <div class="aniimo-setup-panel" id="aniimo-setup-panel">
+                        <p id="aniimo-setup-hint" hidden></p>
+                        <div class="ability-levels" id="ability-levels"></div>
+                        <div class="roster-editor" id="roster-editor" hidden></div>
+                    </div>
+                    <p class="aniimo-count" id="aniimo-count" hidden><span id="aniimo-count-have">0</span><span class="aniimo-count-of" id="aniimo-count-of"></span></p>
+                    <p class="collapsed-summary" id="aniimo-collapsed-summary"></p>
+                    <div class="ability-strip" id="aniimo-abilities" aria-label="Aniimo needed per ability"></div>
+                    <p class="hint small" id="aniimo-pending" style="display: none;">Still working this setup out...</p>
+                    <div id="aniimo-body" hidden>
+                        <div id="aniimo-team-help" hidden>
+                            <p><strong>Best</strong>: the best Aniimo you have of each ability (pick its level above), with each facility's personality. <strong>My Aniimo</strong>: the Aniimo you list; each works what its abilities allow, for the hours it has. <strong>Minimum</strong>: the lowest ability level each recipe accepts, with no personality bonus. The plan below follows whichever is picked.</p>
+                            <p>An Aniimo can take any job needing its ability at or below its level while it has hours to spare, as long as no two of its facilities want opposite personalities. It has four personalities, one from each pair, shown as letters over its portrait: Instinctive or Energetic (I/E), Nimble or Practical (N/S), Faithful or Tenacious (F/T), Playful or Judicious (P/J). Facilities with a resident Aniimo (Sandcastle, Dewy House and the like) need one each, and so does each Heat Furnace (Fire), Cooling Unit (Ice) and Sunlamp (Light) in use. With My Aniimo, Farmland and Woodland tending jobs also consume roster time, so reclaiming, sowing, watering and harvesting compete with Mine, Well and processor work for the same Aniimo's day. Not yet checked in game: each recipe's minimum ability level, the Farmland and Woodland jobs, and whether an environment building's Aniimo level or personality matters.</p>
+                        </div>
+                        <div id="aniimo-summary"></div>
+                    </div>
+                </div>
+
                 <button id="optimize-btn" class="optimize-btn">
                     <span class="btn-text">Find the best plan</span>
                     <span class="btn-loading" style="display: none;">Solving...</span>
@@ -181,47 +342,26 @@
                 <div class="card solve-progress" id="solve-progress" style="display: none;" aria-live="polite"></div>
             </section>
 
+            <section class="card production-steps imported-layout-card" id="imported-layout-card" hidden>
+                <div class="card-head">
+                    <h2>Imported Homeland Layout <button type="button" class="info-button" data-help="An imported layout shows placement only. Your calculator settings stay unchanged. Aniimax codes differ from in-game Combo Codes." aria-label="About Imported Homeland Layout" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h2>
+                    <button type="button" class="toggle-button small" id="imported-layout-close">Close</button>
+                </div>
+                <p class="hint" id="imported-layout-summary"></p>
+                <div class="layout-diagram" id="imported-layout-diagram"></div>
+            </section>
+
             <section class="results-section" id="results-section" style="display: none;">
                 <div id="error-message" class="card error-message" style="display: none;"></div>
 
                 <div id="results-content">
-                    <div class="card aniimo-card" id="aniimo-card">
-                        <div class="card-head">
-                            <button type="button" class="collapse-toggle" id="aniimo-toggle" aria-expanded="false" aria-controls="aniimo-body">
-                                <span class="chevron" aria-hidden="true"></span>
-                                <h2>Aniimo Team</h2>
-                            </button>
-                            <div class="tabs compact" role="radiogroup" aria-label="Aniimo setup">
-                                <label title="The best Aniimo you have, with each facility's personality"><input type="radio" name="aniimo-setup" id="aniimo-best" value="best" checked> Best</label>
-                                <label title="The lowest ability level each recipe accepts: the least you can get by with"><input type="radio" name="aniimo-setup" id="aniimo-minimum" value="minimum"> Minimum</label>
-                                <label title="Plan with the Aniimo you actually have"><input type="radio" name="aniimo-setup" id="aniimo-custom" value="custom"> My Aniimo</label>
-                            </div>
-                        </div>
-                        <div class="aniimo-setup-panel" id="aniimo-setup-panel">
-                            <p class="hint small" id="aniimo-setup-hint"></p>
-                            <div class="ability-levels" id="ability-levels"></div>
-                            <div class="roster-editor" id="roster-editor" hidden></div>
-                        </div>
-                        <p class="aniimo-count" id="aniimo-count" hidden><span id="aniimo-count-have">0</span><span class="aniimo-count-of" id="aniimo-count-of"></span></p>
-                        <p class="collapsed-summary" id="aniimo-collapsed-summary"></p>
-                        <div class="ability-strip" id="aniimo-abilities" aria-label="Aniimo needed per ability"></div>
-                        <p class="hint small" id="aniimo-pending" style="display: none;">Still working this setup out...</p>
-                        <div id="aniimo-body" hidden>
-                            <details class="explain">
-                                <summary>How the team is worked out</summary>
-                                <p><strong>Best</strong>: the best Aniimo you have of each ability (pick its level above), with each facility's personality. <strong>My Aniimo</strong>: the Aniimo you list; each works what its abilities allow, for the hours it has. <strong>Minimum</strong>: the lowest ability level each recipe accepts, with no personality bonus. The plan below follows whichever is picked.</p>
-                                <p>An Aniimo can take any job needing its ability at or below its level while it has hours to spare, as long as no two of its facilities want opposite personalities. It has four personalities, one from each pair, shown as letters over its portrait: Instinctive or Energetic (I/E), Nimble or Practical (N/S), Faithful or Tenacious (F/T), Playful or Judicious (P/J). Facilities with a resident Aniimo (Sandcastle, Dewy House and the like) need one each, and so does each Heat Furnace (Fire), Cooling Unit (Ice) and Sunlamp (Light) in use. With My Aniimo, Farmland and Woodland jobs only need someone able to do each; they're quick, so they aren't counted against anyone's hours. Not yet checked in game: each recipe's minimum ability level, the Farmland and Woodland jobs, and whether an environment building's Aniimo level or personality matters.</p>
-                            </details>
-                            <div id="aniimo-summary"></div>
-                        </div>
-                    </div>
-
                     <div class="card rate-card">
                         <!-- A level-up plan leads with the level-up, and its table's rate column
                              takes over the unit select and the coin rate below. -->
                         <div class="level-up-card" id="level-up-card" style="display: none;">
-                            <span class="summary-label" id="level-up-label">Level-Up</span>
+                            <div class="title-with-help"><span class="summary-label" id="level-up-label">Level-Up</span><button type="button" class="info-button" data-help="The result is time to afford the upgrade. Meet placement, habitability, title and quest requirements in game. The in-game upgrade timer starts after you pay for the upgrade." aria-label="About RV upgrade time" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></div>
                             <div class="summary-value" id="level-up-time">-</div>
+                            <p class="hint small" id="level-up-prerequisites"></p>
                             <div id="level-up-lines"></div>
                         </div>
                         <div id="rate-block">
@@ -247,25 +387,31 @@
                         <div id="improve-list"></div>
                     </div>
 
+                    <div class="card production-steps" id="power-card" style="display: none;">
+                        <h2 class="emode-card-title"><span aria-hidden="true">⚡</span> E-Mode <span class="emode-auto-badge" id="emode-plan-kind">Automatic</span><button type="button" class="info-button" data-help="Each generator needs one Lightning Aniimo; powered stations need no production Aniimo. Repeaters extend coverage. Stay within the generator capacity; grid efficiency sets production speed." aria-label="About E-Mode plan" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h2>
+                        <div id="power-summary"></div>
+                        <p class="power-spare-note" id="power-spare-note"></p>
+                    </div>
+
                     <div class="card production-steps" id="seed-card" style="display: none;">
-                        <h2>Seeds to Plant</h2>
+                        <h2>Seeds to Plant <button type="button" class="info-button" data-help="One seed per planting, for every Farmland and Woodland crop in the plan. The displayed period follows your RV target or selected rate unit." aria-label="About Seeds to Plant" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h2>
                         <p class="hint" id="seed-card-unit"></p>
                         <div class="seed-table" id="seed-table"></div>
                     </div>
 
                     <div class="card production-steps" id="profit-card" style="display: none;">
-                        <h2>Profit by Product</h2>
-                        <p class="hint">Net of seed costs.</p>
+                        <h2>Profit by Product <button type="button" class="info-button" data-help="Income after subtracting seed costs. Ingredients used in another product are counted in that product, rather than sold separately." aria-label="About Profit by Product" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h2>
                         <div id="profit-breakdown"></div>
                     </div>
 
+                    <div class="card production-steps" id="harvest-order-card" hidden>
+                        <h2>Season Crafting Stock <button type="button" class="info-button" data-help="Keep this output raw in Storage for manual seasonal crafting. Held stock earns no income or points. Daily amounts are planned production, rather than your existing inventory." aria-label="About Season Crafting Stock" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h2>
+                        <div class="table-wrapper" id="harvest-order-stock"></div>
+                    </div>
                     <div class="card production-steps">
-                        <h2>What Each Facility Should Do</h2>
-                        <details class="explain">
-                            <summary>How to read this</summary>
-                            <p>Each row is one product; a facility split between several products gets a row for each. Crops that need a growing environment are grouped by the Heat Furnace, Cooling Unit or Sunlamp setting that covers them, with its layout. Everything else is grouped like the facility list.</p>
-                            <p>In the Aniimo column, each circle is an ability in its game color with the Aniimo level inside; a ring means the plan counts on the facility's personality bonus. Hover a circle for details.</p>
-                        </details>
+                        <h2>What Each Facility Should Do <button type="button" class="info-button" data-help="Each row is one product. Minimum level is the lowest facility level needed for that product; higher levels also work. Recipes taking turns can share a facility. E-Mode power depends on actual facility levels. Crops are grouped by the environment that covers them.
+
+Aniimo circles show the ability color and level. A ring means the personality bonus is included. Hover or tap a circle for details." aria-label="About What Each Facility Should Do" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h2>
                         <!-- Populated by app.js's renderFacilityPlan(): one section per
                              environment mode in use (Cool/Warm/Freeze/Scorching/Adequate) first,
                              then one table per facility category (Materials / Environment /
@@ -274,25 +420,44 @@
                     </div>
 
                     <div class="card production-steps" id="layout-card" style="display: none;">
-                        <h2>Homeland Layout</h2>
+                        <h2>Homeland Layout <button type="button" class="info-button" data-help="Busy facilities are placed near Storage Units to reduce estimated walking. Environment coverage keeps each crop at the planned temperature, within the land unlocked at your RV level. Set the Storage Unit count you actually use.
+
+Simulation follows completed batches into shared storage before starting downstream recipes. A ring shows batch progress; amber means waiting for materials.
+
+Generator placement and direct coverage are considered before estimated walking. Power gap reserves ground beside E-Mode machines and generators; machines beyond the 11×11 generator range still need Power Poles.
+
+Hauling travel time, carry capacity and obstacle pathfinding are not simulated. Walking is an estimate; this layout is not proven to be the shortest possible." aria-label="About Homeland Layout" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h2>
                         <p class="hint" id="layout-summary"></p>
-                        <details class="explain">
-                            <summary>How it's laid out</summary>
-                            <p>Every finished batch is carried to the Storage Unit (SU), so each facility is placed by its trips per hour times its straight-line distance to it: the busiest sit closest, idle ones go to the edge. Each environment building's plots can go anywhere its coverage still reaches them, so they sit on its Storage Unit side. No covered plot reaches another building's coverage, and a crop that needs an environment but is grown without one stays out of all of it, so every crop keeps the temperature the plan gave it. Crops that need no environment can go anywhere. Everything stays within the plots your RV level has open (each 20 by 15 tiles; in Advanced mode, the lowest RV level that allows what you entered), and the Storage Unit goes wherever the walking comes out least. Hover or tap a facility for its trips and distance. The diagram plays the homeland out in sped-up game time from when everything is set up: each finished batch goes to the Storage Unit (carrying takes no time here), and a recipe starts only once what it takes is there. A ring on each facility shows its batch, amber while it waits for materials. This is a close-packed arrangement worked out step by step, not a proven shortest one.</p>
-                        </details>
                         <div class="layout-controls">
                             <span class="layout-toggles">
                                 <label class="layout-whole"><input type="checkbox" id="layout-whole"> Show the whole homeland</label>
-                                <label class="layout-whole"><input type="checkbox" id="layout-sim-on" checked> Simulate</label>
+                                <span class="setting-with-help"><label class="layout-whole"><input type="checkbox" id="layout-sim-on" checked> Simulate</label><button type="button" class="info-button" data-help="Plays production in sped-up game time. Finished batches enter shared storage before downstream recipes begin. Rings show batch progress; amber means waiting for materials. Hauling time, capacity and obstacle pathfinding are not simulated." aria-label="About Simulation" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></span>
+                                <span class="setting-with-help"><label class="layout-storage-control">Storage Units
+                                    <input type="number" id="layout-storage-count" aria-label="Storage Units in layout" value="2" min="1" max="24" step="1">
+                                </label><button type="button" class="info-button" data-help="Use the number of Storage Units you can place in game. The layout spreads them through production demand and repacks busy facilities around them. Verified RV placement limits are applied automatically." aria-label="About Storage Units" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></span>
+                                <span class="setting-with-help"><label class="layout-power-control" for="layout-power-gap">Power gap
+                                    <select id="layout-power-gap">
+                                        <option value="0">None</option>
+                                        <option value="0.5">0.5 tile</option>
+                                        <option value="1">1 tile</option>
+                                        <option value="1.5" selected>1.5 tiles</option>
+                                        <option value="2">2 tiles</option>
+                                    </select>
+                                </label><button type="button" class="info-button" data-help="Leaves an empty square beside each E-Mode machine and generator for connections. Amber outlines mark this space. Larger gaps can increase hauling distance. Check the Power Pole footprint and range in game, and choose enough space for your connections." aria-label="About Power gap" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></span>
                             </span>
-                            <span class="layout-sim" id="layout-sim" hidden><span id="layout-clock">0h 00m</span><button type="button" class="toggle-button small" id="layout-replay">Replay</button></span>
+                            <span class="layout-actions">
+                                <button type="button" class="toggle-button small" id="layout-copy-code">Copy layout-only code</button>
+                                <button type="button" class="toggle-button small" id="layout-import-code">Import layout-only code</button><button type="button" class="info-button" data-help="Layout codes share placement only. Use setup codes to share calculator settings. Aniimax codes differ from in-game Combo Codes." aria-label="About Layout codes" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button>
+                                <span class="layout-sim" id="layout-sim" hidden><span id="layout-clock">0h 00m</span><button type="button" class="toggle-button small" id="layout-replay">Replay</button></span>
+                            </span>
                         </div>
+                        <p class="hint small" id="layout-storage-hint"></p>
+                        <p class="hint small layout-share-hint" id="layout-share-hint" role="status" aria-live="polite"></p>
                         <div class="layout-diagram" id="layout-diagram"></div>
                     </div>
 
                     <div class="card production-steps" id="goal-section">
-                        <h2>Set a Goal</h2>
-                        <p class="hint">Updates instantly from the plan above.</p>
+                        <h2>Set a Goal <button type="button" class="info-button" data-help="Uses the production rates in the plan above. Enter a target and what you already have to estimate the remaining time. Updates immediately without calculating a new plan." aria-label="About Set a Goal" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h2>
                         <div class="config-group">
                             <div class="input-row">
                                 <div class="input-field">
@@ -335,7 +500,7 @@
                                             <th>Amount</th>
                                             <th id="product-breakdown-rate-header">Profit</th>
                                             <th>Worth <span class="th-unit">Home Coins</span></th>
-                                            <th id="product-breakdown-points-header" hidden>Harvest Moon Points</th>
+                                            <th id="product-breakdown-points-header" hidden>Whimsy Points</th>
                                         </tr>
                                     </thead>
                                     <tbody id="product-breakdown-tbody"></tbody>
@@ -366,9 +531,10 @@
         </main>
 
         <footer>
-            <p>aniimax v<span id="version">-</span> | <a href="https://github.com/ae-bii/aniimax" target="_blank">github</a></p>
+            <p>aniimax v<span id="version">-</span> | <a href="https://github.com/KrykiZZ/aniimax" target="_blank">github</a> | Based on <a href="https://github.com/Zudin987/aniimax" target="_blank">Zudin987</a> and <a href="https://github.com/ae-bii/aniimax" target="_blank">ae-bii</a></p>
             <p class="footer-note">Unofficial fan-made tool. Not affiliated with or endorsed by the makers of Aniimo.</p>
             <p class="footer-note">Your inputs are saved in your browser and never sent anywhere.</p>
+            <p class="footer-note" id="build-version">Build: development</p>
         </footer>
     </div>
 
@@ -376,11 +542,10 @@
     <div id="facilitiesModal" class="modal" onclick="closeFacilitiesOnBackdrop(event)">
         <div class="modal-content wide">
             <div class="modal-header">
-                <h2>Facility Recipes</h2>
+                <h2>Facility Recipes <button type="button" class="info-button" data-help="Recipes in Aniimax's data, grouped by facility. Some higher-level recipes are missing. This list is independent of your owned facility counts and levels." aria-label="About Facility Recipes" aria-controls="context-help" aria-expanded="false"><span aria-hidden="true">i</span></button></h2>
                 <button class="close-button" onclick="closeFacilities()">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="hint">Every recipe in the game data, grouped by facility. This is a reference table, not tied to your owned facility counts or levels.</p>
                 <p class="hint small" id="facilities-loading-hint">Loading recipe data...</p>
                 <div id="facilities-modal-container" class="facilities-container"></div>
             </div>
@@ -396,16 +561,16 @@
             </div>
             <div class="modal-body">
                 <h3>The Model</h3>
-                <p>Every plan is one mixed-integer program covering every recipe and facility at once, solved with <a href="https://highs.dev" target="_blank" rel="noopener">HiGHS</a>. Each recipe your facility levels and modules unlock, \(r\), gets a rate \(b_r\) (batches per second) and a whole number of units \(u_r\) set to it: plots for a crop, machines for a processed item.</p>
+                <p>Every plan is one mixed-integer program covering the modeled recipes and facilities at once, solved with <a href="https://highs.dev" target="_blank" rel="noopener">HiGHS</a>. Each recipe your facility levels and modules unlock, \(r\), gets a rate \(b_r\) (batches per second) and a whole number of units \(u_r\) set to it: plots for a crop, machines for a processed item.</p>
                 <div class="math-block">\[ \max \ \sum_i p_i \, s_i \;-\; \sum_r c_r \, b_r \]</div>
-                <p>where \(s_i\) is how much of item \(i\) is sold per second at price \(p_i\), and \(c_r\) is a crop's seed cost. During the Harvest Moon Festival, season crops' seeds cost Moonray Wheat instead, which plans take as unlimited. Subject to:</p>
+                <p>where \(s_i\) is how much of item \(i\) is sold per second at price \(p_i\), and \(c_r\) is a crop's seed cost. During Magical Wonder Night, season crops' seeds cost Weird Jelly Beans; the player can optionally cap daily spending (0 means unlimited). Subject to:</p>
                 <ul>
                     <li><strong>Whole units.</strong> \(b_r \, t_r \le u_r\), with \(u_r\) a whole number and \(t_r\) the time per batch. A unit runs one recipe and is left running.</li>
-                    <li><strong>Item balance.</strong> Everything made covers what other recipes use plus what's sold. A quick variant makes the same item as the regular one.</li>
+                    <li><strong>Item balance.</strong> Everything made covers what other recipes use plus what's sold. With Sugarcane stock on, one plot's output is kept for manual seasonal crafting rather than consumed or sold. Quick recipes can make the same base item as normal recipes.</li>
                     <li><strong>What you own.</strong> For every facility and level \(L\), the units on recipes needing level \(L\) or higher add up to at most what you own at that level. A higher-level plot can run a lower-level recipe.</li>
                     <li><strong>Growing environments.</strong> A crop wanting Cool, Warm, Freeze or Scorching grows at full speed on a plot covered by a Heat Furnace or Cooling Unit set to that mode, and more slowly on an uncovered one (see below). An Adequate crop needs a Sunlamp and grows nowhere else.</li>
                 </ul>
-                <p>HiGHS proves the plan is the best possible. On the rare setup where that takes longer than 30 seconds, it stops with the best plan so far and the results say how far from the best it could be. Every plan is then re-checked on its own before it's shown.</p>
+                <p>HiGHS proves the plan is the best possible within the modeled data and constraints. Missing recipes and unverified values can affect the result. On the rare setup where that takes longer than 30 seconds, it stops with the best plan so far and the results say how far from the best it could be. Every plan is then re-checked on its own before it's shown.</p>
 
                 <h3>Time per Batch</h3>
                 <p>Crops and trees take their grow time, less the Aniimo's watering: a plot asks for water twice as it grows, at two thirds and at one third of its time left, and each watering takes an eighth of the crop's own time off. A 40-minute crop comes in at 30 and a 4-minute one at 3. A crop short of its environment grows slower but still loses the same minutes, so a Warm crop with no building takes 50 minutes and is watered down to 40; that part isn't checked in game yet.</p>
@@ -426,7 +591,7 @@
                 <p>Each tier takes 8 of the tier below (4 for the last), so the Bench and Kiln switch between tiers rather than running one recipe like other processors.</p>
 
                 <h3>Priorities</h3>
-                <p>The plan solves once per ticked priority, in your order. Each solve makes as much of its priority as it can while keeping at least what the earlier ones reached; a last solve then earns as many Home Coins as all of those leave room for. Aniimo EXP, Aniipods and, during the Harvest Moon Festival, Harvest Moon Points count as their own currencies, so the same model handles them like Home Coins.</p>
+                <p>The plan solves once per ticked priority, in your order. Each solve makes as much of its priority as it can while keeping at least what the earlier ones reached; a last solve then earns as many Home Coins as all of those leave room for. Aniimo EXP and Aniipods count as separate priorities. Whimsy Points are not currently modeled, because the actions granting them have not yet been verified.</p>
 
                 <h3>Time to Reach a Goal</h3>
                 <p>Each product starts adding up once its first batch clears its ingredient chain (its lead time), then keeps its steady rate:</p>
@@ -438,11 +603,6 @@
             </div>
         </div>
     </div>
-    <script>
-        // Keep the math window before MathJax typesets it. This script runs while the page is still
-        // being parsed, and MathJax typesets only after that. See math-translation.js.
-        window.aniimaxMathSource = document.querySelector('#mathModal .modal-body').innerHTML;
-    </script>
 
     <!-- Help Modal -->
     <div id="helpModal" class="modal" onclick="closeHelpOnBackdrop(event)">
@@ -536,6 +696,6 @@
             }
         });
     </script>
-    <script type="module" src="app.js?v=rv14-rv20-facility-counts"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

@@ -98,18 +98,14 @@ pub struct ProductionItem {
 pub const SEASON_POINTS: &str = "season_points";
 
 /// A season item's terms, e.g. for the Harvest Moon Festival an Umbral Hot Pot sells for 2150
-/// coins and 8 points, and a Moondew Radish's seeds cost 4 Moonray Wheat. Season orders pay out
-/// far more of the season currency than seeds cost, so plans treat it as unlimited and only
-/// report what the seeds take.
+/// coins and 8 points, and a Moondew Radish's seeds cost 4 Moonray Wheat. Plans may either leave
+/// that event currency uncapped or apply the player's per-day Moonray Wheat budget.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct SeasonTerms {
     /// Season points per unit sold, on top of its coins.
     pub points: f64,
     /// Season currency the seeds for one batch cost; 0 for anything that isn't a season crop.
     pub seed_cost: f64,
-    /// The most season currency a day the player can spend on seeds, or `None` for no limit. The
-    /// same budget on every season crop: all their seeds together stay within it.
-    pub currency_per_day: Option<f64>,
 }
 
 impl ProductionItem {
@@ -212,6 +208,21 @@ pub fn has_personality_bonus(facility: &str) -> bool {
     !FACILITIES_WITHOUT_PERSONALITY.contains(&facility)
 }
 
+/// Personality required for the facility's work bonus, matching the web facility configuration.
+pub fn facility_personality(facility: &str) -> Option<&'static str> {
+    match facility {
+        "Mine" | "Pickling Jar" => Some("Playful"),
+        "Well" | "Starfall Hammock" | "Joy Wheel Loom" => Some("Faithful"),
+        "Tidewhisper Sandcastle" | "Nimbus Bed" | "Crafting Table" => Some("Judicious"),
+        "Dewy House" | "Phonolfactory Table" => Some("Instinctive"),
+        "Floral Windmill" | "Jukebox Dryer" | "Blazing Stove" => Some("Nimble"),
+        "Carousel Mill" | "Simmering Pot" => Some("Tenacious"),
+        "Claw Game Cooker" | "Chimney Kiln" => Some("Practical"),
+        "Bouncy Brew Keg" | "Woodworking Bench" => Some("Energetic"),
+        _ => None,
+    }
+}
+
 /// Efficiency at a facility without a personality ([`FACILITIES_WITHOUT_PERSONALITY`]): 100% at
 /// the level the recipe needs, then +40% a level, whatever level the recipe needs. A level-3
 /// Aniimo reads 180%, 140% and 100% on the Dance Pad Polisher's Growth Bud, Flower and Fruit
@@ -233,19 +244,135 @@ pub fn no_personality_efficiency(level: u32, required: u32) -> f64 {
 /// [`add_uncovered_variants`]).
 pub const UNCOVERED_SUFFIX: &str = "__uncovered";
 
-/// The recipe or crop behind an item name: the name without a roster copy's `__by<member>` (see
-/// [`crew_variants`]) or an uncovered variant's suffix.
-pub fn base_item_name(name: &str) -> &str {
-    let name = match name.rsplit_once(CREW_SUFFIX) {
-        Some((base, member)) if !member.is_empty() && member.bytes().all(|b| b.is_ascii_digit()) => base,
-        _ => name,
+/// Marks a fixed-timer electric (E-Mode) variant. This stays internal to the planner.
+pub const ELECTRIC_SUFFIX: &str = "__electric";
+/// Marks the verified 120%-efficiency E-Mode band. The plain electric suffix is the 100% band.
+pub const ELECTRIC_BOOST_SUFFIX: &str = "__electric_boost";
+
+/// Whether an internal recipe name is either powered E-Mode operating band.
+pub fn is_electric_item(name: &str) -> bool {
+    name.ends_with(ELECTRIC_SUFFIX) || name.ends_with(ELECTRIC_BOOST_SUFFIX)
+}
+
+/// Whether an internal recipe is the verified 120%-efficiency E-Mode variant.
+pub fn is_boosted_electric_item(name: &str) -> bool {
+    name.ends_with(ELECTRIC_BOOST_SUFFIX)
+}
+
+/// The recipe or crop behind an internal variant: strips roster-copy, E-Mode and uncovered
+/// suffixes. Variants may be stacked, so keep peeling until nothing changes.
+pub fn base_item_name(mut name: &str) -> &str {
+    loop {
+        let before = name;
+        name = match name.rsplit_once(CREW_SUFFIX) {
+            Some((base, member)) if !member.is_empty() && member.bytes().all(|b| b.is_ascii_digit()) => base,
+            _ => name,
+        };
+        name = name.strip_suffix(ELECTRIC_BOOST_SUFFIX).unwrap_or(name);
+        name = name.strip_suffix(ELECTRIC_SUFFIX).unwrap_or(name);
+        name = name.strip_suffix(UNCOVERED_SUFFIX).unwrap_or(name);
+        if name == before {
+            return name;
+        }
+    }
+}
+
+/// Crops and trees are grown on plots, not operated as powered processors. All other
+/// machines may use E-Mode if (and only if) a known fixed electric timer is loaded from
+/// data/e_mode.csv. Do not force normal mode on Mines, Wells, or early RV materials: the
+/// optimizer must compare staffed and powered recipes using the actual grid constraints.
+pub fn e_mode_allowed(item: &ProductionItem) -> bool {
+    !matches!(item.facility.as_str(), "Farmland" | "Woodland")
+}
+
+/// Full-power E-Mode draw for one facility at its ACTUAL facility level. Most powered processors
+/// use 15 power per level; gathering/resource facilities and the two Lightning machines use 30.
+pub fn e_mode_power_per_unit(facility: &str, facility_level: u32) -> u32 {
+    let per_level = match facility {
+        "Mine" | "Well" | "Aniipod Maker" | "Dance Pad Polisher" => 30,
+        _ => 15,
     };
-    name.strip_suffix(UNCOVERED_SUFFIX).unwrap_or(name)
+    per_level * facility_level.max(1)
+}
+
+/// Lightning level that reaches the Crackle Generator tier's documented base-power workload.
+/// A lower-level Lightning Aniimo can work the station, but does so more slowly; the optimizer
+/// requires this level when it claims the generator's full rated supply.
+pub fn generator_required_lightning_level(level: u32) -> u32 {
+    match level {
+        0 => 0,
+        1 => 1,
+        2 => 2,
+        3.. => 3,
+    }
+}
+
+/// Crackle Generator output at a Power Module / generator level.
+pub fn generator_power(level: u32) -> u32 {
+    match level {
+        1 => 600,
+        2 => 800,
+        3 => 1000,
+        4 => 1200,
+        5.. => 1500,
+        _ => 0,
+    }
+}
+
+/// Maximum total draw that keeps the whole grid in the verified 120% E-Mode efficiency band.
+/// These are the post-release thresholds for Generator Lv.1..5. Above this threshold, but no
+/// higher than the rated generator output, the calculator uses the verified 100% E-Mode band.
+/// The game can continue below 100% when overloaded, but Aniimax deliberately does not model
+/// that region until its exact scaling is reliably known.
+pub fn generator_boost_power(level: u32) -> u32 {
+    match level {
+        1 => 500,
+        2 => 660,
+        3 => 800,
+        4 => 1000,
+        5.. => 1200,
+        _ => 0,
+    }
+}
+
+/// Total full-power grid capacity from the generators the player has built. A generator cannot
+/// operate above the unlocked Power Module level.
+pub fn grid_power_capacity(facilities: &FacilityCounts, modules: &ModuleLevels) -> u32 {
+    if modules.power_module == 0 {
+        return 0;
+    }
+    facilities
+        .tiers("Crackle Generator")
+        .into_iter()
+        .map(|(count, level)| count * generator_power(level.min(modules.power_module)))
+        .sum()
 }
 
 /// Marks a recipe worked by one Aniimo on the player's roster, e.g. `milled_rice__by2` for the
 /// third (see [`crew_variants`]).
 pub const CREW_SUFFIX: &str = "__by";
+
+/// Family restrictions displayed in the production tooltips in the 2026-10-03 recording.
+/// Leisure ability alone does not qualify an Aniimo for these resident stations.
+/// Floral Windmill's family has not been shown, so no family is guessed for it.
+pub fn facility_family(facility: &str) -> Option<&'static str> {
+    match facility {
+        "Tidewhisper Sandcastle" => Some("Susuta"),
+        "Dewy House" => Some("Dewy"),
+        "Nimbus Bed" => Some("Nimbi"),
+        "Starfall Hammock" => Some("Celestis"),
+        _ => None,
+    }
+}
+
+/// Some stations require different families for individual products.
+pub fn recipe_family(facility: &str, name: &str) -> Option<&'static str> {
+    if facility == "Starfall Hammock" && base_item_name(name) == "gold_speck_cap" {
+        Some("Coinwisp")
+    } else {
+        facility_family(facility)
+    }
+}
 
 /// One kind of Aniimo on the player's roster: how many they have that are alike, the homeland
 /// abilities each has with its level (an Aniimo can have several, e.g. Fire 3 and Hauling 3), and
@@ -253,11 +380,23 @@ pub const CREW_SUFFIX: &str = "__by";
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct RosterAniimo {
     pub count: u32,
+    /// Family, including evolved members of that family. Missing on older saved rosters;
+    /// unspecified members may work ordinary jobs but not known family-restricted stations.
+    pub family: Option<String>,
     pub abilities: std::collections::BTreeMap<String, u32>,
     pub personalities: Vec<String>,
 }
 
 impl RosterAniimo {
+    pub fn can_work_at(&self, facility: &str) -> bool {
+        facility_family(facility).is_none_or(|family| self.family.as_deref() == Some(family))
+    }
+
+    pub fn can_work_on(&self, item: &ProductionItem) -> bool {
+        recipe_family(&item.facility, &item.name)
+            .is_none_or(|family| self.family.as_deref() == Some(family))
+    }
+
     /// This Aniimo's level at `ability`, or 0 if it hasn't got it.
     pub fn level(&self, ability: &str) -> u32 {
         self.abilities.get(ability).copied().unwrap_or(0)
@@ -285,6 +424,7 @@ impl Crew {
     /// the facility's personality.
     pub fn worker(&self, member: usize, item: &ProductionItem, requirements: &AniimoRequirements) -> Option<Worker> {
         let aniimo = self.members.get(member)?;
+        if !aniimo.can_work_on(item) { return None; }
         let (ability, _) = requirements.get(base_item_name(&item.name))?;
         let bonus = has_personality_bonus(&item.facility)
             && self.personalities.get(&item.facility).is_some_and(|p| aniimo.personalities.contains(p));
@@ -315,11 +455,18 @@ pub fn crew_variants(
         .collect();
     let mut out = Vec::new();
     for mut item in items {
+        // E-Mode is powered by the grid, not worked by a roster member. Keep its fixed timer and
+        // bypass both processor staffing and grower-job checks.
+        if is_electric_item(&item.name) {
+            item.crew = None;
+            out.push(item);
+            continue;
+        }
         match (item.workload, requirements.get(base_item_name(&item.name))) {
             (Some(workload), Some((ability, required))) => {
                 let mut fastest = f64::INFINITY;
                 for (member, aniimo) in crew.members.iter().enumerate() {
-                    if aniimo.count == 0 || aniimo.level(ability) < required {
+                    if aniimo.count == 0 || aniimo.level(ability) < required || !aniimo.can_work_on(&item) {
                         continue;
                     }
                     let mut variant = ProductionItem {
@@ -889,8 +1036,7 @@ pub struct PlanStep {
     /// ungated crops all leave this `None`).
     pub environment: Option<String>,
     /// On a producing processor row, how many of its `facility_count` units are busy on average
-    /// (a unit waiting on ingredients frees its Aniimo for other work); also on a season crop
-    /// held back by the season currency budget. `None` elsewhere.
+    /// (a unit waiting on ingredients frees its Aniimo for other work). `None` elsewhere.
     pub busy_units: Option<f64>,
     /// When planning with the player's roster, which member works this row (see [`Crew`]).
     pub crew: Option<usize>,
@@ -1178,6 +1324,20 @@ pub struct FacilityCounts {
     default_tier: (u32, u32),
     /// The Aniimo the player has, when planning with them (see [`Crew`]).
     crew: Option<Crew>,
+    /// Optional Harvest Moon seed-currency budget, per real day. Kept here with the rest of the
+    /// plan setup so every exact-solver entry point applies the same limit.
+    season_currency_per_day: Option<f64>,
+    season_points_per_day: f64,
+    /// Minimum Moondew Radish and Waxing Moon Pepper plots to keep cycling during the festival.
+    harvest_mutation_plots: u32,
+    /// Raw seasonal-order ingredients whose one-unit output must be kept, not used or sold.
+    harvest_order_items: Vec<String>,
+    /// Growing jobs used by custom-roster planning so reclaiming/sowing/watering/harvesting
+    /// consume real Aniimo time instead of merely checking that an ability exists somewhere.
+    grower_steps: Option<GrowerSteps>,
+    /// When planning a generic Best/per-facility setup, the Lightning level available for the
+    /// Crackle Generator. None means the Minimum setup may assume the generator-tier minimum.
+    generator_lightning_level: Option<u32>,
 }
 
 impl Default for FacilityCounts {
@@ -1186,6 +1346,12 @@ impl Default for FacilityCounts {
             facilities: std::collections::HashMap::new(),
             default_tier: (1, 1),
             crew: None,
+            season_currency_per_day: None,
+            season_points_per_day: 0.0,
+            harvest_mutation_plots: 1,
+            harvest_order_items: Vec::new(),
+            grower_steps: None,
+            generator_lightning_level: None,
         }
     }
 }
@@ -1200,6 +1366,62 @@ impl FacilityCounts {
     /// The Aniimo the player has, if planning with them.
     pub fn crew(&self) -> Option<&Crew> {
         self.crew.as_ref()
+    }
+
+    /// Sets the Lightning level available to a generic (non-roster) Crackle Generator plan.
+    /// Rated generator output is only available when this reaches the tier requirement.
+    pub fn set_generator_lightning_level(&mut self, level: Option<u32>) -> &mut Self {
+        self.generator_lightning_level = level;
+        self
+    }
+
+    pub fn generator_lightning_level(&self) -> Option<u32> {
+        self.generator_lightning_level
+    }
+
+    /// Supplies Farmland/Woodland job data for roster-aware capacity planning.
+    pub fn set_grower_steps(&mut self, steps: GrowerSteps) -> &mut Self {
+        self.grower_steps = Some(steps);
+        self
+    }
+
+    /// Farmland/Woodland jobs used by the exact roster solver.
+    pub fn grower_steps(&self) -> Option<&GrowerSteps> {
+        self.grower_steps.as_ref()
+    }
+
+    /// Sets seasonal plan limits. A non-positive or non-finite budget means unlimited.
+    pub fn set_season_limits(&mut self, currency_per_day: Option<f64>, mutation_plots: u32) -> &mut Self {
+        self.season_currency_per_day = currency_per_day.filter(|v| v.is_finite() && *v > 0.0);
+        self.harvest_mutation_plots = mutation_plots;
+        self
+    }
+
+    /// Maximum season seed currency the plan may spend per day, if capped.
+    pub fn season_currency_per_day(&self) -> Option<f64> {
+        self.season_currency_per_day
+    }
+
+    pub fn set_season_points_per_day(&mut self, points: f64) -> &mut Self {
+        self.season_points_per_day = if points.is_finite() { points.max(0.0) } else { 0.0 };
+        self
+    }
+
+    pub fn season_points_per_day(&self) -> f64 { self.season_points_per_day }
+
+    /// Minimum plots of EACH Harvest Moon crop kept cycling for mutation attempts.
+    pub fn harvest_mutation_plots(&self) -> u32 {
+        self.harvest_mutation_plots
+    }
+
+    /// Reserves one continuously producing unit of each raw ingredient for manual orders.
+    pub fn set_harvest_order_items(&mut self, items: Vec<String>) -> &mut Self {
+        self.harvest_order_items = items;
+        self
+    }
+
+    pub fn harvest_order_items(&self) -> &[String] {
+        &self.harvest_order_items
     }
 
     /// Creates an empty `FacilityCounts` (every facility defaults to count=1, level=1).
@@ -1236,6 +1458,12 @@ impl FacilityCounts {
             facilities: std::collections::HashMap::new(),
             default_tier: (0, 1),
             crew: None,
+            season_currency_per_day: None,
+            season_points_per_day: 0.0,
+            harvest_mutation_plots: 1,
+            harvest_order_items: Vec::new(),
+            grower_steps: None,
+            generator_lightning_level: None,
         };
         for (name, count, level) in pairs {
             fc.set(name, *count, *level);
@@ -1250,6 +1478,12 @@ impl FacilityCounts {
             facilities: std::collections::HashMap::new(),
             default_tier: (1, 99),
             crew: None,
+            season_currency_per_day: None,
+            season_points_per_day: 0.0,
+            harvest_mutation_plots: 1,
+            harvest_order_items: Vec::new(),
+            grower_steps: None,
+            generator_lightning_level: None,
         }
     }
 
@@ -1346,24 +1580,27 @@ impl FacilityCounts {
 /// use aniimax::models::ModuleLevels;
 ///
 /// let modules = ModuleLevels {
-///     ecological_module: 2,  // Unlocks high-speed wheat and willow
-///     kitchen_module: 2,     // Unlocks super wheat flour
-///     resource_detector: 1,   // Unlocks high-speed rock
-///     crafting_module: 1,    // Unlocks advanced wood carving
+///     ecological_module: 2,  // Unlocks Quick Wheat and Quick Bamboo
+///     kitchen_module: 2,     // Unlocks Premium Bread
+///     resource_detector: 1,  // Unlocks Quick Well Water
+///     crafting_module: 1,    // Unlocks Premium River-Washed Stones
+///     power_module: 0,       // E-Mode still locked in this example
 /// };
 ///
 /// assert!(modules.can_use("ecological_module", 1));
 /// ```
 #[derive(Debug, Clone, Default)]
 pub struct ModuleLevels {
-    /// Level of Ecological Module (unlocks high-speed wheat at 1, high-speed willow at 2)
+    /// Level of Ecological Module (unlocks Quick Wheat at 1, Quick Bamboo at 2).
     pub ecological_module: u32,
-    /// Level of Kitchen Module (unlocks super wheat flour at 2)
+    /// Level of Kitchen Module (unlocks Premium Bread at 2).
     pub kitchen_module: u32,
-    /// Level of Resource Detector (unlocks high-speed rock at 1)
+    /// Level of Resource Detector (unlocks Quick Well Water at 1).
     pub resource_detector: u32,
-    /// Level of Crafting Module (unlocks advanced wood carving at 1)
+    /// Level of Crafting Module (unlocks Premium River-Washed Stones at 1).
     pub crafting_module: u32,
+    /// Level of Power Module. From level 1, Crackle Generators can run E-Mode.
+    pub power_module: u32,
 }
 
 impl ModuleLevels {
@@ -1388,6 +1625,7 @@ impl ModuleLevels {
             "kitchen_module" => self.kitchen_module,
             "resource_detector" => self.resource_detector,
             "crafting_module" => self.crafting_module,
+            "power_module" => self.power_module,
             _ => 0,
         }
     }

@@ -1,9 +1,9 @@
-name: Deploy to GitHub Pages
+name: Deploy Aniimax to GitHub Pages
 
 on:
   push:
-    tags:
-      - 'v*'  # Trigger on version tags like v0.3.0, v1.0.0, etc.
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "github-pages"
   cancel-in-progress: true
 
 jobs:
@@ -23,22 +23,24 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
 
       - name: Install wasm-pack
-        run: cargo install wasm-pack
+        run: cargo install wasm-pack --version 0.13.1 --locked
 
       - name: Build WASM
-        run: wasm-pack build --target web --out-dir web/pkg
+        run: wasm-pack build --target web --out-dir web/pkg --no-opt -- --locked
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+      - name: Version browser assets
+        run: python3 scripts/version_web_assets.py --revision "$GITHUB_SHA"
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ./web
 

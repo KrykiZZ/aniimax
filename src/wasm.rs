@@ -55,6 +55,8 @@ pub struct JsModuleLevels {
     pub resource_detector: u32,
     #[serde(default)]
     pub crafting_module: u32,
+    #[serde(default)]
+    pub power_module: u32,
 }
 
 /// JavaScript-friendly input for optimization.
@@ -175,8 +177,13 @@ fn format_time(seconds: f64) -> String {
 /// This embeds the CSV data directly into the WASM binary.
 /// The Harvest Moon Festival's recipes, watered like everything else.
 fn embedded_season_items() -> Vec<ProductionItem> {
-    let mut season = crate::data::parse_season(include_str!("../data/harvest_moon_festival.csv"))
-        .expect("embedded harvest_moon_festival.csv is valid");
+    let mut season = crate::data::parse_season(include_str!("../data/magical_wonder_night.csv"))
+        .expect("embedded magical_wonder_night.csv is valid");
+    // The recipe cards show Whimsy Points but not whether they are earned from
+    // sales or Pumpkin God offerings. Never fabricate points per sale.
+    for item in &mut season {
+        if let Some(ref mut terms) = item.season { terms.points = 0.0; }
+    }
     crate::models::apply_watering(&mut season);
     season
 }
@@ -543,6 +550,7 @@ pub fn optimize(input_json: &str) -> String {
         kitchen_module: input.modules.kitchen_module,
         resource_detector: input.modules.resource_detector,
         crafting_module: input.modules.crafting_module,
+        power_module: input.modules.power_module,
     };
 
     let mut items = get_embedded_items();
@@ -692,6 +700,10 @@ fn default_true() -> bool {
     true
 }
 
+fn default_harvest_mutation_plots() -> u32 {
+    0
+}
+
 /// JavaScript-friendly input for the plan solver; everything needed to know the best achievable
 /// rate and facility plan, with no goal amount (see [`JsGoalInput`] for that).
 #[derive(Debug, Clone, Deserialize)]
@@ -731,12 +743,12 @@ pub struct JsPlanInput {
     #[serde(default)]
     pub aniimo_levels: std::collections::HashMap<String, u32>,
     /// See `crate::optimizer::find_production_plan`'s doc comment on `prioritize_byproducts`;
-    /// defaults to `true` (checked by default in the UI) since Wood Blocks/Mineral Sand can be a
-    /// real in-game constraint players can't just buy their way around.
+    /// defaults to `true` for API callers. The UI sends `false` and uses the selected priorities
+    /// or RV costs instead.
     #[serde(default = "default_true")]
     pub prioritize_byproducts: bool,
     /// Set for the level-up strategy: the next RV level-up's cost and what's in stock. The exact
-    /// planner then finds the soonest level-up, earning as much as it leaves room for.
+    /// planner then finds the soonest level-up and earns as much as that pace leaves room for.
     #[serde(default)]
     pub level_up: Option<crate::exact::LevelUp>,
     /// Recipes the plan may not use, for comparing against a plan someone suggests. Not on the page.
@@ -747,14 +759,20 @@ pub struct JsPlanInput {
     /// before it allow.
     #[serde(default)]
     pub priorities: Vec<String>,
-    /// Whether plans may use the Harvest Moon Festival's recipes. Its points are the priority
-    /// `"season_points"` (see [`crate::models::SEASON_POINTS`]).
+    /// Whether plans may use the current Magical Wonder Night recipes.
     #[serde(default)]
     pub season: bool,
-    /// During the season, the most of its currency (Moonray Wheat) a day the player can spend on
-    /// seeds; `None` for no limit.
+    /// Maximum Weird Jelly Beans to spend on event seeds per day. None/0 means unlimited.
     #[serde(default)]
     pub season_currency_per_day: Option<f64>,
+    #[serde(default)]
+    pub season_points_per_day: f64,
+    /// Minimum plots of each event crop kept continuously cycling for mutation attempts.
+    #[serde(default = "default_harvest_mutation_plots")]
+    pub harvest_mutation_plots: u32,
+    /// Reserve the output of one Sugarcane plot for manual seasonal crafting.
+    #[serde(default)]
+    pub reserve_season_sugarcane: bool,
 }
 
 /// The player's Aniimo, and what the page knows of the facilities they work (see
@@ -778,6 +796,8 @@ pub struct JsRoster {
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct JsRosterAniimo {
     pub count: u32,
+    #[serde(default)]
+    pub family: Option<String>,
     pub abilities: std::collections::BTreeMap<String, u32>,
     #[serde(default)]
     pub personalities: Vec<String>,
@@ -791,6 +811,7 @@ impl JsRoster {
                 .iter()
                 .map(|m| crate::models::RosterAniimo {
                     count: m.count,
+                    family: m.family.clone(),
                     abilities: m.abilities.clone(),
                     personalities: m.personalities.clone(),
                 })
@@ -809,6 +830,10 @@ impl JsPlanInput {
         for (name, tiers) in &self.facilities {
             fc.set_tiers(name, tiers.iter().map(|t| (t.count, t.level)).collect());
         }
+        fc.set_season_limits(
+            if self.season { self.season_currency_per_day } else { None },
+            if self.season { self.harvest_mutation_plots } else { 0 },
+        );
         fc
     }
 }
@@ -822,6 +847,9 @@ pub struct JsPlanStep {
     pub item_name: Option<String>,
     pub facility: String,
     pub facility_count: u32,
+    /// Minimum level needed for this row's recipe, when known.
+    #[serde(default)]
+    pub minimum_facility_level: Option<u32>,
     /// One of "producing", "nothing_available", "not_needed", "idle".
     pub status: String,
     pub reason: String,
@@ -912,7 +940,7 @@ fn aniimo_tasks_for(
     let Some(cycle_time) = step.cycle_time.filter(|t| *t > 0.0) else {
         return Vec::new();
     };
-    let harvests_per_second = step.busy_units.unwrap_or(step.facility_count as f64) / cycle_time;
+    let harvests_per_second = step.facility_count as f64 / cycle_time;
     let mut tasks: Vec<JsAniimoTask> = Vec::new();
     for job in grower_steps.get(item) {
         let level = job.min_level;
@@ -999,6 +1027,7 @@ impl From<crate::models::PlanStep> for JsPlanStep {
             item_name: s.item_name,
             facility: s.facility,
             facility_count: s.facility_count,
+            minimum_facility_level: None,
             status: status_str(s.status).to_string(),
             reason: s.reason,
             is_grower: s.is_grower,
@@ -1215,10 +1244,44 @@ pub struct JsProductionPlan {
     /// During the season, its points per second from everything the plan sells.
     #[serde(default)]
     pub season_points: Option<f64>,
-    /// With the player's roster, `[building, member, share of its day]` for each environment
-    /// building kind a member staffs.
+    /// Raw output reserved for manual Harvest Moon orders; excluded from income and points.
+    #[serde(default)]
+    pub harvest_order_stock: Vec<JsHarvestOrderStock>,
+    /// Full-power E-Mode draw and configured grid capacity.
+    #[serde(default)]
+    pub power_used: u32,
+    /// Actual powered machine tiers used to calculate power, grouped by facility.
+    #[serde(default)]
+    pub powered_facility_tiers: Vec<(String, Vec<(u32, u32)>)>,
+    #[serde(default)]
+    pub power_capacity: u32,
+    #[serde(default)]
+    pub generators_used: u32,
+    /// Active Crackle Generator tiers as `[tier level, count]`.
+    #[serde(default)]
+    pub generator_tiers: Vec<(u32, u32)>,
+    /// Rated power supplied by the generators the solver actually switches on.
+    #[serde(default)]
+    pub power_supply: u32,
+    /// E-Mode work efficiency selected for the active grid: 0, 100 or 120 percent.
+    #[serde(default)]
+    pub power_efficiency: u32,
+    /// With the player's roster, `[building, member, share of its day]` for resident,
+    /// environment and power facilities.
     #[serde(default)]
     pub staffing: Vec<(String, usize, f64)>,
+    /// Custom-roster grower jobs as `[item, job, member, share of its day]`.
+    #[serde(default)]
+    pub grower_staffing: Vec<(String, String, usize, f64)>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JsHarvestOrderStock {
+    pub item_name: String,
+    pub facility: String,
+    pub units: u32,
+    pub units_per_second: f64,
+    pub first_batch_seconds: f64,
 }
 
 /// What a plan makes of one priority.
@@ -1280,7 +1343,16 @@ fn empty_production_plan(success: bool, error: Option<String>) -> JsProductionPl
         level_up: None,
         priorities: vec![],
         season_points: None,
+        harvest_order_stock: Vec::new(),
+        power_used: 0,
+        powered_facility_tiers: Vec::new(),
+        power_capacity: 0,
+        generators_used: 0,
+        generator_tiers: Vec::new(),
+        power_supply: 0,
+        power_efficiency: 0,
         staffing: Vec::new(),
+        grower_staffing: Vec::new(),
     }
 }
 
@@ -1315,10 +1387,18 @@ impl JsProductionPlan {
 /// doesn't block anything else from rendering.
 #[wasm_bindgen]
 pub fn find_plan(input_json: &str, on_progress: Option<js_sys::Function>) -> String {
-    let prepared = match PreparedInput::from_json(input_json) {
+    let mut prepared = match PreparedInput::from_json(input_json) {
         Ok(p) => p,
         Err(error) => return error,
     };
+    if prepared.input.season {
+        return serde_json::to_string(&empty_production_plan(false, Some(
+            "Seasonal seed-currency limits require the exact planner. Reload and calculate again.".to_string(),
+        ))).unwrap_or_default();
+    }
+    // The backup heuristic does not model grid power. If the exact planner falls back here, strip
+    // powered variants so it can never return a fake E-Mode plan.
+    prepared.items.retain(|item| !crate::models::is_electric_item(&item.name));
 
     // `js_sys::Function::call1` takes `&JsValue` for both the `this` receiver and the argument;
     // errors (e.g. the JS callback itself throwing) are deliberately swallowed with `let _ =`,
@@ -1340,6 +1420,19 @@ pub fn find_plan(input_json: &str, on_progress: Option<js_sys::Function>) -> Str
     ) {
         Some(plan) => serde_json::to_string(&prepared.to_js(plan, None)).unwrap_or_default(),
         None => no_plan(),
+    }
+}
+
+/// A JSON error string for invalid or conflicting settings, or `null` when they are valid.
+/// Such errors must be shown to the player instead of being hidden by a backup plan.
+#[wasm_bindgen]
+pub fn plan_input_error(input_json: &str) -> String {
+    match PreparedInput::from_json(input_json) {
+        Ok(_) => "null".to_string(),
+        Err(error) => {
+            let result: serde_json::Value = serde_json::from_str(&error).unwrap_or_default();
+            serde_json::to_string(result["error"].as_str().unwrap_or("Invalid planner inputs")).unwrap_or_default()
+        }
     }
 }
 
@@ -1426,10 +1519,21 @@ struct JsStage {
     /// [`crate::exact::Goal::StockUp`]).
     #[serde(default)]
     coins: Option<f64>,
+    /// Minimize the Aniimo team while keeping the earlier production targets.
+    #[serde(default)]
+    free_aniimo: bool,
 }
 
 impl JsStage {
-    fn goal<'a>(&'a self, input: &'a JsPlanInput) -> crate::exact::Goal<'a> {
+    fn goal<'a>(&'a self, input: &'a JsPlanInput, work: &'a [crate::exact::AniimoWork]) -> crate::exact::Goal<'a> {
+        if self.free_aniimo {
+            return crate::exact::Goal::FreeAniimo {
+                floors: &self.floors,
+                level_up: input.level_up.as_ref().zip(self.pace),
+                coins: self.coins.unwrap_or(0.0),
+                work,
+            };
+        }
         match (&input.level_up, self.pace, self.coins) {
             (Some(level_up), Some(pace), Some(coins)) => crate::exact::Goal::StockUp(level_up, pace, coins),
             (Some(level_up), Some(pace), None) => crate::exact::Goal::EarnWhileLevelingUp(level_up, pace),
@@ -1451,13 +1555,16 @@ impl JsStage {
 pub fn exact_problem(input_json: &str, stage_json: &str) -> String {
     let stage: JsStage = serde_json::from_str(stage_json).unwrap_or_default();
     let lp = match PreparedInput::from_json(input_json) {
-        Ok(prepared) if !prepared.input.currency.is_empty() => crate::exact::write_lp(
-            &prepared.items,
-            &prepared.input.currency,
-            &prepared.facility_counts,
-            &prepared.module_levels,
-            stage.goal(&prepared.input),
-        ),
+        Ok(prepared) if !prepared.input.currency.is_empty() => {
+            let work = prepared.aniimo_work();
+            crate::exact::write_lp(
+                &prepared.items,
+                &prepared.input.currency,
+                &prepared.facility_counts,
+                &prepared.module_levels,
+                stage.goal(&prepared.input, &work),
+            )
+        }
         _ => Default::default(),
     };
     lp_json(&lp)
@@ -1490,9 +1597,11 @@ pub fn exact_plan(input_json: &str, stage_json: &str, solution_json: &str) -> St
     let stage: JsStage = serde_json::from_str(stage_json).unwrap_or_default();
     let Ok(result) = serde_json::from_str::<JsSolverResult>(solution_json) else { return no_plan() };
     let currency = prepared.input.currency.clone();
-    let goal = stage.goal(&prepared.input);
+    let work = prepared.aniimo_work();
+    let goal = stage.goal(&prepared.input, &work);
     let level_up = match goal {
         crate::exact::Goal::EarnWhileLevelingUp(level_up, _) | crate::exact::Goal::StockUp(level_up, ..) => Some(level_up),
+        crate::exact::Goal::FreeAniimo { level_up: Some((level_up, _)), .. } => Some(level_up),
         _ => None,
     };
     let Some(exact) = crate::exact::plan_from_values(
@@ -1507,7 +1616,7 @@ pub fn exact_plan(input_json: &str, stage_json: &str, solution_json: &str) -> St
     ) else {
         return no_plan();
     };
-    if exact.rate_per_second <= 0.0 && level_up.is_none() {
+    if exact.rate_per_second <= 0.0 && level_up.is_none() && exact.harvest_reserve_units.is_empty() {
         return no_plan();
     }
     // Independent re-check of every limit before trusting the plan; the caller falls back to the
@@ -1524,8 +1633,29 @@ pub fn exact_plan(input_json: &str, stage_json: &str, solution_json: &str) -> St
     let mut js = prepared.to_js(plan, Some(proof));
     js.level_up = report;
     js.staffing = exact.staffing.clone();
+    js.grower_staffing = exact.grower_staffing.clone();
+    js.power_used = exact.power_used;
+    js.powered_facility_tiers = exact.electric_machines.iter()
+        .map(|(facility, tiers)| (facility.clone(), tiers.clone())).collect();
+    js.power_capacity = exact.power_capacity;
+    js.generators_used = exact.generators_used;
+    js.generator_tiers = exact.generators.clone();
+    js.power_supply = exact.power_supply;
+    js.power_efficiency = exact.power_efficiency;
     if prepared.input.season {
         js.season_points = Some(crate::exact::target_rate(&exact, &prepared.items, crate::models::SEASON_POINTS));
+        let all: std::collections::HashMap<&str, &ProductionItem> = prepared.items.iter().map(|item| (item.name.as_str(), item)).collect();
+        js.harvest_order_stock = exact.harvest_reserve_units.iter().filter_map(|(name, &units)| {
+            let recipe = all.get(name.as_str())?;
+            Some(JsHarvestOrderStock {
+                item_name: crate::exact::made_item(name, &all).to_string(),
+                facility: recipe.facility.clone(),
+                units,
+                units_per_second: units as f64 * recipe.yield_amount as f64 / recipe.production_time,
+                first_batch_seconds: recipe.production_time,
+            })
+        }).collect();
+        js.harvest_order_stock.sort_by(|a, b| a.item_name.cmp(&b.item_name));
     }
     js.priorities = prepared
         .input
@@ -1609,6 +1739,45 @@ struct PreparedInput {
 }
 
 impl PreparedInput {
+    /// The same normal-mode Aniimo work shown in the team's table, before any E-Mode jobs
+    /// replace it. Count each ability/level/personality row in whole slots, and include the
+    /// short growing jobs rather than treating grow time itself as Aniimo work.
+    fn aniimo_work(&self) -> Vec<crate::exact::AniimoWork> {
+        let Some(setup) = &self.setup else { return Vec::new() };
+        let mut work = Vec::new();
+        for recipe in &self.items {
+            if crate::models::is_electric_item(&recipe.name) { continue; }
+            if let Some((ability, _)) = self.requirements.get(&recipe.name) {
+                let worker = self.requirements.worker_for_at(&recipe.name, &recipe.facility, setup);
+                work.push(crate::exact::AniimoWork {
+                    recipe: recipe.name.clone(),
+                    // A Nimbi cannot cover a Celestis job, regardless of its Leisure level
+                    // or personalities. Keep family pools separate in staffing refinement.
+                    group: format!("{ability}{}:{}:{}",
+                        crate::models::recipe_family(&recipe.facility, &recipe.name).map(|f| format!("/{f}")).unwrap_or_default(),
+                        worker.suitability,
+                        if worker.personality_bonus {
+                            crate::models::facility_personality(&recipe.facility).unwrap_or(&recipe.facility)
+                        } else { "" }),
+                    per_unit: recipe.raw_materials.is_none(),
+                    seconds: if recipe.raw_materials.is_none() { 1.0 } else { recipe.production_time },
+                });
+            } else {
+                for job in self.grower_steps.get(&recipe.name) {
+                    let seconds = crate::models::Worker::new(job.min_level, false)
+                        .seconds_for(job.workload, job.min_level, true);
+                    work.push(crate::exact::AniimoWork {
+                        recipe: recipe.name.clone(),
+                        group: format!("{}:{}:", job.ability, job.min_level),
+                        per_unit: true,
+                        seconds: seconds / recipe.production_time,
+                    });
+                }
+            }
+        }
+        work
+    }
+
     /// Parses `input_json`; on failure, the error result to return instead.
     fn from_json(input_json: &str) -> Result<Self, String> {
         let input: JsPlanInput = serde_json::from_str(input_json).map_err(|e| {
@@ -1620,16 +1789,56 @@ impl PreparedInput {
             kitchen_module: input.modules.kitchen_module,
             resource_detector: input.modules.resource_detector,
             crafting_module: input.modules.crafting_module,
+            power_module: input.modules.power_module,
         };
         let mut items = get_embedded_items();
         if input.season {
-            let mut season = embedded_season_items();
-            for terms in season.iter_mut().filter_map(|item| item.season.as_mut()) {
-                terms.currency_per_day = input.season_currency_per_day.map(|budget| budget.max(0.0));
-            }
-            items.extend(season);
+            items.extend(embedded_season_items());
+        }
+        // The optional Sugarcane reserve is for manual crafting, not a prediction of orders.
+        let harvest_raw = if input.season && input.reserve_season_sugarcane {
+            vec!["sugarcane".to_string()]
+        } else { Vec::new() };
+        if module_levels.power_module > 0 && facility_counts.get_count("Crackle Generator") > 0 {
+            crate::data::add_e_mode_variants(&mut items, include_str!("../data/e_mode.csv"))
+                .map_err(|e| serde_json::to_string(&empty_production_plan(false, Some(format!("Invalid E-Mode data: {e}")))).unwrap_or_default())?;
         }
         items.retain(|item| !input.exclude.iter().any(|name| name == crate::models::base_item_name(&item.name)));
+        if input.season && (input.season_points_per_day > 0.0
+            || input.priorities.iter().any(|priority| priority == crate::models::SEASON_POINTS))
+        {
+            return Err(serde_json::to_string(&empty_production_plan(false,
+                Some("Whimsy Point earning rules have not been verified; remove points targets before calculating.".into())))
+                .unwrap_or_default());
+        }
+        if input.season && input.harvest_mutation_plots > 0 {
+            for name in ["magic_pumpkin", "memory_lanternfruit"] {
+                if !items.iter().any(|item| item.name == name) {
+                    return Err(serde_json::to_string(&empty_production_plan(false,
+                        Some(format!("Required event crop {} is unavailable. Unskip its recipe or set minimum event plots to 0.", name.replace('_', " ")))))
+                        .unwrap_or_default());
+                }
+            }
+            let needed = input.harvest_mutation_plots.saturating_mul(2);
+            if facility_counts.capacity_at_level("Farmland", 5) < needed {
+                return Err(serde_json::to_string(&empty_production_plan(false,
+                    Some(format!("Magical Wonder Night needs {needed} Farmland Lv.5+ plots for your selected minimum."))))
+                    .unwrap_or_default());
+            }
+            if facility_counts.get_count("Sunlamp") == 0 {
+                return Err(serde_json::to_string(&empty_production_plan(false,
+                    Some("Magic Pumpkin and Memory Lanternfruit require Adequate sunlight; add a Sunlamp or set the minimum plots to 0.".into())))
+                    .unwrap_or_default());
+            }
+        }
+        if input.season && input.reserve_season_sugarcane {
+            let needed = input.harvest_mutation_plots.saturating_mul(2).saturating_add(1);
+            if facility_counts.capacity_at_level("Farmland", 5) < needed {
+                return Err(serde_json::to_string(&empty_production_plan(false,
+                    Some(format!("Sugarcane stock and the selected magical crop minimum need {needed} Farmland Lv.5+ plots. Add plots, reduce the magical crop minimum, or turn off Sugarcane stock."))))
+                    .unwrap_or_default());
+            }
+        }
         let setup = input
             .aniimo
             .as_deref()
@@ -1637,6 +1846,25 @@ impl PreparedInput {
         let requirements = embedded_aniimo_requirements();
         let grower_steps = embedded_grower_steps();
         let mut facility_counts = facility_counts;
+        if !input.season_points_per_day.is_finite() || input.season_points_per_day < 0.0 {
+            return Err(serde_json::to_string(&empty_production_plan(false,
+                Some("Minimum festival points must be a non-negative number.".to_string()))).unwrap_or_default());
+        }
+        if input.season { facility_counts.set_season_points_per_day(input.season_points_per_day); }
+        facility_counts.set_harvest_order_items(harvest_raw);
+        facility_counts.set_grower_steps(grower_steps.clone());
+        // Best mode must not claim a generator tier's rated output from a weaker Lightning
+        // worker. Minimum mode may assume the documented minimum for the chosen Generator tier;
+        // custom-roster mode is checked by the exact staffing constraints below.
+        match &setup {
+            Some(crate::models::AniimoSetup::Best(levels)) => {
+                facility_counts.set_generator_lightning_level(Some(levels.level_for("Lightning")));
+            }
+            Some(crate::models::AniimoSetup::PerFacility(workers)) => {
+                facility_counts.set_generator_lightning_level(Some(workers.get("Crackle Generator").suitability));
+            }
+            _ => {}
+        }
         let crew = match (input.aniimo.as_deref(), &input.roster) {
             (Some(name), Some(roster)) if name.starts_with("roster") => Some(roster.crew()),
             _ => None,
@@ -1648,6 +1876,69 @@ impl PreparedInput {
             }
             (None, Some(setup)) => requirements.apply(setup, &mut items),
             (None, None) => workers_from(&input.workers).apply(&requirements, &mut items),
+        }
+        // These are mandatory ingredients even if Recipe Notes are unticked. Report missing
+        // facilities, levels, skipped raw recipes or incompatible workers before solving.
+        let all: std::collections::HashMap<&str, &ProductionItem> = items.iter().map(|item| (item.name.as_str(), item)).collect();
+        // A listed electric timer is not usable unless the grid can power it AND a Lightning
+        // worker can actually start at least one owned generator. Without this check the early
+        // Harvest Moon validation incorrectly accepts an unstaffed or unpowered Well as a raw
+        // fresh-water supplier, then fails later in the optimizer with a generic error.
+        let electric_available = crate::models::grid_power_capacity(&facility_counts, &module_levels) > 0
+            && facility_counts.tiers("Crackle Generator").into_iter().any(|(count, tier)| {
+                let needed = crate::models::generator_required_lightning_level(tier);
+                count > 0 && match &crew {
+                    Some(roster) => roster.members.iter().any(|member| member.count > 0
+                        && member.level("Lightning") >= needed),
+                    None => facility_counts.generator_lightning_level()
+                        .is_none_or(|level| level >= needed),
+                }
+            });
+        let mut required: std::collections::BTreeMap<&str, Vec<(u32, u32)>> = std::collections::BTreeMap::new();
+        for raw in facility_counts.harvest_order_items() {
+            let available = items.iter().filter(|item| item.raw_materials.is_none()
+                && crate::exact::made_item(&item.name, &all) == raw
+                && item.production_time > 0.0
+                && (!crate::models::is_electric_item(&item.name) || electric_available)
+                && facility_counts.can_produce(&item.facility, item.facility_level)
+                && item.module_requirement.as_ref().is_none_or(|(module, level)| module_levels.can_use(module, *level)))
+                .min_by_key(|item| item.facility_level);
+            let Some(recipe) = available else {
+                return Err(serde_json::to_string(&empty_production_plan(false, Some(format!(
+                    "The selected Sugarcane stock needs a Farmland Lv.5+ plot and available growing workers. Check facility levels and skipped recipes, or turn off Sugarcane stock. Missing: {}.", raw.replace('_', " "),
+                )))).unwrap_or_default());
+            };
+            let units = if matches!(raw.as_str(), "moondew_radish" | "waxing_moon_pepper") {
+                facility_counts.harvest_mutation_plots().max(1)
+            } else { 1 };
+            required.entry(&recipe.facility).or_default().push((recipe.facility_level, units));
+        }
+        for (facility, levels) in required {
+            for &(level, _) in &levels {
+                let need = levels.iter().filter(|&&(minimum, _)| minimum >= level)
+                    .fold(0u32, |total, (_, units)| total.saturating_add(*units));
+                if facility_counts.capacity_at_level(facility, level) < need {
+                    return Err(serde_json::to_string(&empty_production_plan(false, Some(format!(
+                        "Season stock needs at least {need} {facility} units at level {level} or higher. Increase the owned count/levels or turn off Sugarcane stock.",
+                    )))).unwrap_or_default());
+                }
+            }
+        }
+        if let Some(budget) = facility_counts.season_currency_per_day() {
+            let crops: Option<Vec<_>> = ["magic_pumpkin", "memory_lanternfruit"].iter()
+                .map(|name| items.iter().find(|item| item.name == *name)).collect();
+            if let Some(crops) = crops {
+                let plots = facility_counts.harvest_mutation_plots();
+                let minimum: f64 = crops.iter().map(|crop|
+                    plots as f64 * crop.season.map_or(0.0, |season| season.seed_cost)
+                        * 86_400.0 / crop.production_time).sum();
+                if budget + 1e-6 < minimum {
+                    return Err(serde_json::to_string(&empty_production_plan(false, Some(format!(
+                        "Magical Wonder Night: {plots} event plots per crop need at least {:.0} Weird Jelly Beans/day, but your budget is {budget}. Increase the Jelly Bean cap or reduce event plots.",
+                        (minimum - 1e-6).ceil(),
+                    )))).unwrap_or_default());
+                }
+            }
         }
         Ok(PreparedInput { input, facility_counts, module_levels, items, setup, crew, requirements, grower_steps })
     }
@@ -1662,10 +1953,11 @@ impl PreparedInput {
             .filter(|step| step.status == crate::models::PlanStepStatus::Producing)
             .filter_map(|step| {
                 let item = step.item_name.as_ref()?;
+                let base = crate::models::base_item_name(item);
                 listed
                     .iter()
-                    .any(|(name, facility)| name == item && *facility == step.facility)
-                    .then(|| JsUnverified { facility: step.facility.clone(), item_name: item.clone() })
+                    .any(|(name, facility)| name == base && *facility == step.facility)
+                    .then(|| JsUnverified { facility: step.facility.clone(), item_name: base.to_string() })
             })
             .collect();
         unverified.sort_by(|a, b| (&a.facility, &a.item_name).cmp(&(&b.facility, &b.item_name)));
@@ -1674,8 +1966,10 @@ impl PreparedInput {
             .coin_items
             .into_iter()
             .map(|step| {
-                // With the player's roster, the row names the member working it.
-                let from_crew = match (&self.crew, step.crew, &step.item_name) {
+                let powered = step.item_name.as_deref().is_some_and(crate::models::is_electric_item);
+                // With the player's roster, the row names the member working it. Powered rows
+                // deliberately have no production Aniimo.
+                let from_crew = if powered { None } else { match (&self.crew, step.crew, &step.item_name) {
                     (Some(crew), Some(member), Some(item)) => crew.members.get(member).and_then(|aniimo| {
                         let (ability, _) = self.requirements.get(item)?;
                         let bonus = crate::models::has_personality_bonus(&step.facility)
@@ -1683,8 +1977,8 @@ impl PreparedInput {
                         Some(JsAniimo { ability: ability.to_string(), level: aniimo.level(ability), personality_bonus: bonus })
                     }),
                     _ => None,
-                };
-                let aniimo = from_crew.or_else(|| match (&self.setup, &step.item_name) {
+                }};
+                let aniimo = from_crew.or_else(|| if powered { None } else { match (&self.setup, &step.item_name) {
                     (Some(setup), Some(item)) if step.status == crate::models::PlanStepStatus::Producing => {
                         self.requirements.get(item).map(|(ability, _)| {
                             let worker = self.requirements.worker_for_at(item, &step.facility, setup);
@@ -1696,13 +1990,26 @@ impl PreparedInput {
                         })
                     }
                     _ => None,
-                });
-                let aniimo_tasks = self
+                }});
+                let aniimo_tasks = if powered {
+                    Vec::new()
+                } else { self
                     .setup
                     .as_ref()
                     .map(|setup| aniimo_tasks_for(&step, setup, &self.requirements, &self.grower_steps))
-                    .unwrap_or_default();
-                JsPlanStep { aniimo, aniimo_tasks, ..step.into() }
+                    .unwrap_or_default() };
+                let minimum_facility_level = if step.status == crate::models::PlanStepStatus::Producing {
+                    step.item_name.as_deref().and_then(|name| {
+                        let base = crate::models::base_item_name(name);
+                        self.items.iter()
+                            .filter(|item| item.facility == step.facility
+                                && crate::models::base_item_name(&item.name) == base
+                                && item.facility_level != u32::MAX)
+                            .map(|item| item.facility_level)
+                            .min()
+                    })
+                } else { None };
+                JsPlanStep { aniimo, aniimo_tasks, minimum_facility_level, ..step.into() }
             })
             .collect();
         let income_streams: Vec<JsPlanProduct> = plan
@@ -1732,7 +2039,16 @@ impl PreparedInput {
             level_up: None,
             priorities: vec![],
             season_points,
+            harvest_order_stock: Vec::new(),
+            power_used: 0,
+            powered_facility_tiers: Vec::new(),
+            power_capacity: crate::models::grid_power_capacity(&self.facility_counts, &self.module_levels),
+            generators_used: 0,
+            generator_tiers: Vec::new(),
+            power_supply: 0,
+        power_efficiency: 0,
             staffing: Vec::new(),
+            grower_staffing: Vec::new(),
         }
     }
 }
@@ -1921,6 +2237,8 @@ struct RecipeInfo {
     /// The Aniimo ability this recipe uses and the lowest ability level that can run it; `None`
     /// for crops and trees.
     aniimo: Option<(String, u32)>,
+    /// A specific Aniimo family required by the station, in addition to its ability.
+    family: Option<String>,
     /// `false` if the recipe's numbers haven't been checked in game yet (see
     /// `data/unverified.csv`).
     verified: bool,
@@ -1964,6 +2282,7 @@ pub fn get_all_items() -> String {
             module_requirement: item.module_requirement.clone(),
             byproduct: item.byproduct.clone(),
             aniimo: requirements.get(&item.name).map(|(ability, level)| (ability.to_string(), level)),
+            family: crate::models::recipe_family(&item.facility, &item.name).map(str::to_string),
             verified: !unverified.iter().any(|(name, facility)| *name == item.name && *facility == item.facility),
             jobs: grower_steps.get(&item.name).iter().map(|s| (s.step.clone(), s.ability.clone(), s.min_level)).collect(),
             environment: item.environment.clone(),
@@ -1979,6 +2298,103 @@ pub fn get_all_items() -> String {
 #[cfg(test)]
 mod tests {
     use super::{embedded_aniimo_requirements, embedded_grower_steps, get_embedded_items};
+
+    #[test]
+    fn family_metadata_roster_compatibility_and_staffing_pools() {
+        let base = serde_json::json!({ "aniimo": "roster", "roster": { "members": [{
+            "count": 1, "abilities": { "Leisure": 4 }, "personalities": [] }] } });
+        let old: super::JsPlanInput = serde_json::from_value(base.clone()).unwrap();
+        let old_crew = old.roster.unwrap().crew();
+        assert!(old_crew.members[0].family.is_none());
+        assert!(!old_crew.members[0].can_work_at("Nimbus Bed"));
+        let mut new = base;
+        new["roster"]["members"][0]["family"] = "Nimbi".into();
+        let parsed: super::JsPlanInput = serde_json::from_value(new).unwrap();
+        assert!(parsed.roster.unwrap().crew().members[0].can_work_at("Nimbus Bed"));
+        let recipes: serde_json::Value = serde_json::from_str(&super::get_all_items()).unwrap();
+        let star = recipes.as_array().unwrap().iter().find(|r| r["name"] == "star").unwrap();
+        assert_eq!(star["family"], "Celestis");
+        assert_eq!(star["verified"], true);
+        let prepared = super::PreparedInput::from_json(r#"{"aniimo":"best"}"#).unwrap();
+        let work = prepared.aniimo_work();
+        let wool = work.iter().find(|w| w.recipe == "wool").unwrap();
+        let star = work.iter().find(|w| w.recipe == "star").unwrap();
+        assert!(wool.group.starts_with("Leisure/Nimbi:"), "{}", wool.group);
+        assert!(star.group.starts_with("Leisure/Celestis:"), "{}", star.group);
+        assert_ne!(wool.group.split(':').next(), star.group.split(':').next());
+    }
+
+    #[test]
+    fn wonder_night_defaults_have_no_old_order_reserves() {
+        let input = wonder_input();
+        let parsed: super::JsPlanInput = serde_json::from_value(input.clone()).unwrap();
+        assert_eq!(parsed.harvest_mutation_plots, 0);
+        assert_eq!(super::plan_input_error(&input.to_string()), "null");
+        let prepared = super::PreparedInput::from_json(&input.to_string()).unwrap();
+        assert!(prepared.facility_counts.harvest_order_items().is_empty());
+        assert!(prepared.items.iter().any(|i| i.name == "magic_pumpkin"));
+        assert!(prepared.items.iter().any(|i| i.name == "memory_lanternfruit"));
+        assert!(!prepared.items.iter().any(|i| i.name == "moondew_radish"));
+        assert_eq!(prepared.items.iter().find(|i| i.name == "magic_pumpkin").unwrap().season.unwrap().points, 0.0,
+            "sale-based Whimsy awards have not been verified");
+    }
+
+    fn wonder_input() -> serde_json::Value {
+        serde_json::json!({ "season": true, "aniimo": "minimum", "season_currency_per_day": 600,
+            "facilities": { "Farmland": [{ "count": 5, "level": 5 }], "Sunlamp": [{ "count": 1, "level": 1 }] } })
+    }
+
+    #[test]
+    fn wonder_night_seed_caps_use_real_crop_times() {
+        let mut input = wonder_input();
+        input["harvest_mutation_plots"] = 2.into();
+        let error: String = serde_json::from_str(&super::plan_input_error(&input.to_string())).unwrap();
+        assert!(error.contains("1024 Weird Jelly Beans/day"), "{error}");
+        for (budget, plots) in [(1024, 2), (600, 1), (0, 2), (0, 0)] {
+            let mut valid = input.clone();
+            valid["season_currency_per_day"] = budget.into();
+            valid["harvest_mutation_plots"] = plots.into();
+            assert_eq!(super::plan_input_error(&valid.to_string()), "null");
+        }
+        input["season_currency_per_day"] = 511.into();
+        input["harvest_mutation_plots"] = 1.into();
+        assert!(super::plan_input_error(&input.to_string()).contains("512 Weird Jelly Beans/day"));
+    }
+
+    #[test]
+    fn wonder_night_manual_orders_are_not_auto_reserved() {
+        let mut input = wonder_input();
+        input["harvest_mutation_plots"] = 0.into();
+        input["exclude"] = serde_json::json!(["glowfruit_lantern_set", "honey_glazed_pumpkin_cup",
+            "magic_pumpkin_lantern", "memory_lantern", "magic_pumpkin_cake",
+            "gleam_fruit_nectar", "golden_lantern_pumpkin_soup"]);
+        assert_eq!(super::plan_input_error(&input.to_string()), "null");
+        let prepared = super::PreparedInput::from_json(&input.to_string()).unwrap();
+        assert!(prepared.facility_counts.harvest_order_items().is_empty());
+        input["facilities"]["Farmland"][0]["count"] = 0.into();
+        assert_eq!(super::plan_input_error(&input.to_string()), "null",
+            "seasonal participation alone should not require unrequested crop plots");
+        input["season"] = false.into();
+        let inactive = super::PreparedInput::from_json(&input.to_string()).unwrap();
+        assert!(!inactive.items.iter().any(|i| i.name == "magic_pumpkin"));
+    }
+
+    #[test]
+    fn wonder_night_rejects_unavailable_required_plots_and_unverified_points() {
+        let mut input = wonder_input();
+        input["harvest_mutation_plots"] = 1.into();
+        input["exclude"] = serde_json::json!(["magic_pumpkin"]);
+        assert!(super::plan_input_error(&input.to_string()).contains("magic pumpkin"));
+        input["exclude"] = serde_json::json!([]);
+        input["facilities"]["Farmland"][0]["count"] = 1.into();
+        assert!(super::plan_input_error(&input.to_string()).contains("2 Farmland"));
+        input["facilities"]["Farmland"][0]["count"] = 2.into();
+        input["facilities"]["Sunlamp"][0]["count"] = 0.into();
+        assert!(super::plan_input_error(&input.to_string()).contains("Sunlamp"));
+        input["harvest_mutation_plots"] = 0.into();
+        input["priorities"] = serde_json::json!(["season_points"]);
+        assert!(super::plan_input_error(&input.to_string()).contains("Whimsy Point"));
+    }
 
     // Every crop and tree the web build knows has its Aniimo jobs listed.
     #[test]

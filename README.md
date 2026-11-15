@@ -2,33 +2,38 @@
 
 A command-line tool, Rust library, and **web application** for optimizing production paths in Aniimo Homeland. Calculate the fastest way to produce your target amount of Homeland currency, and see what every facility you own should be doing at once.
 
-Updated for the full release, with a joint LP-based facility-allocation engine for the web app (the CLI uses a simpler greedy approach; see [How the Optimization Works](#how-the-optimization-works) for the difference). Game data is being re-verified against the release facility by facility; facilities whose data hasn't been confirmed yet are left out until it is, so the calculator never recommends numbers from an older version of the game.
+Updated for the full release, with a joint LP-based facility-allocation engine for the web app (the CLI uses a simpler greedy approach; see [How the Optimization Works](#how-the-optimization-works) for the difference). Game data is checked against in-game evidence facility by facility; recipes still awaiting confirmation are marked in the recipe reference and in any plan that uses them.
 
 > **Note:** Game data for the full release is still being filled in, so some facilities and items are missing.
 
 ## Try It Online
 
-**[Launch Aniimax Web App](https://ae-bii.github.io/aniimax/)** - No installation required!
+**[Launch Aniimax Web App](https://krykizz.github.io/aniimax/)** - No installation required!
+
+This deployment uses Zudin987/aniimax commit `c1e259d818141ea4b1d833c45af0292a74757118`, derived from [ae-bii/aniimax](https://github.com/ae-bii/aniimax). The original MIT license is preserved. GitHub Pages builds and deploys the `web/` directory automatically on pushes to `main`.
 
 ## Features
 
 **Web app**
-- **Simple or Advanced Setup**: Simple mode only asks for your RV level and assumes everything that level allows is built and upgraded; advanced mode sets every facility's count and level (and can start from the simple-mode setup)
+- **Simple or Advanced Setup**: Simple mode assumes all facilities at your RV level and lets you set each owned module level (0 = not upgraded, RV max = automatic). Advanced sets individual facility counts and levels too.
+- **Automatic E-Mode**: Compares documented powered and Aniimo-worked recipes, including Mine/Well and first-tier RV materials, and chooses the best modeled output/staffing balance under real generator limits. Farming plots remain unpowered. The forced-power override has been removed.
 - **Live Production Plan**: Set your facilities to get the best achievable rate and what every facility should produce; no target amount needed
 - **Goal Timing**: Add a target amount afterward to see how long it'll take; updates instantly as you type, no re-solving
-- **Proven Best Plans**: The web app solves the whole problem exactly (every recipe, whole plots and machines, and environment building layouts together) with the [HiGHS](https://highs.dev) solver, and proves each plan is the best possible for your facilities
+- **Production Optimality**: The web app solves recipes, whole plots and machines, and environment building allocations with the [HiGHS](https://highs.dev) solver. The progress card reports whether it proved a production result optimal under the modeled constraints. Homeland placement uses a separate heuristic.
 - **Joint Facility Allocation**: Solves for every item and every facility at once, so shared resources (e.g. two recipes both wanting the same Farmland soybean supply) are split correctly instead of double-counted
 - **Whole-Unit Realism**: Growers are rounded to whole plots and processors are dedicated to one recipe each, matching how the game actually works; only the Woodworking Bench and Chimney Kiln take turns between tiers, since each tier is made from the one below
-- **Level-Up Strategy**: Plans the soonest next RV level-up (Home Coins plus Wood Blocks and Mineral Sand, or from RV 7 the Woodworking Bench and Chimney Kiln items it costs), counting what you already have, then earns as many Home Coins as that pace allows; RV 2 to 20
-- **Priorities Strategy**: Rank what you want (Home Coins, Aniimo EXP, Aniipods, Wood Blocks, Mineral Sand, and Harvest Moon Points while a festival runs) and switch off what you don't; each one is maximized in turn, keeping what the ones above it reached, and Home Coins take whatever is left
-- **Harvest Moon Festival** (event over): the festival has ended, so it is off the page and plans no longer use it. Its crops and recipes stay in the data and the recipe reference lists them, marked as ended, for looking the old numbers up. While it ran, from RV 10, plans could use the season's crops and recipes (Recipe Note ones once you ticked them), count Harvest Moon Points on everything sold, and show the Moonray Wheat their seeds used; wheat was taken as unlimited. Clear `SEASON.over` in `web/facility-config.js` to bring it back
+- **Level-Up Strategy**: Plans the soonest resources for the next RV level-up (Home Coins plus Wood Blocks and Mineral Sand, or from RV 7 the Woodworking Bench and Chimney Kiln items it costs), counting what you already have, then earns as many Home Coins as that pace allows; RV 2 to 20. This is time to afford the upgrade. Placement, habitability, title and quest requirements remain in game; the separate upgrade timers verified for RV 14–20 are shown too.
+- **Priorities Strategy**: Rank what you want (Home Coins, Aniimo EXP, Aniipods, Wood Blocks, Mineral Sand, and Harvest Moon Points during the festival) and switch off what you don't; each one is maximized in turn, keeping what the ones above it reached, and Home Coins take whatever is left
+- **Festival Targets**: An optional minimum points/day applies before priorities, within the Wheat cap. A collapsed crafting checklist computes quantities and prerequisite steps for every festival dish; it does not replace the production plan or estimate a completion time.
+- **Share and Import Setup**: Before calculating, use Share setup link or Copy setup code. Import code accepts setup links/codes and older layout-only codes. Setup imports restore facilities, modules, RV stock, priorities, skipped/unlocked recipes, Harvest limits, Aniimo mode/levels/roster, and display choices; review before calculating. Opening a link keeps previous browser-saved values until you edit the shared setup. Layout-only codes show placement without replacing settings. These are Aniimax calculator codes, not in-game Combo Codes.
+- **Magical Wonder Night (current season)**: From RV 10, use Magic Pumpkin and Memory Lanternfruit (4 Weird Jelly Beans/seed, 8 yield, 30-minute card timer) and nine event products. The user may specify a daily Jelly Bean spending cap (0 = unlimited) and optional continuously planted event plots (0 = no forced plots). Seven crafted recipes are gated by Formula Notes. Pumpkin God orders rotate, so the calculator does not invent mandatory raw stock. Whimsy Points are shown on product cards but not yet optimized because the reward trigger is unverified. The old Harvest Moon season is archived and no longer selectable.
 - **Growing Environments**: Heat Furnace, Cooling Unit and Sunlamp layouts are planned with the plots, including a crop grown outside its environment at the slower rate, and a Heat Furnace and Cooling Unit placed so their areas overlap and add up to a third temperature between them
 - **Watering**: A plot is watered twice as it grows, each watering taking an eighth off its full-speed time
-- **Recipe Reference Page**: Every recipe in the game data, browsable by facility, independent of what you own
+- **Recipe Reference Page**: Recipes in Aniimax's data, browsable by facility, independent of what you own. Some higher-level items are missing; see the [recording review](docs/homeland-index-video-review-2026-10-29.md)
 - **Aniimo Recommendations**: Every plan is solved for the Best Aniimo (the level you have of each ability, with each facility's personality) and the Minimum (the lowest ability level each recipe accepts), and lists the team it needs: each ability, level and personality, and how many it takes to keep up with the work (Farmland and Woodland jobs included), checked against how many Aniimo your RV level allows. An Aniimo carries four personalities at once, one from each opposed pair (I/E Instinctive-Energetic, N/S Nimble-Practical, F/T Faithful-Tenacious, P/J Playful-Judicious), so one can hold the bonus at several facilities as long as none of them want opposites and it has hours to spare. Times follow the game's Efficiency: 100% at the level a recipe needs (one workload a second at a processor, 1.25 or 1.5 on a gathering facility's level-2 or level-3 recipe); at a processor, 300% one level above, then +100% per level; at a gathering facility each level above adds half a workload a second, reading as +50% on a level-1 recipe, +40% on a level-2 one and +33% on a level-3 one; the personality bonus adds 20%
-- **My Aniimo**: Plan with the Aniimo you actually have: list each kind with how many, its abilities and levels, and its personalities. Each works what its abilities allow for the hours it has, environment buildings and resident facilities take one Aniimo each, and the plan shows what every Aniimo does
+- **My Aniimo**: Plan with the Aniimo you actually have: list each kind with how many, its family, abilities and levels, and its personalities. The Sandcastle requires the Susuta family, Dewy House the Dewy family, Nimbus Bed the Nimbi family, and Starfall Hammock the Celestis family, in addition to Leisure ability. Evolved members keep their family. Older rosters without a family still load, but cannot staff these four stations until you select a family; a nickname never substitutes for it. Family selection survives saves and setup sharing. Environment buildings and resident facilities take one Aniimo each, and the plan shows what every Aniimo does.
 - **Opportunities**: After each plan, the changes within your reach (a recipe to unlock, a higher Aniimo level, and in Advanced mode a module or facility) are solved and ranked by how much they'd improve it
-- **Homeland Layout**: Places every facility within your open plots so the busiest are nearest the Storage Unit, keeping each environment building's plots in its coverage and other crops out of it
+- **Homeland Layout**: Places every facility within your open plots around a configurable number of Storage Units, estimates hauling to the nearest unit, and keeps each environment building's plots in its coverage and other crops out of it. An adjustable Power gap reserves empty ground beside E-Mode machines and generators; amber squares mark those spaces. The search prefers layouts that fit active generators and need fewer machines relayed before comparing hauling distance. Power Pole footprints and relay reach still require in-game verification. RV13 layouts respect the verified five-Storage-Unit limit; other RV storage caps still need in-game confirmation.
 - **Progress Card**: Shows each solve as it runs and whether it proved its answer the best
 - **Item Upgrade Modules**: Support for module-unlocked items (Ecological, Kitchen, Resource Detector, Crafting)
 
@@ -48,7 +53,7 @@ Updated for the full release, with a joint LP-based facility-allocation engine f
 ### Building from Source
 
 ```bash
-git clone https://github.com/ae-bii/aniimax.git
+git clone https://github.com/Zudin987/aniimax.git
 cd aniimax
 cargo build --release
 ```
@@ -153,7 +158,7 @@ Options:
   -V, --version                      Print version
 ```
 
-> **CLI coverage:** the CLI exposes the 10 facilities listed above; any facility without a flag counts as not owned. The CLI also doesn't model environment coverage, so it can recommend a crop that needs a Heat Furnace, Cooling Unit or Sunlamp you don't own. For full coverage, use the [web app](https://ae-bii.github.io/aniimax/) instead.
+> **CLI coverage:** the CLI exposes the 10 facilities listed above; any facility without a flag counts as not owned. The CLI also doesn't model environment coverage, so it can recommend a crop that needs a Heat Furnace, Cooling Unit or Sunlamp you don't own. For full coverage, use the [web app](https://zudin987.github.io/aniimax/) instead.
 
 ## Example Output
 
@@ -580,12 +585,6 @@ cargo doc --open
 
 ## Web Development
 
-### Languages
-
-The web language selector and CLI `--language en|ru` use English by default. English UI text is the source; `web/locales/en.json` inventories its phrases for translation checks, and `web/locales/ru.json` maps them to Russian. To add a language, add a matching JSON catalog and register its code and native label in `web/i18n.js`. Keep facility, item, and solver identifiers in English; translation happens only when results are displayed. Run `node tests/locale.test.mjs` to check catalog parity and switching.
-
-Traditional Chinese uses the code `zh-TW` in the web app and `--language zh-tw` in the CLI. The CLI also accepts `zh-TW` and `ZH-TW`. Its catalog is `web/locales/zh-TW.json`. Its own rules are in a zh-TW block in `web/i18n.js` and in `src/locale/zh_tw.rs`, so the other languages do not change. A phrase that the zh-TW catalog does not hold shows in English. Run `node tests/locale_zh_tw.test.mjs` and `cargo test --test zh_tw_locale_tests --test cli_language_tests` to check zh-TW.
-
 ### Building the Web App
 
 1. Install wasm-pack:
@@ -610,7 +609,7 @@ Traditional Chinese uses the code `zh-TW` in the web app and `--language zh-tw` 
 
 ### Deploying to GitHub Pages
 
-Deployment (`.github/workflows/deploy.yml`) runs on pushing a version tag (`v*`) or via manual workflow dispatch, not on every push to main. Tag a release (`git tag v0.14.1 && git push --tags`) or trigger the workflow manually to deploy. You can also deploy by hand by copying the contents of the `web/` directory (including a freshly built `web/pkg/`) to your gh-pages branch.
+This fork deploys the web app to `https://zudin987.github.io/aniimax/` from `main`. The workflow is explicitly guarded to run only inside `Zudin987/aniimax`, so it cannot deploy the upstream repository.
 
 ## Data Format
 
@@ -633,9 +632,9 @@ Production data is stored in CSV files in the `data/` directory:
 - `pickling_jar.csv` - Sauces, vinegars and candied fruit
 - `joy_wheel_loom.csv` - Thread, yarn and fabric
 - `woodworking_bench.csv`, `chimney_kiln.csv` - RV level-up materials from Wood Blocks and Mineral Sand (no sale value)
-- `harvest_moon_festival.csv` - The Harvest Moon Festival's crops and recipes, with their seed cost in Moonray Wheat and Harvest Moon Points; the event is over, so the data is kept for reference only (see `SEASON.over`)
+- `harvest_moon_festival.csv` - The Harvest Moon Festival's crops and recipes, with their seed cost in Moonray Wheat and Harvest Moon Points
 
-Farmland, Woodland, Mine, Well, Tidewhisper Sandcastle, Dewy House, Carousel Mill, Crafting Table, Claw Game Cooker, Jukebox Dryer, Simmering Pot, Phonolfactory Table, Bouncy Brew Keg, Joy Wheel Loom, Blazing Stove, Pickling Jar, Woodworking Bench and Chimney Kiln are verified in game. The other three facilities' recipes haven't been checked in game yet: `data/unverified.csv` lists them, the recipe list marks each one, and a plan lists any it relies on.
+The [2026-10-03 recording review](docs/game-evidence-2026-10-03.md) records the full video timeline, module gates, RV13 build limits, progression requirements, recipe values, family restrictions and remaining uncertainties. It confirms Starfall Hammock's Star recipe: 390 Home Coins, 2 per batch, 2,700 workload and Cool environment. Floral Windmill's Scales and Quick Scales production values remain unverified; `data/unverified.csv` lists them, the recipe reference marks them, and a plan lists any it relies on. Premium Wind Chime and Premium Gemstone Dust use their current displayed names while preserving their older internal IDs for saved settings and share codes.
 
 ### Adding New Items
 
@@ -672,8 +671,68 @@ tests/
 
 ## Contributing
 
-Want to report a bug, verify game data, or change the code? Read the [contributing guide](CONTRIBUTING.md) for setup, validation, and pull request guidance.
+Contributions are welcome! Here's how you can help:
+
+### Reporting Issues
+
+- Check existing issues before creating a new one
+- Include steps to reproduce the problem
+- Mention your environment (OS, Rust version, browser if applicable)
+
+### Adding Game Data
+
+To add missing items or correct existing data:
+
+1. Edit the appropriate CSV file in `data/`, following the existing format for that facility
+2. If you add a new CSV, load it in both `src/data.rs` and `src/wasm.rs`
+3. Run `cargo test`; the data checks flag misspelled ingredients, mismatched quick variants and out-of-range values
+4. Submit a pull request
+
+### Code Contributions
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make your changes
+4. Run tests: `cargo test`
+5. Build WASM to verify: `wasm-pack build --target web --out-dir web/pkg`
+6. Commit with a descriptive message
+7. Push and open a pull request
+
+### Development Setup
+
+```bash
+# Clone your fork
+git clone https://github.com/<your-username>/aniimax.git
+cd aniimax
+
+# Build and test
+cargo build
+cargo test
+
+# Build WASM for web testing
+wasm-pack build --target web --out-dir web/pkg
+
+# Start local server for web app
+cd web && python3 -m http.server 8080
+```
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+
+## Setup sharing development checks
+
+`web/share-config.js` uses the compressed `v1` fragment format from upstream
+[PR #26](https://github.com/ae-bii/aniimax/pull/26) at `740dd186`, so links from that
+version can be pasted into Import code. The fork also supports `ANIIMAX2` setup
+codes and `ANIIMAX1` placement codes. Unknown versions and invalid settings are
+rejected before replacing the current setup. Missing fields in older setups use
+current defaults rather than the recipient's previous roster or recipe choices.
+
+For browser changes, run `npm ci`, `npm test`,
+`wasm-pack build --target web --out-dir web/pkg --no-opt -- --locked`,
+`npx playwright install chromium`, and `npm run test:ui`. The UI smoke test uses
+a local server and real optimizer WASM, covering pre-calculation import, stored
+Aniimo mode, compatibility, invalid codes, shared-link persistence, Harvest caps,
+and desktop/mobile layout.
