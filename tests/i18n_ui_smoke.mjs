@@ -64,7 +64,8 @@ try{
  await writeFile(new URL('../test-results/untranslated.json',import.meta.url),JSON.stringify(untranslated,null,2));
  await page.setViewportSize({width:390,height:844});
  await page.screenshot({path:fileURLToPath(new URL('../test-results/russian-mobile.png',import.meta.url)),fullPage:true});
- assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'mobile overflow');
+ const overflow=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,elements:[...document.querySelectorAll('body *')].filter(el=>el.getBoundingClientRect().right>innerWidth+2&&getComputedStyle(el).position!=='absolute').slice(0,8).map(el=>({tag:el.tagName,id:el.id,class:el.className,right:el.getBoundingClientRect().right}))}));
+ assert.ok(overflow.scroll<=overflow.width+2,`mobile overflow: ${JSON.stringify(overflow)}`);
  assert.deepEqual(errors,[]);
  console.log('RU/EN switching, persistence, dynamic text, calculation and mobile checks passed.');
 }finally{await browser.close();await new Promise(r=>server.close(r));}
