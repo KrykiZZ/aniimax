@@ -2139,7 +2139,7 @@ function renderRoster() {
                         <option value="">Other / unspecified</option>
                         ${ANIIMO_FAMILIES.map(family => `<option value="${family}"${aniimo.family === family ? ' selected' : ''}>${family}</option>`).join('')}
                     </select>
-                </label>${infoButton('Aniimo family', 'Family matters for Leisure stations: Susuta → Sandcastle, Dewy → Dewy House, Nimbi → Nimbus Bed, Celestis → Star; Coinwisp → Gold-Speck Cap in the Starfall Hammock. Choose the family for evolved Aniimo too. Other / unspecified can work ordinary jobs, but cannot staff these four stations.')}</div>
+                </label>${infoButton('Aniimo family', 'Family matters for Leisure stations: Susuta → Sandcastle, Dewy → Dewy House, Nimbi → Wool, Iris → Petals in the Nimbus Bed, Celestis → Star; Coinwisp → Gold-Speck Cap in the Starfall Hammock. Choose the family for evolved Aniimo too. Other / unspecified can work ordinary jobs, but cannot staff these four stations.')}</div>
                 <div class="roster-abilities">${abilities}${add}</div>
                 <div class="roster-personalities">${personalities}</div>
             </div>`;

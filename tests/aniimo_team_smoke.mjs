@@ -108,3 +108,8 @@ assert.ok(!persisted.includes('force-e-mode') && !persisted.includes('rv-order-v
     'Removed settings are no longer persisted');
 for (const { id } of SIMPLE_MODULE_FIELDS) assert.ok(persisted.includes(id), `${id} survives saves and sharing`);
 console.log('Aniimo team and E-Mode staffing smoke checks passed.');
+
+assert.equal(aniimoTeamCount({ coin_items: [
+    { ...row('Nimbus Bed', 'Leisure', 0.3), item_name: 'wool' },
+    { ...row('Nimbus Bed', 'Leisure', 0.3), item_name: 'petals__by1' },
+] }), 3, 'Wool and Petals need separate Nimbi and Iris workers, plus the hauler');

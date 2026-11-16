@@ -64,7 +64,7 @@ export const FACILITIES = [
         name: 'Nimbus Bed', slug: 'nimbus-bed', defaultCount: 0, category: 'Aniimo Materials', hasWorker: true, ability: 'Leisure', personality: 'Judicious', family: 'Nimbi',
         unlocks: { 1: 10, 2: 13, 3: 16 },
         counts: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
-        tooltip: "Requires a Nimbi-family Aniimo with Leisure.&#10;Lv.1: Wool&#10;Lv.2: Quick Wool&#10;Lv.3: Petals"
+        tooltip: "Wool and Quick Wool require the Nimbi family; Petals require the Iris family with Leisure Lv.3.&#10;Lv.1: Wool&#10;Lv.2: Quick Wool&#10;Lv.3: Petals"
     },
     {
         name: 'Starfall Hammock', slug: 'starfall-hammock', defaultCount: 0, category: 'Aniimo Materials', hasWorker: true, ability: 'Leisure', personality: 'Faithful', family: 'Celestis',
@@ -191,10 +191,11 @@ export const FACILITIES = [
 
 // Families confirmed by production tooltips; evolved Aniimo keep their family. Other/unset
 // covers ordinary jobs. Do not infer a family from a player's nickname or Leisure ability.
-export const ANIIMO_FAMILIES = [...FACILITIES.filter(f => f.family).map(f => f.family), 'Coinwisp'];
+export const ANIIMO_FAMILIES = [...FACILITIES.filter(f => f.family).map(f => f.family), 'Coinwisp', 'Iris'];
 
-// Preserve the facility default for legacy rows; the Lv.2 hammock product has a different family.
+// Preserve defaults for legacy rows; individual recipes can require another family.
 export function recipeFamily(facility, itemName = '') {
+    if (facility === 'Nimbus Bed' && /^petals(?:$|__)/.test(itemName || '')) return 'Iris';
     if (facility === 'Starfall Hammock' && /^gold_speck_cap(?:$|__)/.test(itemName || '')) return 'Coinwisp';
     return FACILITIES.find(f => f.name === facility)?.family || null;
 }

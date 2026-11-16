@@ -83,3 +83,18 @@ test('mixed tiers report recipe minimums instead of owned facility levels', asyn
     assert.equal(quartz?.facility_count, 2);
     assert.equal(quartz?.minimum_facility_level, 5);
 });
+
+test('Nimbus Bed Petals use Iris rather than the wool family', async () => {
+    const reference = JSON.parse(pkg.get_all_items());
+    assert.equal(reference.find(r => r.name === 'petals').family, 'Iris');
+    assert.equal(reference.find(r => r.name === 'quick_wool').family, 'Nimbi');
+    for (const family of ['Nimbi', 'Iris']) {
+        const input = { currency: 'coins', aniimo: 'roster', prioritize_byproducts: false,
+            facilities: { ...none, 'Nimbus Bed': [{count:1, level:3}] },
+            roster: { members: [{count:1, family, abilities:{Leisure:3}, personalities:[]}], residents:[] } };
+        const result = JSON.parse(await plan(pkg, JSON.stringify(input)));
+        checkPlan(result);
+        const produced = result.coin_items.filter(r => r.status === 'producing').map(r => r.item_name);
+        assert.equal(produced.some(n => n === 'petals' || n.startsWith('petals__')), family === 'Iris', `${family}: ${produced}`);
+    }
+});

@@ -73,3 +73,10 @@ test('real rendering functions show current recipe names and required families',
     assert.match(taskLabel({ ability: 'Leisure', level: 3, personality_bonus: false }, 'Starfall Hammock', false, 'gold_speck_cap'), /Coinwisp family/);
     assert.doesNotMatch(taskLabel({ ability: 'Fire', level: 3, personality_bonus: false }, 'Blazing Stove'), /family/);
 });
+
+test('Petals family override survives internal variant suffixes', () => {
+    assert.equal(recipeFamily('Nimbus Bed', 'petals'), 'Iris');
+    assert.equal(recipeFamily('Nimbus Bed', 'petals__uncovered__by1'), 'Iris');
+    assert.equal(recipeFamily('Nimbus Bed', 'wool'), 'Nimbi');
+    assert.equal(recipeFamily('Nimbus Bed', 'quick_wool'), 'Nimbi');
+});

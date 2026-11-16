@@ -52,3 +52,25 @@ fn hammock_rosters_use_product_specific_families() {
     assert!(variants.iter().any(|i| i.name == "gold_speck_cap__by1"));
     assert!(!variants.iter().any(|i| i.name == "star__by1" || i.name == "gold_speck_cap__by0"));
 }
+
+#[test]
+fn petals_need_iris_with_leisure_three_while_wool_needs_nimbi() {
+    let items = data::load_all_data(Path::new("data")).unwrap();
+    let requirements = data::load_aniimo_requirements(Path::new("data")).unwrap();
+    let steps = data::load_grower_steps(Path::new("data")).unwrap();
+    let petals = items.iter().find(|i| i.name == "petals").unwrap();
+    let wool = items.iter().find(|i| i.name == "wool").unwrap();
+    let person = |family: &str, level| RosterAniimo { count: 1, family: Some(family.into()),
+        abilities: [("Leisure".into(), level)].into_iter().collect(), personalities: vec![] };
+    let crew = Crew { members: vec![person("Nimbi", 3), person("Iris", 3), person("Iris", 2)], ..Default::default() };
+    assert_eq!(recipe_family("Nimbus Bed", "petals__uncovered__by1"), Some("Iris"));
+    assert_eq!(recipe_family("Nimbus Bed", "quick_wool"), Some("Nimbi"));
+    assert!(crew.worker(0, petals, &requirements).is_none());
+    assert!(crew.worker(1, petals, &requirements).is_some());
+    assert_eq!(requirements.get("petals"), Some(("Leisure", 3)));
+    assert!(crew.worker(1, wool, &requirements).is_none());
+    let variants = crew_variants(vec![petals.clone(), wool.clone()], &crew, &requirements, &steps);
+    assert!(variants.iter().any(|i| i.name == "petals__by1"));
+    assert!(variants.iter().any(|i| i.name == "wool__by0"));
+    assert!(!variants.iter().any(|i| i.name == "petals__by0" || i.name == "petals__by2" || i.name == "wool__by1"));
+}

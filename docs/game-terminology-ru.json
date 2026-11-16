@@ -1679,6 +1679,16 @@
       "en": "Cultivating",
       "ru": "Возделывание",
       "note": "Linked through client build 3934365 recipe/operation IDs; see game-data audit."
+    },
+    "Iris": {
+      "textId": "1858487872",
+      "en": "Iris",
+      "ru": "Ирис"
+    },
+    "Irisal": {
+      "textId": "1306144796",
+      "en": "Irisal",
+      "ru": "Ирисаль"
     }
   }
 }

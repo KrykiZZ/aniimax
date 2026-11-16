@@ -74,9 +74,21 @@ try {
  await page.locator('label:has(#aniimo-custom)').click();
  await page.locator('[data-roster="add"]').click();
  await capture('custom-roster');
+ await page.locator('.roster-family').first().selectOption('Iris');
+ await capture('iris-roster');
+ assert.equal(await page.locator('.roster-family').first().inputValue(),'Iris');
  await page.locator('label:has(#aniimo-best)').click();
  await page.locator('#setup-import-code').click();await page.locator('#setup-import-value').fill('not-a-code');await page.locator('#setup-import-apply').click();await capture('invalid-import');await page.locator('#setup-import-cancel').click();
- await page.locator('#facilitiesToggle').click();await page.waitForSelector('.recipe-table');await capture('recipe-reference');await page.locator('#facilitiesModal .close-button').click();
+ await page.locator('#facilitiesToggle').click();await page.waitForSelector('.recipe-table');await capture('recipe-reference');
+ const petalsRow=page.locator('.recipe-table tr').filter({has:page.getByText('Petals',{exact:true})}).first();
+ assert.match(await petalsRow.innerText(),/Iris family/);
+ assert.doesNotMatch(await petalsRow.innerText(),/Nimbi family/);
+ await page.locator('#language-switch').selectOption('ru');
+ await page.waitForFunction(()=>document.documentElement.lang==='ru');
+ const petalsRu=page.locator('.recipe-table tr').filter({has:page.getByText('Лепестки',{exact:true})}).first();
+ assert.match(await petalsRu.innerText(),/Ирис/);
+ assert.doesNotMatch(await petalsRu.innerText(),/Пушинка/);
+ await page.locator('#facilitiesModal .close-button').click();
  assert.deepEqual(errors,[], 'No browser errors');
 } finally {
  await writeFile('test-results/localization-inventory.json',JSON.stringify([...inventory.values()],null,2));

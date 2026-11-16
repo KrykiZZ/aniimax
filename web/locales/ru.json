@@ -1269,5 +1269,9 @@
   "Review it before calculating.": "Проверьте их перед расчётом.",
   "Your previous saved values are kept until you edit this setup.": "Предыдущие сохранённые значения сохраняются до редактирования этих настроек.",
   "The recipient can review the settings before calculating.": "Получатель сможет проверить настройки перед расчётом.",
-  "{item} copied.": "{item}: скопировано."
+  "{item} copied.": "{item}: скопировано.",
+  "Iris": "Ирис",
+  "Irisal": "Ирисаль",
+  "Wool and Quick Wool require the Nimbi family; Petals require the Iris family with Leisure Lv.3.": "Для шерсти и её быстрой формулы нужно семейство Пушинки; для лепестков — семейство Ириса с умением «Досуг» ур. 3.",
+  "Family matters for Leisure stations: Susuta → Sandcastle, Dewy → Dewy House, Nimbi → Wool, Iris → Petals in the Nimbus Bed, Celestis → Star; Coinwisp → Gold-Speck Cap in the Starfall Hammock. Choose the family for evolved Aniimo too. Other / unspecified can work ordinary jobs, but cannot staff these four stations.": "Для объектов с умением «Досуг» важно семейство: Стесняша → Песочный замок «Шепот прилива», Отдушечка → Дом росы, Пушинка → Шерсть, Ирис → Лепестки на объекте «Дождливое ложе», Селестис → Звезда; Монетгейст → Шляпка «Крупицы золота» на объекте «Гамак падающих звезд». Для эволюционировавших анимо также укажите семейство. Значение «Другое / не указано» допускает обычные работы, но не работу на этих четырёх объектах."
 }

@@ -156,3 +156,10 @@ test('old Harvest Moon saves reset only the obsolete season settings', () => {
     assert.equal(migrate(next)['season-wheat-budget'], '800',
         'current-season saves keep the player-entered cap');
 });
+
+test('Iris family survives setup code import for Petals workers', () => {
+    const value = { ...input, roster: [{ ...input.roster[0], family: 'Iris', abilities: { Leisure: 3 } }] };
+    const { settings } = normalizeSetupSettings(value, defaults);
+    assert.equal(settings.roster[0].family, 'Iris');
+    assert.equal(settings.roster[0].abilities.Leisure, 3);
+});

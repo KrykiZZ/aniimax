@@ -1,0 +1,39 @@
+{
+  "build": 3934365,
+  "formulaId": 4001045,
+  "product": "Petals",
+  "facility": "Nimbus Bed",
+  "facilityLevel": 3,
+  "operationId": 1021003,
+  "ethnicGroup": 1021,
+  "homeAbility": {
+    "id": 1102,
+    "name": "Leisure",
+    "level": 3
+  },
+  "prototypeIds": [
+    1021100,
+    1021200
+  ],
+  "family": "Iris",
+  "ru": "Ирис",
+  "evidence": "homeland_formula_data → postOperateList → homeland_operate_data.ethnicGroup/petPrototype → pet_prototype_data.name",
+  "previousIncorrectFamily": "Nimbi",
+  "archiveSha256": "f043cfe74521483e74a0be39c6d635356c4d0313cef3169c62a5ff69c12d7e06",
+  "allowedPetPrototypes": [
+    1021100,
+    1021101,
+    1021102,
+    1021103,
+    1021104,
+    1021105,
+    1021106,
+    1021200,
+    1021201,
+    1021202,
+    1021203,
+    1021204,
+    1021205,
+    1021206
+  ]
+}

@@ -367,7 +367,9 @@ pub fn facility_family(facility: &str) -> Option<&'static str> {
 
 /// Some stations require different families for individual products.
 pub fn recipe_family(facility: &str, name: &str) -> Option<&'static str> {
-    if facility == "Starfall Hammock" && base_item_name(name) == "gold_speck_cap" {
+    if facility == "Nimbus Bed" && base_item_name(name) == "petals" {
+        Some("Iris")
+    } else if facility == "Starfall Hammock" && base_item_name(name) == "gold_speck_cap" {
         Some("Coinwisp")
     } else {
         facility_family(facility)
